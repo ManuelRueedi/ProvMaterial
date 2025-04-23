@@ -55,10 +55,13 @@ export default defineWebAuthnAuthenticateEventHandler({
     }
 
     //update the counter
+    console.log(
+      `Updating counter for credential ${credential.id} to ${authenticationInfo.newCounter}`,
+    );
     await useDrizzle()
       .update(tables.webauthnCredentials)
       .set({
-        counter: credential.counter + 1,
+        counter: authenticationInfo.newCounter,
       })
       .where(eq(tables.webauthnCredentials.id, credential.id));
 
