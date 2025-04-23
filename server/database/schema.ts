@@ -1,5 +1,37 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
-import { sql } from "drizzle-orm";
+import { isNotNull, sql } from "drizzle-orm";
+
+// auth
+// ───────────────────────── users ─────────────────────────
+export const users = sqliteTable("users", {
+  id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+  microsoftID: text().notNull(),
+  mail: text().notNull().unique(),
+  firstName: text().notNull(),
+  lastName: text(),
+  jobtitle: text(),
+  rights: text({ mode: "json" }).$type<{
+    useArticels: boolean;
+    editArticels: boolean;
+    addArticels: boolean;
+    removeArticels: boolean;
+  }>(),
+});
+
+// ───────────────────────── webauthnCredentials  ─────────────────────────
+export const webauthnCredentials = sqliteTable("webauthnCredentials", {
+  id: text().primaryKey(),
+  userId: integer()
+    .notNull()
+    .references(() => users.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
+  publicKey: text().notNull(),
+  counter: integer().notNull(),
+  backedUp: integer({ mode: "boolean" }).notNull(),
+  transports: text(),
+});
 
 // ───────────────────────── projects ─────────────────────────
 export const projects = sqliteTable("projects", {
@@ -51,7 +83,7 @@ export const articleLocationHistory = sqliteTable("article_location_history", {
 
 // ──────────────────────── inspections ───────────────────────
 export const inspections = sqliteTable("inspections", {
-  inspectionId: integer().primaryKey({ autoIncrement: true }),
+  id: integer().primaryKey({ autoIncrement: true }),
   articleId: text().references(() => articles.id),
   inspectionDate: integer({ mode: "timestamp" }).notNull(),
   inspectedBy: text(),
@@ -66,7 +98,7 @@ export const inspections = sqliteTable("inspections", {
 
 // ───────────────────────── change_log ───────────────────────
 export const changeLog = sqliteTable("change_log", {
-  logId: integer().primaryKey({ autoIncrement: true }),
+  id: integer().primaryKey({ autoIncrement: true }),
   articleId: text().references(() => articles.id),
   changeTs: integer({ mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
   user: text(),

@@ -6,7 +6,31 @@ export default defineNuxtConfig({
   future: { compatibilityVersion: 4 },
   // Nuxt Modules
   // https://nuxt.com/modules
-  modules: ["@nuxthub/core", "@nuxt/eslint", "nuxt-auth-utils"],
+  modules: [
+    "@nuxthub/core",
+    "@nuxt/eslint",
+    "nuxt-auth-utils",
+    "@nuxt/ui",
+    "@compodium/nuxt",
+    "shadcn-nuxt",
+  ],
+  css: ["~/assets/css/main.css"],
+  fonts: {
+    families: [
+      { name: "Roboto", provider: "google", weights: [300, 400, 500, 700] },
+    ],
+  },
+  shadcn: {
+    /**
+     * Prefix for all the imported component
+     */
+    prefix: "",
+    /**
+     * Directory that the component lives in.
+     * @default "./app/components/ui"
+     */
+    componentDir: "./app/components/ui",
+  },
   hub: {
     database: true,
     kv: true,
@@ -26,6 +50,10 @@ export default defineNuxtConfig({
     timeline: {
       enabled: true,
     },
+  },
+  // Auth
+  auth: {
+    webAuthn: true,
   },
   runtimeConfig: {
     oauth: {
