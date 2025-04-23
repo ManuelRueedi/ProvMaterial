@@ -54,7 +54,6 @@ export default defineOAuthMicrosoftEventHandler({
         message: "User not found in database",
       });
     } else {
-      console.log("Setting session");
       await setUserSession(event, {
         user: {
           userId: dbUser.id,
@@ -67,6 +66,7 @@ export default defineOAuthMicrosoftEventHandler({
           }))
             ? true
             : false,
+          loggedInAt: Date.now(),
         },
         rights: {
           //check if null and set to false otherwise use dbUser data
@@ -78,7 +78,6 @@ export default defineOAuthMicrosoftEventHandler({
         secure: {
           microsoftID: dbUser.microsoftID,
         },
-        loggedInAt: Date.now(),
       });
       return sendRedirect(event, "/");
     }

@@ -6,6 +6,7 @@ declare module "#auth-utils" {
     mail: string;
     jobtitle: string;
     hasWebauthn: boolean;
+    loggedInAt: number;
   }
 
   interface UserRights {

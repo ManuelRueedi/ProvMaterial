@@ -1,61 +1,87 @@
-// server/api/webauthn/authenticate.post.ts
-// export default defineWebAuthnAuthenticateEventHandler({
-//   async storeChallenge(event, challenge, attemptId) {
-//     // Store the challenge in a KV store or DB
-//     await useStorage().setItem(`attempt:${attemptId}`, challenge);
-//   },
-//   async getChallenge(event, attemptId) {
-//     const challenge = await useStorage().getItem(`attempt:${attemptId}`);
+import { eq } from "drizzle-orm";
+import { webauthnCredentials } from "~~/server/database/schema";
 
-//     // Make sure to always remove the attempt because they are single use only!
-//     await useStorage().removeItem(`attempt:${attemptId}`);
+export default defineWebAuthnAuthenticateEventHandler({
+  async storeChallenge(event, challenge, attemptId) {
+    await hubKV().set(`auth:challenge:${attemptId}`, challenge, { ttl: 60 });
+  },
+  async getChallenge(event, attemptId) {
+    const challenge = await hubKV().get<string>(`auth:challenge:${attemptId}`);
+    if (!challenge) {
+      throw createError({
+        statusCode: 400,
+        message: "Challenge not found or expired",
+      });
+    }
+    await hubKV().del(`auth:challenge:${attemptId}`);
+    return challenge;
+  },
 
-//     if (!challenge)
-//       throw createError({ statusCode: 400, message: "Challenge expired" });
+  async allowCredentials(event, userName) {
+    const user = await useDrizzle().query.users.findFirst({
+      where: eq(tables.users.mail, userName),
+      with: {
+        credentials: true,
+      },
+    });
 
-//     return challenge;
-//   },
-//   async onSuccess(event, { authenticator }) {
-//     // ...
-//   },
-//   // Optionally, we can prefetch the credentials if the user gives their userName during login
-//   async allowCredentials(event, userName) {
-//     const credentials = await useDatabase().sql`...`;
-//     // If no credentials are found, the authentication cannot be completed
-//     if (!credentials.length)
-//       throw createError({ statusCode: 400, message: "User not found" });
+    return user?.credentials || [];
+  },
 
-//     // If user is found, only allow credentials that are registered
-//     // The browser will automatically try to use the credential that it knows about
-//     // Skipping the step for the user to select a credential for a better user experience
-//     return credentials;
-//     // example: [{ id: '...' }]
-//   },
-//   async getCredential(event, credentialId) {
-//     // Look for the credential in our database
-//     const credential = await useDatabase().sql`...`;
+  async getCredential(event, credentialId) {
+    // Look for the credential in our database
+    const credential = await useDrizzle().query.webauthnCredentials.findFirst({
+      where: eq(tables.webauthnCredentials.id, credentialId),
+      with: {
+        user: true,
+      },
+    });
 
-//     // If the credential is not found, there is no account to log in to
-//     if (!credential)
-//       throw createError({ statusCode: 400, message: "Credential not found" });
+    // If the credential is not found, there is no account to log in to
+    if (!credential)
+      throw createError({ statusCode: 401, message: "Credential not found" });
 
-//     return credential;
-//   },
-//   async onSuccess(event, { credential, authenticationInfo }) {
-//     // The credential authentication has been successful
-//     // We can look it up in our database and get the corresponding user
-//     const db = useDatabase();
-//     const user = await db.sql`...`;
+    return credential;
+  },
+  async onSuccess(event, { credential, authenticationInfo }) {
+    const dbUser = await useDrizzle().query.users.findFirst({
+      where: (users, { eq }) => eq(users.id, credential.userId),
+    });
+    if (!dbUser) {
+      throw createError({
+        statusCode: 502,
+        message: "User not found in database",
+      });
+    }
 
-//     // Update the counter in the database (authenticationInfo.newCounter)
-//     await db.sql`...`;
+    //update the counter
+    await useDrizzle()
+      .update(tables.webauthnCredentials)
+      .set({
+        counter: credential.counter + 1,
+      })
+      .where(eq(tables.webauthnCredentials.id, credential.id));
 
-//     // Set the user session
-//     await setUserSession(event, {
-//       user: {
-//         id: user.id,
-//       },
-//       loggedInAt: Date.now(),
-//     });
-//   },
-// });
+    await setUserSession(event, {
+      user: {
+        userId: dbUser.id,
+        firstName: dbUser.firstName,
+        lastName: dbUser.lastName,
+        mail: dbUser.mail,
+        jobtitle: dbUser.jobtitle,
+        hasWebauthn: true,
+        loggedInAt: Date.now(),
+      },
+      rights: {
+        //check if null and set to false otherwise use dbUser data
+        useArticles: dbUser.rights?.useArticels ?? false,
+        editArticles: dbUser.rights?.editArticels ?? false,
+        addArticles: dbUser.rights?.addArticels ?? false,
+        removeArticles: dbUser.rights?.removeArticels ?? false,
+      },
+      secure: {
+        webauthnID: credential.id,
+      },
+    });
+  },
+});

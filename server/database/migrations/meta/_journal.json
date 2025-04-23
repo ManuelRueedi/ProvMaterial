@@ -15,6 +15,13 @@
       "when": 1745348794349,
       "tag": "0001_amazing_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1745412357605,
+      "tag": "0002_careful_surge",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,21 @@
 import { eq } from "drizzle-orm";
 
 export default defineWebAuthnRegisterEventHandler({
+  async storeChallenge(event, challenge, attemptId) {
+    await hubKV().set(`auth:challenge:${attemptId}`, challenge, { ttl: 60 });
+  },
+  async getChallenge(event, attemptId) {
+    const challenge = await hubKV().get<string>(`auth:challenge:${attemptId}`);
+    if (!challenge) {
+      throw createError({
+        statusCode: 400,
+        message: "Challenge not found or expired",
+      });
+    }
+    await hubKV().del(`auth:challenge:${attemptId}`);
+    return challenge;
+  },
+
   async validateUser(userBody, event) {
     const session = await requireUserSession(event);
 
@@ -29,7 +44,7 @@ export default defineWebAuthnRegisterEventHandler({
 
   async onSuccess(event, { credential, user }) {
     const session = await requireUserSession(event);
-    const clear = await await useDrizzle()
+    await useDrizzle()
       .insert(tables.webauthnCredentials)
       .values({
         id: credential.id,
@@ -37,7 +52,7 @@ export default defineWebAuthnRegisterEventHandler({
         publicKey: credential.publicKey,
         counter: credential.counter,
         backedUp: credential.backedUp,
-        transports: JSON.stringify(credential.transports),
+        transports: credential.transports,
       });
     // set the user session with the webauthnID
     await setUserSession(event, {

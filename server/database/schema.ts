@@ -1,5 +1,7 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { isNotNull, sql } from "drizzle-orm";
+import { relations } from "drizzle-orm";
+import type { WebAuthnCredential } from "#auth-utils";
 
 // auth
 // ───────────────────────── users ─────────────────────────
@@ -18,6 +20,10 @@ export const users = sqliteTable("users", {
   }>(),
 });
 
+export const usersRelations = relations(users, ({ many }) => ({
+  credentials: many(webauthnCredentials),
+}));
+
 // ───────────────────────── webauthnCredentials  ─────────────────────────
 export const webauthnCredentials = sqliteTable("webauthnCredentials", {
   id: text().primaryKey(),
@@ -30,8 +36,20 @@ export const webauthnCredentials = sqliteTable("webauthnCredentials", {
   publicKey: text().notNull(),
   counter: integer().notNull(),
   backedUp: integer({ mode: "boolean" }).notNull(),
-  transports: text(),
+  transports: text({ mode: "json" })
+    .notNull()
+    .$type<WebAuthnCredential["transports"]>(),
 });
+
+export const webauthnCredentialsRelations = relations(
+  webauthnCredentials,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [webauthnCredentials.userId],
+      references: [users.id],
+    }),
+  }),
+);
 
 // ───────────────────────── projects ─────────────────────────
 export const projects = sqliteTable("projects", {
