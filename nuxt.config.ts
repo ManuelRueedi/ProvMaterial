@@ -13,6 +13,7 @@ export default defineNuxtConfig({
     "@nuxt/ui",
     "@compodium/nuxt",
     "shadcn-nuxt",
+    "@nuxtjs/device",
   ],
   css: ["~/assets/css/main.css"],
   fonts: {

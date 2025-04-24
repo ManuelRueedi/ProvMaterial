@@ -1,8 +1,8 @@
 /**
- * Centralises all passkey‑related actions and user‑session helpers.
+ * Centralises passkey actions and device‑aware Microsoft login.
  */
 export const usePasskey = () => {
-  /* User‑session utilities */
+  /* User‑session helpers */
   const {
     loggedIn,
     user,
@@ -17,7 +17,19 @@ export const usePasskey = () => {
     authenticateEndpoint: "/auth/authenticate",
   });
 
-  /** Register a new WebAuthn credential (aka passkey) */
+  const { isDesktop } = useDevice();
+
+  /** Microsoft login – popup on desktop, redirect on mobile */
+  const loginWithMicrosoft = () => {
+    const url = "/auth/microsoft";
+    if (isDesktop) {
+      openInPopup(url);
+    } else {
+      window.location.href = url;
+    }
+  };
+
+  /** Register a new passkey */
   const signUp = async () => {
     try {
       if (user.value) {
@@ -29,7 +41,7 @@ export const usePasskey = () => {
     }
   };
 
-  /** Sign in with an existing WebAuthn credential */
+  /** Sign in with an existing passkey */
   const signIn = async () => {
     try {
       await authenticate();
@@ -39,13 +51,14 @@ export const usePasskey = () => {
     }
   };
 
-  /** Remove the current user’s WebAuthn key */
+  /** Remove the user’s passkey */
   const deleteKey = async () => {
     try {
-      await $fetch<{ message: string }>("/auth/removeKey", {
+      const { message } = await $fetch<{ message: string }>("/auth/removeKey", {
         method: "DELETE",
       });
       await fetchUserSession();
+      console.log(message);
     } catch (err: any) {
       console.error("❌ Delete key failed:", err.message);
     }
@@ -54,10 +67,11 @@ export const usePasskey = () => {
   return {
     /* state */ loggedIn,
     user,
+    isDesktop,
     /* auth helpers */ signUp,
     signIn,
     deleteKey,
+    loginWithMicrosoft,
     /* misc */ logout,
-    openInPopup,
   };
 };

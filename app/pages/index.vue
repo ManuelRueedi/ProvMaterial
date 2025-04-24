@@ -6,7 +6,9 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="flex min-h-dvh items-center justify-center p-4">
-    <AuthCard />
+  <div>
+    <div class="flex justify-center">
+      <h1>Home</h1>
+    </div>
   </div>
 </template>

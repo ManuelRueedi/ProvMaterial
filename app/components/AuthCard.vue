@@ -1,63 +1,102 @@
 <script setup lang="ts">
 import { usePasskey } from "@/composables/usePasskey";
 
-const { loggedIn, user, logout, openInPopup, signUp, signIn, deleteKey } =
-  usePasskey();
+const {
+  loggedIn,
+  user,
+  logout,
+  signUp,
+  signIn,
+  deleteKey,
+  loginWithMicrosoft,
+} = usePasskey();
+
+const colorMode = useColorMode();
+const isDark = computed({
+  get() {
+    return colorMode.value === "dark";
+  },
+  set(_isDark) {
+    colorMode.preference = _isDark ? "dark" : "light";
+  },
+});
 </script>
 
 <template>
-  <div
-    class="card w-full max-w-[22rem] rounded-2xl p-6 shadow-lg sm:max-w-md md:max-w-lg lg:max-w-xl"
-  >
+  <UCard class="flex max-h-fit max-w-fit rounded-2xl">
     <!-- Signed‑in state -->
-    <template v-if="loggedIn && user">
+    <UContainer v-if="loggedIn && user">
+      <UContainer class="my-5 flex justify-between">
+        <UButton
+          to="/"
+          icon="ic:baseline-home"
+          size="xl"
+          color="neutral"
+          variant="ghost"
+          class="flex justify-end"
+        />
+        <ClientOnly v-if="!colorMode?.forced">
+          <UButton
+            :icon="isDark ? 'i-lucide-moon' : 'i-lucide-sun'"
+            color="neutral"
+            variant="ghost"
+            size="xl"
+            @click="isDark = !isDark"
+            background="primary"
+          />
+
+          <template #fallback>
+            <div class="size-8" />
+          </template>
+        </ClientOnly>
+      </UContainer>
       <h1 class="mb-4 text-center text-3xl font-semibold">
-        Welcome, {{ user.firstName }}!
+        Hallo, {{ user?.firstName }}!
       </h1>
 
       <div class="space-y-1 text-center text-base">
-        <p>{{ user.jobtitle }}</p>
-        <p>{{ user.mail }}</p>
+        <p>{{ user?.jobtitle }}</p>
+        <p>{{ user?.mail }}</p>
       </div>
 
       <div
         class="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center"
       >
-        <UButton @click="logout" label="Logout" />
+        <UButton color="error" @click="logout" label="Logout" />
         <UButton
-          :disabled="user.hasWebauthn"
-          label="Enable Passkey"
+          :disabled="user?.hasWebauthn"
+          label="Passkey einrichten"
           @click="signUp"
         />
         <UButton
-          type="reset"
-          :disabled="!user.hasWebauthn"
-          label="Delete Passkey"
+          color="warning"
+          :disabled="!user?.hasWebauthn"
+          label="Passkey löschen"
           @click="deleteKey"
         />
       </div>
 
-      <p v-if="user.hasWebauthn" class="mt-4 text-center text-green-600">
-        Passkey registered.
+      <p v-if="user?.hasWebauthn" class="text-success-600 mt-4 text-center">
+        Passkey registriert.
       </p>
-    </template>
+    </UContainer>
 
     <!-- Guest state -->
-    <template v-else>
-      <h1 class="mb-6 text-center text-2xl font-semibold">Please Sign In</h1>
+    <UContainer v-else>
+      <h1 class="mb-6 text-center text-2xl font-semibold">Bitte anmelden</h1>
 
       <div class="flex flex-col items-center gap-4">
         <UButton
           class="w-full sm:w-auto"
-          @click="openInPopup('/auth/microsoft')"
-          label="Login with Microsoft"
+          @click="loginWithMicrosoft"
+          label="Login mit Microsoft"
         />
         <UButton
           class="w-full sm:w-auto"
           @click="signIn"
-          label="Login with WebAuthn"
+          label="Login mit WebAuthn"
         />
       </div>
-    </template>
-  </div>
+    </UContainer>
+  </UCard>
 </template>

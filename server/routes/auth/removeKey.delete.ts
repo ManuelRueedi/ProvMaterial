@@ -22,6 +22,6 @@ export default defineEventHandler(async (event) => {
       hasWebauthn: false,
     },
   });
-  setResponseStatus(event, 200); // or event.node.res.statusCode = 200
+  setResponseStatus(event, 200);
   return { message: "WebAuthn key removed successfully" };
 });
