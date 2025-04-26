@@ -16,40 +16,60 @@ const items = ref<NavigationMenuItem[][]>([
     },
   ],
 ]);
+
+const ScannedQrCodes = useState("ScannedQrCodes", () => []);
+const selectedQrCodes = useState("selectedQrCodes", () => []);
 </script>
 
 <template>
-  <UContainer class="mb-20 w-screen overflow-hidden p-0">
+  <UContainer class="full-width mb-20 h-screen overflow-hidden">
     <slot />
+
     <UNavigationMenu
       :highlight="true"
       :items="items"
-      class="fixed bottom-0 left-1/2 w-[95vw] -translate-x-1/2 justify-evenly rounded-t-2xl bg-neutral-50 px-10 py-2 lg:w-3/4"
+      highlight-color="error"
+      color="primary"
+      class="fixed bottom-0 left-1/2 w-[95vw] -translate-x-1/2 justify-evenly rounded-t-3xl bg-neutral-50 lg:w-3/4"
       :ui="{
+        root: 'shadow-md',
         linkLabel: 'font-semibold text-lg relative  hidden md:inline',
         linkLeadingIcon: 'shrink-0 size-10',
         link: 'w-full px-8',
       }"
     />
+    <UButton
+      size="xl"
+      to="/login"
+      color="neutral"
+      icon="ic:baseline-manage-accounts"
+      class="fixed top-3 left-3 opacity-90"
+    />
+    <UModal
+      :ui="{ header: 'hidden' }"
+      description="scanning.."
+      title="QrCode Scanner"
+    >
+      <UButton
+        variant="subtle"
+        color="neutral"
+        icon="ic:baseline-qr-code-scanner"
+        class="fixed right-10 bottom-23 opacity-80"
+        :ui="{
+          leadingIcon: 'size-13',
+        }"
+      />
+      <template #body>
+        <QrCodeScanner></QrCodeScanner>
+      </template>
+      <template #footer>
+        <UInputMenu
+          class="w-full"
+          v-model="selectedQrCodes"
+          multiple
+          :items="ScannedQrCodes"
+        />
+      </template>
+    </UModal>
   </UContainer>
-  <UButton
-    variant="subtle"
-    color="neutral"
-    icon="ic:baseline-qr-code-scanner"
-    class="fixed right-5 bottom-30 opacity-80"
-    :ui="{
-      base: 'p-3',
-      leadingIcon: 'size-14',
-    }"
-  />
-  <UButton
-    to="/login"
-    color="neutral"
-    icon="ic:baseline-manage-accounts"
-    class="fixed top-3 left-3 opacity-90"
-    :ui="{
-      base: 'p-2',
-      leadingIcon: 'size-8',
-    }"
-  />
 </template>

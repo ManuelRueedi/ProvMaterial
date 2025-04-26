@@ -3,5 +3,9 @@
 @import "tw-animate-css";
 
 @theme {
-  --font-display: "Roboto", sans‑serif, 500;
+  --font-display: "Roboto", sans-serif, 500;
+  --container-8xl: 2000px;
+}
+:root {
+  --ui-container: var(--container-8xl);
 }

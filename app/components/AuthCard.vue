@@ -11,6 +11,8 @@ const {
   loginWithMicrosoft,
 } = usePasskey();
 
+const { openInPopup } = useUserSession();
+
 const colorMode = useColorMode();
 const isDark = computed({
   get() {
@@ -88,7 +90,7 @@ const isDark = computed({
       <div class="flex flex-col items-center gap-4">
         <UButton
           class="w-full sm:w-auto"
-          @click="loginWithMicrosoft"
+          @click="openInPopup('/auth/microsoft')"
           label="Login mit Microsoft"
         />
         <UButton
