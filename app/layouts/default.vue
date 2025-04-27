@@ -19,6 +19,12 @@ const items = ref<NavigationMenuItem[][]>([
 
 const ScannedQrCodes = useState("ScannedQrCodes", () => []);
 const selectedQrCodes = useState("selectedQrCodes", () => []);
+
+const handleModalLeave = () => {
+  if (selectedQrCodes.value.length > 0) {
+    navigateTo("/articels/scannedArticles");
+  }
+};
 </script>
 
 <template>
@@ -46,6 +52,7 @@ const selectedQrCodes = useState("selectedQrCodes", () => []);
       class="fixed top-3 left-3 opacity-90"
     />
     <UModal
+      @after:leave="handleModalLeave"
       :ui="{ header: 'hidden' }"
       description="scanning.."
       title="QrCode Scanner"
@@ -63,7 +70,7 @@ const selectedQrCodes = useState("selectedQrCodes", () => []);
         <QrCodeScanner></QrCodeScanner>
       </template>
       <template #footer>
-        <UInputMenu
+        <USelect
           class="w-full"
           v-model="selectedQrCodes"
           multiple
