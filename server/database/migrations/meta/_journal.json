@@ -22,6 +22,34 @@
       "when": 1745412357605,
       "tag": "0002_careful_surge",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1746272321632,
+      "tag": "0003_elite_medusa",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1746272478924,
+      "tag": "0004_loving_ronan",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1746276222126,
+      "tag": "0005_shiny_blob",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1746279796833,
+      "tag": "0006_groovy_orphan",
+      "breakpoints": true
     }
   ]
 }

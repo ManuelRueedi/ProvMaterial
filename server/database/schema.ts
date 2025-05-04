@@ -1,7 +1,12 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
-import { isNotNull, sql } from "drizzle-orm";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import type { WebAuthnCredential } from "#auth-utils";
+import type {
+  Type,
+  Ampacity,
+  Connector,
+  Tags,
+} from "@/composables/articels/types";
 
 // auth
 // ───────────────────────── users ─────────────────────────
@@ -68,25 +73,44 @@ export const locations = sqliteTable("locations", {
   isStorageLocation: integer({ mode: "boolean" }).default(false),
 });
 
+export const locationsRelations = relations(locations, ({ one }) => ({
+  article: one(articles),
+}));
+
 // ───────────────────────── articles ─────────────────────────
 export const articles = sqliteTable("articles", {
-  id: integer().primaryKey({ autoIncrement: true }),
-  articleIdentifier: text(),
-  type: text().notNull(),
-  connector: text().notNull(),
-  outputs: text({ mode: "json" }).$type<string[]>(),
-  lengthInMeter: real(),
-  locationId: integer().references(() => locations.id, { onUpdate: "cascade" }),
-  storageLocationId: integer().references(() => locations.id, {
-    onUpdate: "cascade",
-  }),
-  storageLocationSection: integer(),
+  id: text().primaryKey(),
+  type: text().notNull().$type<Type>(),
+  ampacity: integer().notNull(),
+  connector: text().$type<Connector>(),
+  outputs: text({ mode: "json" }).$type<Record<Connector, number>>(),
+  tags: text({ mode: "json" })
+    .notNull()
+    .default(sql`'[]'`)
+    .$type<Tags[]>(),
+  lengthInMeter: real().notNull(),
+  locationId: integer()
+    .references(() => locations.id, { onUpdate: "cascade" })
+    .notNull(),
+  storageLocationId: integer()
+    .references(() => locations.id, {
+      onUpdate: "cascade",
+    })
+    .notNull(),
+  storageLocationSection: text(),
   currentProjectId: integer().references(() => projects.id, {
     onUpdate: "cascade",
   }),
-  createdAt: integer({ mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: integer({ mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+  createdAt: integer({ mode: "timestamp" }).default(sql`(unixepoch())`),
+  updatedAt: integer({ mode: "timestamp" }).default(sql`(unixepoch())`),
 });
+
+export const articlesRelations = relations(articles, ({ one }) => ({
+  storageLocation: one(locations, {
+    fields: [articles.storageLocationId],
+    references: [locations.id],
+  }),
+}));
 
 // ─────────────── article_location_history ───────────────────
 export const articleLocationHistory = sqliteTable("article_location_history", {
@@ -95,7 +119,7 @@ export const articleLocationHistory = sqliteTable("article_location_history", {
   locationId: integer().references(() => locations.id),
   fromTs: integer({ mode: "timestamp" })
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`(unixepoch())`),
   toTs: integer({ mode: "timestamp" }),
 });
 
@@ -118,7 +142,7 @@ export const inspections = sqliteTable("inspections", {
 export const changeLog = sqliteTable("change_log", {
   id: integer().primaryKey({ autoIncrement: true }),
   articleId: text().references(() => articles.id),
-  changeTs: integer({ mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+  changeTs: integer({ mode: "timestamp" }).default(sql`(unixepoch())`),
   user: text(),
   field: text(),
   old: text(),

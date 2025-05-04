@@ -67,10 +67,11 @@ const handleModalLeave = () => {
         }"
       />
       <template #body>
-        <QrCodeScanner></QrCodeScanner>
+        <qrCodeScanner></qrCodeScanner>
       </template>
       <template #footer>
         <USelect
+          v-if="ScannedQrCodes.length > 0"
           class="w-full"
           v-model="selectedQrCodes"
           multiple

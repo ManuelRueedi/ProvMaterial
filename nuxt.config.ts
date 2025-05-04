@@ -37,6 +37,7 @@ export default defineNuxtConfig({
     kv: true,
     blob: true,
     cache: true,
+    remote: true,
   },
   nitro: {
     experimental: {

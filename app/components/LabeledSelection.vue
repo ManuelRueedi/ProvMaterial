@@ -15,27 +15,36 @@
   </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
+import type { PropType } from "vue";
+import type { SelectItem, ArrayOrNested } from "@nuxt/ui"; // ← official types:contentReference[oaicite:0]{index=0}
+
 const props = defineProps({
-  /** The list of options for the select */
+  /** Leading icon on the badge */
   icon: {
     type: String,
-    default: "i-lucide-rocket", // fallback if parent omits it
+    default: "i‑lucide‑rocket",
   },
+
+  /** Options for the select */
   items: {
-    type: Array,
+    /*  strings | numbers | booleans | SelectItem objects,
+        or nested arrays of those                         */
+    type: Array as PropType<ArrayOrNested<SelectItem>>,
     required: true,
   },
-  /** Bound value for the select */
+
+  /** v‑model value */
   modelValue: {
-    type: [String, Number, null],
+    type: [String, Number, null] as PropType<string | number | null>,
     default: null,
   },
 });
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits<{
+  "update:modelValue": [string | number | null];
+}>();
 
-// proxy prop → emit
 const innerValue = computed({
   get: () => props.modelValue,
   set: (v) => emit("update:modelValue", v),

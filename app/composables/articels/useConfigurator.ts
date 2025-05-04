@@ -4,8 +4,8 @@ import {
   ampacityByType,
   connectorByType,
   connectorByAmpacity,
-  socketsAllowed,
   socketsByType,
+  tagsByType,
 } from "./rules";
 import type { Config, Connector } from "./types";
 
@@ -14,8 +14,19 @@ export function useConfigurator() {
     type: "Kabel",
     ampacity: null,
     connector: null,
-    sockets: null,
+    sockets: {},
+    length: 0,
+    tags: [],
   });
+
+  /* ── reset length when TYPE changes ───────────────────── */
+  watch(
+    () => config.type,
+    () => {
+      config.length = 0;
+      config.tags = [];
+    },
+  );
 
   /* ────── option lists ────── */
   const ampacityOptions = computed(() => ampacityByType[config.type]);
@@ -29,7 +40,13 @@ export function useConfigurator() {
     return byType.filter((c) => (byAmpacity ? byAmpacity.includes(c) : true));
   });
   const socketsOptions = computed(() => socketsByType[config.type] ?? []);
-  const socketsEnabled = computed(() => socketsAllowed[config.type] ?? false);
+  const socketsEnabled = computed(
+    () => (socketsByType[config.type]?.length ?? 0) > 0,
+  );
+  const tagsOptions = computed(() => tagsByType[config.type] ?? []);
+  const tagsEnabled = computed(
+    () => (tagsByType[config.type]?.length ?? 0) > 0,
+  );
 
   /* ────── keep everything valid + pre-select first entry ────── */
   watchEffect(() => {
@@ -43,10 +60,8 @@ export function useConfigurator() {
 
     /* Sockets */
     if (!socketsEnabled.value) {
-      config.sockets = null; // deaktivieren
+      config.sockets = {};
     } else {
-      if (config.sockets == null) config.sockets = {}; // anlegen
-      // nur zulässige Buchsen behalten
       if (config.sockets && typeof config.sockets === "object") {
         for (const k of Object.keys(config.sockets) as Connector[]) {
           if (!socketsOptions.value.includes(k)) {
@@ -63,5 +78,7 @@ export function useConfigurator() {
     connectorOptions,
     socketsEnabled,
     socketsOptions,
+    tagsOptions,
+    tagsEnabled,
   };
 }

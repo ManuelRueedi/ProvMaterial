@@ -1,36 +1,76 @@
 <template>
-  <h1 class="justify-self-center">Auslagern</h1>
-
   <div
     class="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-center gap-7 pt-5"
   >
     <!-- Typ -->
-    <LabeledSelection
+    <labeledSelection
       icon="ic:baseline-view-in-ar"
-      :items="typeOptions"
+      :items="TypeEnum.options"
       v-model="config.type"
     >
       Typ
-    </LabeledSelection>
+    </labeledSelection>
 
     <!-- Strombelastbarkeit -->
-    <LabeledSelection
+    <labeledSelection
       icon="ic:baseline-electric-bolt"
       :items="ampacityOptions"
       v-model="config.ampacity"
     >
       Nennstrom
-    </LabeledSelection>
+    </labeledSelection>
 
     <!-- Anschluss -->
-    <LabeledSelection
+    <labeledSelection
       v-if="connectorOptions.length"
       icon="ic:baseline-power"
       :items="connectorOptions"
       v-model="config.connector"
     >
       Anschluss
-    </LabeledSelection>
+    </labeledSelection>
+    <!-- Länge -->
+    <div
+      class="flex w-full max-w-xl flex-col gap-2 px-10 [@media(min-width:400px)]:flex-row"
+    >
+      <UBadge
+        class="min-w-30 flex-1/3 justify-center"
+        icon="ic:baseline-settings-ethernet"
+        size="md"
+        color="neutral"
+        variant="solid"
+      >
+        Länge
+      </UBadge>
+      <UInputNumber
+        class="flex-2/3"
+        :step="5"
+        :min="0"
+        :max="250"
+        v-model="config.length"
+      ></UInputNumber>
+    </div>
+    <!-- Tags -->
+    <div
+      v-if="tagsEnabled"
+      class="flex w-full max-w-xl flex-col gap-2 px-10 [@media(min-width:400px)]:flex-row"
+    >
+      <UBadge
+        class="min-w-30 flex-1/3 justify-center"
+        icon="ic:baseline-tag"
+        size="md"
+        color="neutral"
+        variant="solid"
+      >
+        Tags
+      </UBadge>
+      <USelect
+        class="flex-2/3"
+        v-model="config.tags"
+        multiple
+        :items="tagsOptions"
+      />
+    </div>
     <!-- Abgänge -->
     <div
       v-if="socketsEnabled"
@@ -54,7 +94,7 @@
           v-model="selectedSocket"
         />
       </div>
-      <div class="flex w-full gap-2">
+      <div class="mb-5 flex w-full gap-2">
         <UButton
           @click="setSelectedSocket"
           class="min-w-30 flex-1/3 justify-center"
@@ -67,7 +107,6 @@
       </div>
     </div>
   </div>
-  <USeparator class="h-2 w-full p-3" color="neutral" type="solid" />
   <div
     v-for="(value, key) in config.sockets"
     class="flex w-full max-w-xl gap-2 justify-self-center px-10 pb-2"
@@ -82,21 +121,161 @@
       {{ value }} X {{ key }}
     </UBadge>
   </div>
-  <!-- <p>{{ config }}</p> -->
+  <USeparator class="h-2 w-full p-3" color="neutral" type="solid" />
+  <UButton
+    :color="error ? 'error' : 'primary'"
+    :loading="isLoading"
+    class="mx-auto mt-5 flex w-full max-w-xl justify-center justify-self-center"
+    @click="findArticles(config)"
+    >Suchen</UButton
+  >
+  <p v-if="error">{{ error }}</p>
+  <UTable
+    v-if="tableItems.length"
+    @select="onSelect"
+    :loading="isLoading"
+    :columns="columnsWithType"
+    :data="tableItems"
+    v-model:row-selection="rowSelection"
+  ></UTable>
+  <UTable
+    v-for="bundle in tableBundles"
+    :loading="isLoading"
+    :columns="columnsWithLength"
+    :data="bundle"
+  ></UTable>
 </template>
 
 <script lang="ts" setup>
 import { useConfigurator } from "@/composables/articels/useConfigurator";
-import { ref } from "vue";
+import { TypeEnum } from "@/composables/articels/types";
+import type { TableColumn, TableRow } from "@nuxt/ui";
+import type { Type, Config, Connector } from "@/composables/articels/types";
+import type {
+  HandlerResult,
+  ArticleWithOutputs,
+  ArticleBundle,
+} from "~~/server/api/articels/search.post"; // adjust import
 
-const typeOptions = ref([
-  "Kabel",
-  "Verlängerung",
-  "Verteiler",
-  "Box",
-  "Kabelrolle",
-  "Steckerleiste",
-]);
+const rowSelection = ref<Record<string, boolean>>({});
+
+function onSelect(row: TableRow<foundArticelWithType>, e?: Event) {
+  /* If you decide to also select the column you can do this  */
+  row.toggleSelected(!row.getIsSelected());
+
+  console.log(rowSelection);
+}
+
+type foundArticelWithType = {
+  Nummer: string;
+  Typ: ArticleWithOutputs["type"];
+  Ort: string;
+  Platz: ArticleWithOutputs["storageLocationSection"];
+};
+type foundArticelWithLength = {
+  Nummer: string;
+  Länge: ArticleWithOutputs["lengthInMeter"];
+  Ort: string;
+  Platz: ArticleWithOutputs["storageLocationSection"];
+};
+
+const columnsWithType: TableColumn<foundArticelWithType>[] = [
+  {
+    accessorKey: "Nummer",
+    header: "Nummer",
+  },
+  {
+    accessorKey: "Typ",
+    header: "Typ",
+  },
+  {
+    accessorKey: "Ort",
+    header: "Ort",
+  },
+  {
+    accessorKey: "Platz",
+    header: "Platz",
+  },
+];
+
+const columnsWithLength: TableColumn<foundArticelWithLength>[] = [
+  {
+    accessorKey: "Nummer",
+    header: "Nummer",
+  },
+  {
+    accessorKey: "Länge",
+    header: "Länge",
+  },
+  {
+    accessorKey: "Ort",
+    header: "Ort",
+  },
+  {
+    accessorKey: "Platz",
+    header: "Platz",
+  },
+];
+
+// normalize to an array of ArticleWithOutputs
+const itemsArray = computed<ArticleWithOutputs[]>(() => {
+  if (!articlesResult.value) return [];
+  return Array.isArray(articlesResult.value)
+    ? articlesResult.value
+    : articlesResult.value.items;
+});
+
+// map to the first table’s shape
+const tableItems = computed<foundArticelWithType[]>(() =>
+  itemsArray.value.map((item) => ({
+    Nummer: item.id,
+    Typ: item.type,
+    Ort: (item.storageLocation as any).name,
+    Platz: item.storageLocationSection,
+  })),
+);
+
+// map the bundles (if any)
+const tableBundles = computed<foundArticelWithLength[][]>(() => {
+  if (
+    !articlesResult.value ||
+    Array.isArray(articlesResult.value) ||
+    !("bundles" in articlesResult.value)
+  )
+    return [];
+
+  return articlesResult.value.bundles.map((bundle) =>
+    bundle.map((item) => ({
+      Nummer: item.id,
+      Länge: item.lengthInMeter,
+      Ort: (item.storageLocation as any).name,
+      Platz: item.storageLocationSection,
+    })),
+  );
+});
+
+const articlesResult = ref<HandlerResult | null>(null);
+const isLoading = ref(false);
+const error = ref<string | null>(null);
+
+async function findArticles(config: Config) {
+  isLoading.value = true;
+  error.value = null;
+
+  try {
+    const data = await $fetch<HandlerResult>("/api/articels/search", {
+      method: "POST",
+      body: config,
+      headers: { "Content-Type": "application/json" },
+    });
+
+    articlesResult.value = data;
+  } catch (err: any) {
+    error.value = err.message || "Unknown error";
+  } finally {
+    isLoading.value = false;
+  }
+}
 
 const {
   config,
@@ -104,9 +283,11 @@ const {
   connectorOptions,
   socketsEnabled,
   socketsOptions,
+  tagsOptions,
+  tagsEnabled,
 } = useConfigurator();
 
-const selectedSocket = ref("CEE16");
+const selectedSocket = ref<Connector>("CEE16");
 const selectedSocketNumber = ref(1);
 
 const setSelectedSocket = () => {
@@ -117,7 +298,6 @@ const setSelectedSocket = () => {
     };
   }
 };
-import type { Config } from "@/composables/articels/types";
 
 const removeSocketFromSelection = (
   key: keyof NonNullable<Config["sockets"]>,
