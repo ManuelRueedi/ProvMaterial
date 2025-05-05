@@ -150,58 +150,69 @@ export default defineEventHandler(async (event) => {
     storageLocation: { id: number };
   };
 
-  const target = body.length; // requested total (metres, EU units)
-  const combosNeed = 3 - items.length; // 0…3 according to your rule
-  const combos: RowLite[][] = [];
+  const target = body.length; // requested total (in metres)
+  const combosNeed = 3 - items.length; // 0…3
+  let poolRest: RowLite[] = [...pool]; // copy so we can mark used
 
-  let poolRest: RowLite[] = [...pool]; // we’ll remove items as we use them
+  // 1) Generate all candidate combos (2- and 3-item) within each location
+  type Candidate = { combo: RowLite[]; diff: number };
+  const candidates: Candidate[] = [];
 
-  /* group by storage location so every bundle lies in one place */
   for (const locId of new Set(poolRest.map((r) => r.storageLocation.id))) {
-    if (combos.length >= combosNeed) break;
-
     const group = poolRest
       .filter((r) => r.storageLocation.id === locId)
-      .sort((a, b) => b.lengthInMeter - a.lengthInMeter); // long → short
+      .sort((a, b) => b.lengthInMeter - a.lengthInMeter);
 
-    /* ---------- 2‑item bundles ---------- */
+    // 2-item
     for (let i = 0; i < group.length; i++) {
       for (let j = i + 1; j < group.length; j++) {
-        if (combos.length >= combosNeed) break;
-        const tot = group[i].lengthInMeter + group[j].lengthInMeter;
-        if (tot >= target) {
-          combos.push([group[i], group[j]]);
-          poolRest = poolRest.filter(
-            (r) => r.id !== group[i].id && r.id !== group[j].id,
-          );
+        const sum = group[i].lengthInMeter + group[j].lengthInMeter;
+        if (sum >= target) {
+          candidates.push({
+            combo: [group[i], group[j]],
+            diff: sum - target,
+          });
         }
       }
     }
 
-    /* ---------- 3‑item bundles (only if still needed) ---------- */
+    // 3-item
     for (let i = 0; i < group.length; i++) {
       for (let j = i + 1; j < group.length; j++) {
         for (let k = j + 1; k < group.length; k++) {
-          if (combos.length >= combosNeed) break;
-          const tot =
+          const sum =
             group[i].lengthInMeter +
             group[j].lengthInMeter +
             group[k].lengthInMeter;
-          if (tot >= target) {
-            combos.push([group[i], group[j], group[k]]);
-            poolRest = poolRest.filter(
-              (r) => ![group[i].id, group[j].id, group[k].id].includes(r.id),
-            );
+          if (sum >= target) {
+            candidates.push({
+              combo: [group[i], group[j], group[k]],
+              diff: sum - target,
+            });
           }
         }
       }
     }
   }
 
-  /* ---------- fetch full rows for every id used in bundles ---------- */
+  // 2) Sort by smallest over-run
+  candidates.sort((a, b) => a.diff - b.diff);
+
+  // 3) Pick up to combosNeed non-overlapping combos
+  const combos: RowLite[][] = [];
+  const used = new Set<string>();
+
+  for (const { combo } of candidates) {
+    if (combos.length >= combosNeed) break;
+    const ids = combo.map((r) => r.id);
+    if (ids.some((id) => used.has(id))) continue;
+    combos.push(combo);
+    ids.forEach((id) => used.add(id));
+  }
+
+  // 4) Fetch full rows if we got any bundles
   if (combos.length) {
     const comboIds = [...new Set(combos.flat().map((r) => r.id))];
-
     const comboRows = await drizzle.query.articles.findMany({
       columns: {
         id: true,
@@ -214,15 +225,12 @@ export default defineEventHandler(async (event) => {
       with: { storageLocation: { columns: { id: false } } },
       where: inArray(articles.id, comboIds),
     });
-
-    /* map back to the original nested structure */
     const byId = new Map(comboRows.map((r) => [r.id, r]));
     const bundles = combos.map((arr) => arr.map((r) => byId.get(r.id)!));
-
-    return { items, bundles }; // <- success response
+    return { items, bundles };
   }
 
-  /* ---------- still nothing? ---------- */
+  // 5) No bundles found?
   if (!items.length) {
     throw createError({ statusCode: 404, statusMessage: "No matching items" });
   }

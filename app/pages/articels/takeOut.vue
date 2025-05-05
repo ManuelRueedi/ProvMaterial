@@ -125,25 +125,28 @@
   <UButton
     :color="error ? 'error' : 'primary'"
     :loading="isLoading"
-    class="mx-auto mt-5 flex w-full max-w-xl justify-center justify-self-center"
+    class="mx-auto my-5 flex w-full max-w-xl justify-center justify-self-center"
     @click="findArticles(config)"
     >Suchen</UButton
   >
-  <p v-if="error">{{ error }}</p>
   <UTable
     v-if="tableItems.length"
     @select="onSelect"
     :loading="isLoading"
-    :columns="columnsWithType"
+    :columns="tableColumns"
     :data="tableItems"
     v-model:row-selection="rowSelection"
   ></UTable>
-  <UTable
-    v-for="bundle in tableBundles"
-    :loading="isLoading"
-    :columns="columnsWithLength"
-    :data="bundle"
-  ></UTable>
+  <div v-for="bundle in tableBundles" class="flex flex-col">
+    <UTable
+      :loading="isLoading"
+      :columns="tableColumns"
+      :data="bundle"
+    ></UTable>
+    <UButton class="justify-center justify-self-center"
+      >Alle Hinzufügen</UButton
+    >
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -157,48 +160,25 @@ import type {
   ArticleBundle,
 } from "~~/server/api/articels/search.post"; // adjust import
 
+const toast = useToast();
+
 const rowSelection = ref<Record<string, boolean>>({});
 
-function onSelect(row: TableRow<foundArticelWithType>, e?: Event) {
+function onSelect(row: TableRow<foundArticel>, e?: Event) {
   /* If you decide to also select the column you can do this  */
   row.toggleSelected(!row.getIsSelected());
 
   console.log(rowSelection);
 }
 
-type foundArticelWithType = {
+type foundArticel = {
   Nummer: string;
-  Typ: ArticleWithOutputs["type"];
-  Ort: string;
-  Platz: ArticleWithOutputs["storageLocationSection"];
-};
-type foundArticelWithLength = {
-  Nummer: string;
-  Länge: ArticleWithOutputs["lengthInMeter"];
+  Länge: string;
   Ort: string;
   Platz: ArticleWithOutputs["storageLocationSection"];
 };
 
-const columnsWithType: TableColumn<foundArticelWithType>[] = [
-  {
-    accessorKey: "Nummer",
-    header: "Nummer",
-  },
-  {
-    accessorKey: "Typ",
-    header: "Typ",
-  },
-  {
-    accessorKey: "Ort",
-    header: "Ort",
-  },
-  {
-    accessorKey: "Platz",
-    header: "Platz",
-  },
-];
-
-const columnsWithLength: TableColumn<foundArticelWithLength>[] = [
+const tableColumns: TableColumn<foundArticel>[] = [
   {
     accessorKey: "Nummer",
     header: "Nummer",
@@ -226,17 +206,17 @@ const itemsArray = computed<ArticleWithOutputs[]>(() => {
 });
 
 // map to the first table’s shape
-const tableItems = computed<foundArticelWithType[]>(() =>
+const tableItems = computed<foundArticel[]>(() =>
   itemsArray.value.map((item) => ({
     Nummer: item.id,
-    Typ: item.type,
+    Länge: item.lengthInMeter + " m",
     Ort: (item.storageLocation as any).name,
     Platz: item.storageLocationSection,
   })),
 );
 
 // map the bundles (if any)
-const tableBundles = computed<foundArticelWithLength[][]>(() => {
+const tableBundles = computed<foundArticel[][]>(() => {
   if (
     !articlesResult.value ||
     Array.isArray(articlesResult.value) ||
@@ -247,7 +227,7 @@ const tableBundles = computed<foundArticelWithLength[][]>(() => {
   return articlesResult.value.bundles.map((bundle) =>
     bundle.map((item) => ({
       Nummer: item.id,
-      Länge: item.lengthInMeter,
+      Länge: item.lengthInMeter + " m",
       Ort: (item.storageLocation as any).name,
       Platz: item.storageLocationSection,
     })),
@@ -271,6 +251,12 @@ async function findArticles(config: Config) {
 
     articlesResult.value = data;
   } catch (err: any) {
+    toast.add({
+      title: "Error!",
+      description: err.message,
+      icon: "ic:baseline-close",
+      color: "error",
+    });
     error.value = err.message || "Unknown error";
   } finally {
     isLoading.value = false;

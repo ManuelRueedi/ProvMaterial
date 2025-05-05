@@ -4,14 +4,12 @@ import { usePasskey } from "@/composables/usePasskey";
 const {
   loggedIn,
   user,
-  logout,
   signUp,
   signIn,
   deleteKey,
   loginWithMicrosoft,
+  logout,
 } = usePasskey();
-
-const { openInPopup } = useUserSession();
 
 const colorMode = useColorMode();
 const isDark = computed({
@@ -90,7 +88,7 @@ const isDark = computed({
       <div class="flex flex-col items-center gap-4">
         <UButton
           class="w-full sm:w-auto"
-          @click="openInPopup('/auth/microsoft')"
+          @click="loginWithMicrosoft()"
           label="Login mit Microsoft"
         />
         <UButton

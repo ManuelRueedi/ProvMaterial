@@ -112,11 +112,22 @@ export const articlesRelations = relations(articles, ({ one }) => ({
   }),
 }));
 
-// ─────────────── article_location_history ───────────────────
+// ─────────────── article_history ───────────────────
 export const articleLocationHistory = sqliteTable("article_location_history", {
   id: integer().primaryKey({ autoIncrement: true }),
-  articleId: text().references(() => articles.id),
-  locationId: integer().references(() => locations.id),
+  articleId: text()
+    .references(() => articles.id)
+    .notNull(),
+  locationName: text().notNull(),
+  locationaddress: text(),
+  locationLatitude: real(),
+  locationLongitude: real(),
+  locationID: integer().references(() => locations.id, {
+    onDelete: "set null",
+  }),
+  projectName: text().notNull(),
+  projectDescription: text(),
+  projectId: integer().references(() => projects.id, { onDelete: "set null" }),
   fromTs: integer({ mode: "timestamp" })
     .notNull()
     .default(sql`(unixepoch())`),

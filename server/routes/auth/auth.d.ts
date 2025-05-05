@@ -9,8 +9,13 @@ declare module "#auth-utils" {
     loggedInAt: number;
   }
 
-  interface UserRights {
-    rights: string[];
+  interface UserSession {
+    rights: {
+      useArticles: boolean;
+      editArticles: boolean;
+      addArticles: boolean;
+      removeArticles: boolean;
+    };
   }
 
   interface SecureSessionData {
