@@ -8,8 +8,8 @@ export default defineWebAuthnRegisterEventHandler({
     const challenge = await hubKV().get<string>(`auth:challenge:${attemptId}`);
     if (!challenge) {
       throw createError({
-        statusCode: 400,
-        message: "Challenge not found or expired",
+        statusCode: 405,
+        message: "WebAuthn challenge not found or has expired.",
       });
     }
     await hubKV().del(`auth:challenge:${attemptId}`);
@@ -21,11 +21,12 @@ export default defineWebAuthnRegisterEventHandler({
 
     if (session.user.mail !== userBody.userName) {
       throw createError({
-        statusCode: 401,
-        message: "User not authenticated or email mismatch",
+        statusCode: 403,
+        message:
+          "Authenticated user email does not match the provided username.",
       });
     }
-    // check if the loged in user.id has a row in webauthnCredentials witch matches the user id
+    // check if the logged in user.id has a row in webauthnCredentials which matches the user id
     const response = await useDrizzle().query.webauthnCredentials.findFirst({
       where: eq(tables.webauthnCredentials.userId, Number(session.user.userId)),
     });
@@ -36,8 +37,8 @@ export default defineWebAuthnRegisterEventHandler({
         },
       });
       throw createError({
-        statusCode: 400,
-        message: "User already has a webauthn credential",
+        statusCode: 409,
+        message: "User already registered a WebAuthn credential.",
       });
     }
   },

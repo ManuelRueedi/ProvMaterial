@@ -106,7 +106,7 @@ export default defineEventHandler(async (event) => {
         statusMessage: "No matching items",
       });
     }
-    return { items };
+    return { items } as HandlerResult;
   }
 
   /* ---------- length > 0 : singles then bundles ---------- */
@@ -130,7 +130,7 @@ export default defineEventHandler(async (event) => {
     limit: 3,
   });
 
-  if (items.length >= 3) return items;
+  if (items.length >= 3) return { items } as HandlerResult;
 
   const pool = await drizzle.query.articles.findMany({
     columns: {
@@ -142,7 +142,7 @@ export default defineEventHandler(async (event) => {
     orderBy: desc(articles.lengthInMeter),
   });
 
-  /* ---------- build “bundle” suggestions (2‑ or 3‑part) ---------- */
+  /* ---------- build “bundle” suggestions (2- or 3-part) ---------- */
 
   type RowLite = {
     id: string;
@@ -150,11 +150,10 @@ export default defineEventHandler(async (event) => {
     storageLocation: { id: number };
   };
 
-  const target = body.length; // requested total (in metres)
-  const combosNeed = 3 - items.length; // 0…3
-  let poolRest: RowLite[] = [...pool]; // copy so we can mark used
+  const target = body.length; // requested total (metres)
+  const combosNeed = 3 - items.length; // 0…3 singles still missing
+  const poolRest: RowLite[] = [...pool]; // copy so we can mark used
 
-  // 1) Generate all candidate combos (2- and 3-item) within each location
   type Candidate = { combo: RowLite[]; diff: number };
   const candidates: Candidate[] = [];
 
@@ -163,31 +162,30 @@ export default defineEventHandler(async (event) => {
       .filter((r) => r.storageLocation.id === locId)
       .sort((a, b) => b.lengthInMeter - a.lengthInMeter);
 
-    // 2-item
     for (let i = 0; i < group.length; i++) {
-      for (let j = i + 1; j < group.length; j++) {
-        const sum = group[i].lengthInMeter + group[j].lengthInMeter;
-        if (sum >= target) {
-          candidates.push({
-            combo: [group[i], group[j]],
-            diff: sum - target,
-          });
-        }
-      }
-    }
+      const first = group[i];
+      if (!first) continue;
 
-    // 3-item
-    for (let i = 0; i < group.length; i++) {
       for (let j = i + 1; j < group.length; j++) {
+        const second = group[j];
+        if (!second) continue;
+
+        /* -------- 2-item combo -------- */
+        const twoSum = first.lengthInMeter + second.lengthInMeter;
+        if (twoSum >= target) {
+          candidates.push({ combo: [first, second], diff: twoSum - target });
+        }
+
+        /* -------- 3-item combo -------- */
         for (let k = j + 1; k < group.length; k++) {
-          const sum =
-            group[i].lengthInMeter +
-            group[j].lengthInMeter +
-            group[k].lengthInMeter;
-          if (sum >= target) {
+          const third = group[k];
+          if (!third) continue; // ✔
+
+          const threeSum = twoSum + third.lengthInMeter;
+          if (threeSum >= target) {
             candidates.push({
-              combo: [group[i], group[j], group[k]],
-              diff: sum - target,
+              combo: [first, second, third],
+              diff: threeSum - target,
             });
           }
         }
@@ -227,7 +225,7 @@ export default defineEventHandler(async (event) => {
     });
     const byId = new Map(comboRows.map((r) => [r.id, r]));
     const bundles = combos.map((arr) => arr.map((r) => byId.get(r.id)!));
-    return { items, bundles };
+    return { items, bundles } as HandlerResult;
   }
 
   // 5) No bundles found?
@@ -236,11 +234,11 @@ export default defineEventHandler(async (event) => {
   }
 });
 
-export interface ArticleWithOutputs {
+export interface Article {
   id: string;
   type: Type;
   connector: Connector;
-  outputs: Record<string, unknown>;
+  outputs: Record<Connector, number>;
   lengthInMeter: number;
   storageLocationSection: string;
   tags: Tags[];
@@ -253,14 +251,8 @@ export interface ArticleWithOutputs {
   };
 }
 
-// 2️ The “bundle” shape (no `outputs`) returned inside `bundles`
-export type ArticleBundle = Omit<ArticleWithOutputs, "outputs">;
-
-// 3️ The three possible return shapes
 export type HandlerResult =
-  | { items: ArticleWithOutputs[] } // when body.length===0
-  | ArticleWithOutputs[] // when length>0 and items.length ≥ 3
-  | { items: ArticleWithOutputs[]; bundles: ArticleBundle[][] }; // when length>0 & items<3 but combos found
+  | { items: Article[] }
+  | { items: Article[]; bundles: Article[][] };
 
-// 4️ Since it’s an async handler:
 export type HandlerReturn = Promise<HandlerResult>;

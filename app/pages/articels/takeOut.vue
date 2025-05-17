@@ -121,120 +121,215 @@
       {{ value }} X {{ key }}
     </UBadge>
   </div>
-  <USeparator class="h-2 w-full p-3" color="neutral" type="solid" />
+  <USeparator class="h-2 w-full max-w-xl p-3" color="neutral" type="solid" />
   <UButton
-    :color="error ? 'error' : 'primary'"
+    :color="error ? 'warning' : 'primary'"
     :loading="isLoading"
     class="mx-auto my-5 flex w-full max-w-xl justify-center justify-self-center"
     @click="findArticles(config)"
     >Suchen</UButton
   >
-  <UTable
-    v-if="tableItems.length"
-    @select="onSelect"
-    :loading="isLoading"
-    :columns="tableColumns"
-    :data="tableItems"
-    v-model:row-selection="rowSelection"
-  ></UTable>
-  <div v-for="bundle in tableBundles" class="flex flex-col">
+  <div
+    class="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-center gap-7 pt-5"
+  >
     <UTable
+      class="flex w-full max-w-xl px-5"
+      v-if="tableItems.length"
+      @select="openDetails"
+      :loading="isLoading"
+      :columns="tableColumns"
+      :data="tableItems"
+    ></UTable>
+    <UTable
+      class="flex w-full max-w-xl px-5"
+      v-for="bundle in tableBundles"
+      @select="openDetails"
       :loading="isLoading"
       :columns="tableColumns"
       :data="bundle"
     ></UTable>
-    <UButton class="justify-center justify-self-center"
-      >Alle Hinzufügen</UButton
-    >
   </div>
+  <USlideover
+    :side="isDesktop ? 'right' : 'bottom'"
+    v-model:open="showDetails"
+    class="flex flex-col items-center px-6 text-center"
+  >
+    <template #title>Artikel Info</template>
+    <template #description
+      >Mehr informationen über den ausgewählten artikel.</template
+    >
+    <template #content>
+      <h1 class="mt-8 text-4xl">
+        {{ selectedArticle?.number }}
+      </h1>
+      <h2 class="mb-8 text-2xl">
+        {{ selectedArticle?.type }}
+      </h2>
+      <div class="space-y-6">
+        <div
+          v-if="selectedArticle?.length !== '0 m'"
+          class="flex flex-col items-center"
+        >
+          <h1 class="mb-2 text-xl">Länge</h1>
+          <UBadge class="text-lg" color="neutral">{{
+            selectedArticle?.length
+          }}</UBadge>
+        </div>
+
+        <div
+          v-if="selectedArticle?.connector !== null"
+          class="flex flex-col items-center"
+        >
+          <h1 class="mb-2 text-xl">Anschluss</h1>
+          <UBadge class="text-lg" color="neutral">{{
+            selectedArticle?.connector
+          }}</UBadge>
+        </div>
+
+        <div
+          v-if="
+            selectedArticle?.outputs &&
+            Object.keys(selectedArticle.outputs).length
+          "
+          class="flex flex-col items-center"
+        >
+          <h1 class="mb-2 text-xl">Abgänge</h1>
+          <div class="flex flex-wrap justify-center gap-2">
+            <UBadge
+              class="text-lg"
+              v-for="(value, key) in selectedArticle.outputs"
+              :key="key"
+              color="neutral"
+            >
+              {{ key }}: {{ value }}
+            </UBadge>
+          </div>
+        </div>
+
+        <div
+          v-if="selectedArticle?.tags.length"
+          class="flex flex-col items-center"
+        >
+          <h1 class="mb-2 text-xl">Tags</h1>
+          <div class="flex flex-wrap justify-center gap-2">
+            <UBadge
+              class="text-lg"
+              v-for="tag in selectedArticle.tags"
+              :key="tag"
+              color="neutral"
+            >
+              {{ tag }}
+            </UBadge>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-center">
+          <h1 class="mb-2 text-lg">Standort</h1>
+          <UBadge color="neutral" class="text-xl">{{
+            selectedArticle?.locationName
+          }}</UBadge>
+        </div>
+
+        <div class="flex flex-col items-center">
+          <h1 class="mb-2 text-xl">Platz Nr.</h1>
+          <UBadge class="text-lg" color="neutral">{{
+            selectedArticle?.storageLocationId
+          }}</UBadge>
+        </div>
+      </div>
+      <div class="mt-6 mb-4 flex w-full justify-center gap-4">
+        <UButton class="text-lg">Hinzufügen</UButton>
+        <UButton class="text-lg">Austragen</UButton>
+      </div>
+    </template>
+  </USlideover>
 </template>
 
 <script lang="ts" setup>
 import { useConfigurator } from "@/composables/articels/useConfigurator";
 import { TypeEnum } from "@/composables/articels/types";
 import type { TableColumn, TableRow } from "@nuxt/ui";
-import type { Type, Config, Connector } from "@/composables/articels/types";
+import type {
+  Type,
+  Config,
+  Connector,
+  Tags,
+} from "@/composables/articels/types";
 import type {
   HandlerResult,
-  ArticleWithOutputs,
-  ArticleBundle,
-} from "~~/server/api/articels/search.post"; // adjust import
+  Article,
+} from "~~/server/api/articels/search.post";
+import { errorMap } from "@/composables/useFriendlyError";
+const { isDesktop } = useDevice();
 
 const toast = useToast();
 
-const rowSelection = ref<Record<string, boolean>>({});
-
-function onSelect(row: TableRow<foundArticel>, e?: Event) {
-  /* If you decide to also select the column you can do this  */
-  row.toggleSelected(!row.getIsSelected());
-
-  console.log(rowSelection);
-}
-
-type foundArticel = {
-  Nummer: string;
-  Länge: string;
-  Ort: string;
-  Platz: ArticleWithOutputs["storageLocationSection"];
-};
-
-const tableColumns: TableColumn<foundArticel>[] = [
+const tableColumns: TableColumn<TableItem>[] = [
   {
-    accessorKey: "Nummer",
+    accessorKey: "number",
     header: "Nummer",
   },
   {
-    accessorKey: "Länge",
+    accessorKey: "length",
     header: "Länge",
   },
   {
-    accessorKey: "Ort",
+    accessorKey: "locationName",
     header: "Ort",
   },
   {
-    accessorKey: "Platz",
+    accessorKey: "storageLocationId",
     header: "Platz",
   },
 ];
 
-// normalize to an array of ArticleWithOutputs
-const itemsArray = computed<ArticleWithOutputs[]>(() => {
-  if (!articlesResult.value) return [];
-  return Array.isArray(articlesResult.value)
-    ? articlesResult.value
-    : articlesResult.value.items;
+const showDetails = ref(false);
+const selectedArticle = ref<TableItem | null>(null);
+
+function openDetails(row: TableRow<TableItem>, e?: Event) {
+  selectedArticle.value = row.original;
+  showDetails.value = true;
+}
+
+interface TableItem {
+  number: string;
+  length: string; // “12.5 m”
+  locationName: string; // warehouse name
+  storageLocationId: string; // section code
+  type: Type;
+  connector: Connector;
+  outputs: Record<Connector, number>;
+  tags: Tags[];
+}
+
+const articleToTableItem = (a: Article): TableItem => ({
+  number: a.id,
+  length: `${a.lengthInMeter} m`,
+  locationName: a.storageLocation.name,
+  storageLocationId: a.storageLocationSection,
+  type: a.type,
+  connector: a.connector,
+  outputs: a.outputs,
+  tags: a.tags,
 });
 
-// map to the first table’s shape
-const tableItems = computed<foundArticel[]>(() =>
-  itemsArray.value.map((item) => ({
-    Nummer: item.id,
-    Länge: item.lengthInMeter + " m",
-    Ort: (item.storageLocation as any).name,
-    Platz: item.storageLocationSection,
-  })),
-);
+/** ───────────────────────────────────────────────────────────────
+ *  Simple list (always present)                                      */
+const tableItems = computed<TableItem[]>(() => {
+  if (!foundArticls.value) return [];
+  return foundArticls.value.items.map(articleToTableItem);
+});
 
-// map the bundles (if any)
-const tableBundles = computed<foundArticel[][]>(() => {
-  if (
-    !articlesResult.value ||
-    Array.isArray(articlesResult.value) ||
-    !("bundles" in articlesResult.value)
-  )
-    return [];
-
-  return articlesResult.value.bundles.map((bundle) =>
-    bundle.map((item) => ({
-      Nummer: item.id,
-      Länge: item.lengthInMeter + " m",
-      Ort: (item.storageLocation as any).name,
-      Platz: item.storageLocationSection,
-    })),
+/** ───────────────────────────────────────────────────────────────
+ *  Bundles – only if the backend returned them                      */
+const tableBundles = computed<TableItem[][]>(() => {
+  if (!foundArticls.value || !("bundles" in foundArticls.value)) return [];
+  return foundArticls.value.bundles.map((bundle) =>
+    bundle.map(articleToTableItem),
   );
 });
 
-const articlesResult = ref<HandlerResult | null>(null);
+const foundArticls = ref<HandlerResult | null>(null);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
 
@@ -248,16 +343,10 @@ async function findArticles(config: Config) {
       body: config,
       headers: { "Content-Type": "application/json" },
     });
-
-    articlesResult.value = data;
+    foundArticls.value = data;
   } catch (err: any) {
-    toast.add({
-      title: "Error!",
-      description: err.message,
-      icon: "ic:baseline-close",
-      color: "error",
-    });
-    error.value = err.message || "Unknown error";
+    toast.add(errorMap(err));
+    error.value = err;
   } finally {
     isLoading.value = false;
   }

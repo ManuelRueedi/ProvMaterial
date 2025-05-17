@@ -10,7 +10,7 @@ export default defineWebAuthnAuthenticateEventHandler({
     if (!challenge) {
       throw createError({
         statusCode: 400,
-        message: "Challenge not found or expired",
+        statusMessage: "Challenge not found or expired",
       });
     }
     await hubKV().del(`auth:challenge:${attemptId}`);
@@ -39,7 +39,10 @@ export default defineWebAuthnAuthenticateEventHandler({
 
     // If the credential is not found, there is no account to log in to
     if (!credential)
-      throw createError({ statusCode: 401, message: "Credential not found" });
+      throw createError({
+        statusCode: 401,
+        statusMessage: "Credential not found",
+      });
 
     return credential;
   },
@@ -50,7 +53,7 @@ export default defineWebAuthnAuthenticateEventHandler({
     if (!dbUser) {
       throw createError({
         statusCode: 502,
-        message: "User not found in database",
+        statusMessage: "User not found in database",
       });
     }
 
