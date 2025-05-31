@@ -6,7 +6,7 @@ import type {
   Ampacity,
   Connector,
   Tags,
-} from "@/composables/articels/types";
+} from "@/composables/articles/types";
 
 // auth
 // ───────────────────────── users ─────────────────────────
@@ -18,16 +18,12 @@ export const users = sqliteTable("users", {
   lastName: text(),
   jobtitle: text(),
   rights: text({ mode: "json" }).$type<{
-    useArticels: boolean;
-    editArticels: boolean;
-    addArticels: boolean;
-    removeArticels: boolean;
+    useArticles: boolean;
+    editArticles: boolean;
+    addArticles: boolean;
+    removeArticles: boolean;
   }>(),
 });
-
-export const usersRelations = relations(users, ({ many }) => ({
-  credentials: many(webauthnCredentials),
-}));
 
 // ───────────────────────── webauthnCredentials  ─────────────────────────
 export const webauthnCredentials = sqliteTable("webauthnCredentials", {
@@ -46,20 +42,10 @@ export const webauthnCredentials = sqliteTable("webauthnCredentials", {
     .$type<WebAuthnCredential["transports"]>(),
 });
 
-export const webauthnCredentialsRelations = relations(
-  webauthnCredentials,
-  ({ one }) => ({
-    user: one(users, {
-      fields: [webauthnCredentials.userId],
-      references: [users.id],
-    }),
-  }),
-);
-
 // ───────────────────────── projects ─────────────────────────
 export const projects = sqliteTable("projects", {
   id: integer().primaryKey({ autoIncrement: true }),
-  name: text().notNull(),
+  name: text().notNull().unique(),
   description: text(),
 });
 
@@ -73,17 +59,13 @@ export const locations = sqliteTable("locations", {
   isStorageLocation: integer({ mode: "boolean" }).default(false),
 });
 
-export const locationsRelations = relations(locations, ({ one }) => ({
-  article: one(articles),
-}));
-
 // ───────────────────────── articles ─────────────────────────
 export const articles = sqliteTable("articles", {
   id: text().primaryKey(),
   type: text().notNull().$type<Type>(),
   ampacity: integer().notNull(),
   connector: text().$type<Connector>(),
-  outputs: text({ mode: "json" }).$type<Record<Connector, number>>(),
+  outputs: text({ mode: "json" }).$type<Partial<Record<Connector, number>>>(),
   tags: text({ mode: "json" })
     .notNull()
     .default(sql`'[]'`)
@@ -104,13 +86,6 @@ export const articles = sqliteTable("articles", {
   createdAt: integer({ mode: "timestamp" }).default(sql`(unixepoch())`),
   updatedAt: integer({ mode: "timestamp" }).default(sql`(unixepoch())`),
 });
-
-export const articlesRelations = relations(articles, ({ one }) => ({
-  storageLocation: one(locations, {
-    fields: [articles.storageLocationId],
-    references: [locations.id],
-  }),
-}));
 
 // ─────────────── article_history ───────────────────
 export const articleLocationHistory = sqliteTable("article_location_history", {
@@ -159,3 +134,38 @@ export const changeLog = sqliteTable("change_log", {
   old: text(),
   new: text(),
 });
+
+// Relations
+
+export const usersRelations = relations(users, ({ many }) => ({
+  credentials: many(webauthnCredentials),
+}));
+
+export const webauthnCredentialsRelations = relations(
+  webauthnCredentials,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [webauthnCredentials.userId],
+      references: [users.id],
+    }),
+  }),
+);
+
+export const articlesRelations = relations(articles, ({ one }) => ({
+  storageLocation: one(locations, {
+    fields: [articles.storageLocationId],
+    references: [locations.id],
+  }),
+  project: one(projects, {
+    fields: [articles.currentProjectId],
+    references: [projects.id],
+  }),
+}));
+
+export const projectsRelations = relations(projects, ({ many }) => ({
+  articles: many(articles),
+}));
+
+export const locationsRelations = relations(locations, ({ many }) => ({
+  article: many(articles),
+}));

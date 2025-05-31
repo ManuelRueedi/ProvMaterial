@@ -80,10 +80,10 @@ export default defineWebAuthnAuthenticateEventHandler({
       },
       rights: {
         //check if null and set to false otherwise use dbUser data
-        useArticles: dbUser.rights?.useArticels ?? false,
-        editArticles: dbUser.rights?.editArticels ?? false,
-        addArticles: dbUser.rights?.addArticels ?? false,
-        removeArticles: dbUser.rights?.removeArticels ?? false,
+        useArticles: dbUser.rights?.useArticles ?? false,
+        editArticles: dbUser.rights?.editArticles ?? false,
+        addArticles: dbUser.rights?.addArticles ?? false,
+        removeArticles: dbUser.rights?.removeArticles ?? false,
       },
       secure: {
         webauthnID: credential.id,

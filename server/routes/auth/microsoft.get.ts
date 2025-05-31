@@ -21,10 +21,10 @@ export default defineOAuthMicrosoftEventHandler({
           jobtitle: user.jobTitle,
           rights: {
             //if user.mail ends with @shpower.ch, add rights to use and add Articles
-            useArticels: user.mail.endsWith("@shpower.ch") ? true : false,
-            editArticels: false,
-            addArticels: user.mail.endsWith("@shpower.ch") ? true : false,
-            removeArticels: false,
+            useArticles: user.mail.endsWith("@shpower.ch") ? true : false,
+            editArticles: false,
+            addArticles: user.mail.endsWith("@shpower.ch") ? true : false,
+            removeArticles: false,
           },
         });
     } else {
@@ -70,10 +70,10 @@ export default defineOAuthMicrosoftEventHandler({
         },
         rights: {
           //check if null and set to false otherwise use dbUser data
-          useArticles: dbUser.rights?.useArticels ?? false,
-          editArticles: dbUser.rights?.editArticels ?? false,
-          addArticles: dbUser.rights?.addArticels ?? false,
-          removeArticles: dbUser.rights?.removeArticels ?? false,
+          useArticles: dbUser.rights?.useArticles ?? false,
+          editArticles: dbUser.rights?.editArticles ?? false,
+          addArticles: dbUser.rights?.addArticles ?? false,
+          removeArticles: dbUser.rights?.removeArticles ?? false,
         },
         secure: {
           microsoftID: dbUser.microsoftID,

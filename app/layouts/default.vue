@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from "@nuxt/ui";
+const { isMobile } = useDevice();
 
 const items = ref<NavigationMenuItem[][]>([
   [
     {
-      to: "/articels/takeOut",
+      to: "/articles/takeOut",
       label: "Auslagern",
       icon: "ic:baseline-outbox",
     },
     { to: "/", label: "Übersicht", icon: "ic:baseline-space-dashboard" },
     {
-      to: "/articels/bringBack",
+      to: "/articles/bringBack",
       label: "Einlagern",
       icon: "ic:baseline-move-to-inbox",
     },
@@ -22,13 +23,13 @@ const selectedQrCodes = useState("selectedQrCodes", () => []);
 
 const handleModalLeave = () => {
   if (selectedQrCodes.value.length > 0) {
-    navigateTo("/articels/scannedArticles");
+    //navigateTo("/articles/scannedArticles");
   }
 };
 </script>
 
 <template>
-  <UContainer class="full-width mb-20 h-screen overflow-hidden">
+  <UContainer class="full-width h-screen overflow-x-hidden pt-5 pb-20">
     <slot />
 
     <UNavigationMenu
@@ -49,9 +50,10 @@ const handleModalLeave = () => {
       to="/login"
       color="neutral"
       icon="ic:baseline-manage-accounts"
-      class="fixed top-3 left-3 opacity-90"
+      class="fixed top-3 left-3 z-10 opacity-90"
     />
     <UModal
+      v-if="isMobile"
       @after:leave="handleModalLeave"
       :ui="{ header: 'hidden' }"
       description="scanning.."

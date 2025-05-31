@@ -1,6 +1,6 @@
 import { and, eq, gte, lt, lte, asc, desc, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { ConfigSchema } from "@/composables/articels/types";
+import { ConfigSchema } from "@/composables/articles/types";
 import { articles } from "~~/server/database/schema";
 import type {
   Type,
@@ -8,7 +8,7 @@ import type {
   Connector,
   Tags,
   Config,
-} from "@/composables/articels/types";
+} from "@/composables/articles/types";
 
 export default defineEventHandler(async (event) => {
   requireUserSession(event);

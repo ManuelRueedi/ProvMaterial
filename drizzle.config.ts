@@ -4,4 +4,5 @@ export default defineConfig({
   dialect: "sqlite",
   schema: "./server/database/schema.ts",
   out: "./server/database/migrations",
+  verbose: true,
 });
