@@ -1,4 +1,4 @@
-import type { Type, Ampacity, Connector, Tags } from "./types";
+import type { Type, Ampacity, Connector, Tag } from "./types";
 
 export const ampacityByType: Record<Type, Ampacity[]> = {
   Kabel: ["≤13A", "16A", "32A", "63A", "≥125A"],
@@ -44,7 +44,7 @@ export const socketsByType: Record<Type, Connector[]> = {
   Steckerleiste: ["T13", "T23"],
 };
 
-export const tagsByType: Record<Type, Tags[]> = {
+export const tagsByType: Record<Type, Tag[]> = {
   Kabel: [],
   Verlängerung: [],
   Verteiler: ["Hauptschalter", "Zähler"],

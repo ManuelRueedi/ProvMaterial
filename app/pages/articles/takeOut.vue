@@ -185,156 +185,80 @@
       {{ selectedArticle?.type }}
     </template>
     <template #body>
-      <div
-        v-if="selectedArticle?.length !== '0m'"
-        class="flex flex-col items-center"
-      >
-        <h1 class="mb-2 text-xl">Länge</h1>
-        <UBadge class="text-lg" color="neutral">{{
-          selectedArticle?.length
-        }}</UBadge>
-      </div>
+      <ArticleDetails :article="selectedArticle">
+        <USlideover
+          :close="{
+            color: 'primary',
+            variant: 'solid',
+            size: 'xl',
+          }"
+          :side="isDesktop ? 'right' : 'bottom'"
+          :ui="{
+            title: 'text-center text-3xl font-bold',
+            description: 'text-center text-2xl ',
+            header: 'justify-center py-7',
+            body: 'flex flex-col gap-5',
+          }"
+        >
+          <template #title>
+            <h1>Austragen</h1>
+          </template>
+          <template #description>
+            <h2>
+              {{ selectedArticle?.number }}
+            </h2>
+          </template>
+          <template #body>
+            <div class="flex flex-row justify-center gap-1">
+              <USelectMenu
+                class="w-4/4"
+                size="lg"
+                :items="projects"
+                labelKey="name"
+                :loading="projectsPending"
+                v-model="selectedProject"
+                placeholder="Projekt"
+              >
+              </USelectMenu>
+              <UButton class="ml-2 justify-center p-2" color="neutral">
+                Hinzufügen
+              </UButton>
+            </div>
+            <div v-if="selectedProject">
+              {{ selectedProject.description }}
+            </div>
 
-      <div
-        v-if="selectedArticle?.connector !== null"
-        class="flex flex-col items-center"
-      >
-        <h1 class="mb-2 text-xl">Anschluss</h1>
-        <UBadge class="text-lg" color="neutral">{{
-          selectedArticle?.connector
-        }}</UBadge>
-      </div>
-
-      <div
-        v-if="
-          selectedArticle?.outputs &&
-          Object.keys(selectedArticle.outputs).length
-        "
-        class="flex flex-col items-center"
-      >
-        <h1 class="mb-2 text-xl">Abgänge</h1>
-        <div class="flex flex-wrap justify-center gap-2">
-          <UBadge
-            class="text-lg"
-            v-for="(value, key) in selectedArticle.outputs"
-            :key="key"
-            color="neutral"
-          >
-            {{ value }}x {{ key }}
-          </UBadge>
-        </div>
-      </div>
-
-      <div
-        v-if="selectedArticle?.tags.length"
-        class="flex flex-col items-center"
-      >
-        <h1 class="mb-2 text-xl">Tags</h1>
-        <div class="flex flex-wrap justify-center gap-2">
-          <UBadge
-            class="text-lg"
-            v-for="tag in selectedArticle.tags"
-            :key="tag"
-            color="neutral"
-          >
-            {{ tag }}
-          </UBadge>
-        </div>
-      </div>
-
-      <!-- Lagerort -->
-      <div
-        v-if="selectedArticle?.locationName"
-        class="flex flex-col items-center"
-      >
-        <h3 class="mb-2 text-xl font-medium text-gray-800 dark:text-gray-200">
-          Lagerort
-        </h3>
-        <div class="flex flex-wrap gap-1">
-          <UBadge class="text-lg" color="neutral">
-            {{ selectedArticle.locationName }}
-          </UBadge>
-          <UBadge
-            v-if="selectedArticle.storageLocationId"
-            class="text-lg"
-            color="neutral"
-          >
-            Nr.{{ selectedArticle.storageLocationId }}
-          </UBadge>
-        </div>
-      </div>
-      <USlideover
-        :close="{
-          color: 'primary',
-          variant: 'solid',
-          size: 'xl',
-        }"
-        :side="isDesktop ? 'right' : 'bottom'"
-        :ui="{
-          title: 'text-center text-3xl font-bold',
-          description: 'text-center text-2xl ',
-          header: 'justify-center py-7',
-          body: 'flex flex-col gap-5',
-        }"
-      >
-        <template #title>
-          <h1>Austragen</h1>
-        </template>
-        <template #description>
-          <h2>
-            {{ selectedArticle?.number }}
-          </h2>
-        </template>
-        <template #body>
-          <div class="flex flex-row justify-center gap-1">
-            <USelectMenu
-              class="w-4/4"
-              size="lg"
-              :items="projects"
-              labelKey="name"
-              :loading="projectsPending"
-              v-model="selectedProject"
-              placeholder="Projekt"
-            >
-            </USelectMenu>
-            <UButton class="ml-2 justify-center p-2" color="neutral">
-              Hinzufügen
+            <div class="flex flex-row justify-center gap-1">
+              <USelectMenu
+                class="w-3/4"
+                size="lg"
+                :items="locations"
+                labelKey="name"
+                :loading="locationsPending"
+                v-model="selectedLocation"
+                placeholder="Standort"
+              >
+              </USelectMenu>
+              <UButton class="ml-2 justify-center p-2" color="neutral">
+                Hinzufügen
+              </UButton>
+            </div>
+            <div v-if="selectedLocation">
+              {{ selectedLocation.address }}
+            </div>
+            <UButton
+              size="xl"
+              :disabled="selectedLocation === undefined"
+              @click="TakeOutArticle"
+              class="mt-6 flex w-full justify-center"
+              >Austragen
             </UButton>
-          </div>
-          <div v-if="selectedProject">
-            {{ selectedProject.description }}
-          </div>
-
-          <div class="flex flex-row justify-center gap-1">
-            <USelectMenu
-              class="w-3/4"
-              size="lg"
-              :items="locations"
-              labelKey="name"
-              :loading="locationsPending"
-              v-model="selectedLocation"
-              placeholder="Standort"
-            >
-            </USelectMenu>
-            <UButton class="ml-2 justify-center p-2" color="neutral">
-              Hinzufügen
-            </UButton>
-          </div>
-          <div v-if="selectedLocation">
-            {{ selectedLocation.address }}
-          </div>
-          <UButton
-            size="xl"
-            :disabled="selectedLocation === undefined"
-            @click="TakeOutArticle"
-            class="mt-6 flex w-full justify-center"
+          </template>
+          <UButton size="xl" class="mt-6 mb-4 flex w-full justify-center gap-4"
             >Austragen
           </UButton>
-        </template>
-        <UButton size="xl" class="mt-6 mb-4 flex w-full justify-center gap-4"
-          >Austragen
-        </UButton>
-      </USlideover>
+        </USlideover>
+      </ArticleDetails>
     </template>
   </USlideover>
 </template>
@@ -382,18 +306,21 @@ const { data: locations, pending: locationsPending } = await useFetch<
 const selectedProject = ref();
 const selectedLocation = ref();
 
-function TakeOutArticle() {
-  const data = $fetch("/api/articles/TakeOut", {
-    body: {
-      articleId: selectedArticle.value?.number as string,
-      newLocationId: Number(selectedLocation.value.id),
-      newProjectId:
-        selectedProject.value !== undefined
-          ? selectedProject.value.id
-          : undefined,
+async function TakeOutArticle() {
+  const articleId = selectedArticle.value?.number as string;
+  const data = await $fetch(
+    `/api/articles/${encodeURIComponent(articleId)}/takeOut`,
+    {
+      body: {
+        newLocationId: Number(selectedLocation.value.id),
+        newProjectId:
+          selectedProject.value !== undefined
+            ? selectedProject.value.id
+            : undefined,
+      },
+      method: "PUT",
     },
-    method: "PUT",
-  });
+  );
   console.log(data);
 }
 

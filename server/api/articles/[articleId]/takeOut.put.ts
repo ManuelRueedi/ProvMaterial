@@ -1,12 +1,24 @@
 import { z } from "zod";
 import { eq, and, isNull, sql } from "drizzle-orm";
+import { projects } from "~~/server/database/schema";
+import { getRouterParam } from "h3";
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle();
 
   /* ─────────────── Eingaben prüfen ─────────────── */
+  // Get articleId from route parameter
+  const rawArticleId = getRouterParam(event, "articleId") ?? "";
+  if (!rawArticleId || rawArticleId.trim() === "") {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Missing articleId parameter",
+    });
+  }
+  const articleId = decodeURIComponent(rawArticleId);
+
+  // Validate request body
   const schema = z.object({
-    articleId: z.string().trim(),
     newLocationId: z.number().int().positive(),
     newProjectId: z.number().int().positive().optional(),
   });
@@ -15,7 +27,8 @@ export default defineEventHandler(async (event) => {
     schema.safeParse(body),
   );
   if (!result.success) throw result.error.issues;
-  const { articleId, newLocationId, newProjectId } = result.data;
+  const { newLocationId, newProjectId } = result.data;
+
   /* ─────────────── Artikel prüfen ─────────────── */
   const article = await db.query.articles.findFirst({
     where: eq(tables.articles.id, articleId),
@@ -60,17 +73,16 @@ export default defineEventHandler(async (event) => {
       statusMessage: "Artikel befindet sich bereits ausserhalb des Lagers.",
     });
   /* ─────────────── Transaktion ─────────────── */
+  const project =
+    newProjectId !== undefined
+      ? await db.query.projects.findFirst({
+          where: eq(tables.projects.id, newProjectId),
+        })
+      : null;
   try {
-    await db.transaction(async (tx) => {
-      const project =
-        typeof newProjectId === "number"
-          ? await tx.query.projects.findFirst({
-              where: eq(tables.projects.id, newProjectId),
-            })
-          : null;
-
+    return await db.batch([
       /* Historie anlegen */
-      await tx.insert(tables.articleLocationHistory).values({
+      db.insert(tables.articleLocationHistory).values({
         articleId,
         locationName: location.name,
         locationaddress: location.address ?? "", // ggf. null-able machen
@@ -80,23 +92,22 @@ export default defineEventHandler(async (event) => {
         projectName: project?.name ?? "",
         projectDescription: project?.description ?? "",
         projectId: project?.id ?? null,
-        fromTs: sql`UNIX_TIMESTAMP()`,
-      });
+      }),
 
       /* Artikel aktualisieren */
-      await tx
+      db
         .update(tables.articles)
         .set({
           locationId: location.id,
           currentProjectId: project?.id ?? null,
-          updatedAt: sql`UNIX_TIMESTAMP()`,
+          updatedAt: new Date(),
         })
-        .where(eq(tables.articles.id, articleId));
-    });
-
-    return { id: articleId };
+        .where(eq(tables.articles.id, articleId)),
+    ]);
   } catch (error) {
-    console.error("Transaction failed, full error:", error);
-    return { success: false };
+    throw createError({
+      statusCode: 500,
+      statusMessage: "Transaction failed, full error: " + error,
+    });
   }
 });

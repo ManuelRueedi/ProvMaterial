@@ -100,7 +100,7 @@ export const articleLocationHistory = sqliteTable("article_location_history", {
   locationID: integer().references(() => locations.id, {
     onDelete: "set null",
   }),
-  projectName: text().notNull(),
+  projectName: text(),
   projectDescription: text(),
   projectId: integer().references(() => projects.id, { onDelete: "set null" }),
   fromTs: integer({ mode: "timestamp" })
@@ -152,6 +152,10 @@ export const webauthnCredentialsRelations = relations(
 );
 
 export const articlesRelations = relations(articles, ({ one }) => ({
+  location: one(locations, {
+    fields: [articles.locationId],
+    references: [locations.id],
+  }),
   storageLocation: one(locations, {
     fields: [articles.storageLocationId],
     references: [locations.id],
