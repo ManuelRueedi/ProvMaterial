@@ -127,7 +127,6 @@ const columns: TableColumn<ArticleView>[] = [
       return h("div", { class: "flex flex-wrap gap-1" }, formatted) || "";
     },
     id: "Abgänge",
-    enableColumnFilter: false,
   },
   {
     accessorKey: "tags",
@@ -149,7 +148,6 @@ const columns: TableColumn<ArticleView>[] = [
         ),
       );
     },
-    enableColumnFilter: false,
   },
   {
     accessorKey: "storageLocation",

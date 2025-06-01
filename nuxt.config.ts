@@ -17,6 +17,7 @@ export default defineNuxtConfig({
     "@compodium/nuxt",
     "shadcn-nuxt",
     "@nuxtjs/device",
+    "nuxt-maplibre",
   ],
   css: ["~/assets/css/main.css"],
   fonts: {
@@ -42,10 +43,9 @@ export default defineNuxtConfig({
     cache: true,
     remote: false,
   },
-  nitro: {
-    experimental: {
-      // Enable Server API documentation within NuxtHub
-      openAPI: true,
+  vite: {
+    optimizeDeps: {
+      include: ["maplibre-gl"],
     },
   },
   // Development

@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { sql, eq } from "drizzle-orm";
 
 export default defineEventHandler(async (event) => {
   const session = requireUserSession(event);
@@ -17,6 +17,7 @@ export default defineEventHandler(async (event) => {
     const allLocations = await db
       .select()
       .from(tables.locations)
+      .where(eq(tables.locations.isStorageLocation, false))
       .orderBy(sql`${tables.locations.name} asc`);
 
     if (!allLocations) {

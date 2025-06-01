@@ -1,56 +1,78 @@
 <template>
-  <div class="container mx-auto p-4">
-    <!-- Your existing index content -->
-
-    <!-- Article details slideover -->
-    <USlideover
-      v-model:open="showDetails"
-      :side="isDesktop ? 'right' : 'bottom'"
-      :ui="{
-        title: 'text-center text-3xl font-bold',
-        description: 'text-center text-2xl',
-        header: 'justify-center py-7',
-        body: 'flex flex-col gap-5',
-      }"
+  <div class="flex h-full w-full flex-1 flex-col">
+    <!-- <p>{{ address }}</p>
+    <p>Latitude: {{ latitude }}</p>
+    <p>Longitude: {{ longitude }}</p>
+    <ClientOnly>
+      <MglMap :map-style="style" :center="center" :zoom="zoom">
+        <MglNavigationControl />
+        <mgl-marker
+          v-model:coordinates="coordinates"
+          :draggable="true"
+          @dragend="onDragEnd"
+        />
+      </MglMap>
+    </ClientOnly> -->
+    <UButton
+      class="ml-2 justify-center p-2"
+      color="neutral"
+      @click="openCreateLocation = true"
     >
-      <template #title>
-        {{ selectedArticle?.number }}
-      </template>
-      <template #description>
-        {{ selectedArticle?.type }}
-      </template>
-      <template #body>
-        <ArticleDetails :article="selectedArticle" />
-      </template>
-    </USlideover>
+      Hinzufügen
+    </UButton>
+    <ClientOnly>
+      <CreateLocationSlideover v-model:open="openCreateLocation">
+      </CreateLocationSlideover>
+    </ClientOnly>
   </div>
 </template>
 
 <script lang="ts" setup>
-import type { Type, Connector, Tags } from "@/composables/articles/types";
-const { isDesktop } = useDevice();
+const openCreateLocation = ref(false);
+const style =
+  "https://api.maptiler.com/maps/0197273f-cf7d-78b4-b2e3-16a360932850/style.json?key=Z3eYEpeHavyVp6P3AygU";
+const center: [number, number] = [8.65374, 47.69431];
+const zoom = 13;
+const coordinates = ref<{ lng: number; lat: number }>({
+  lng: 8.65374,
+  lat: 47.69431,
+});
 
-// Define the article structure (same as in takeOut.vue)
-interface ArticleDetailsItem {
-  number: string;
-  length: string;
-  locationName: string;
-  storageLocationId: string;
-  type: Type;
-  connector: Connector;
-  outputs: Record<Connector, number>;
-  tags: Tags[];
+const latitude = ref(47.69431);
+const longitude = ref(8.65374);
+const address = ref("");
+
+function onDragEnd() {
+  latitude.value = coordinates.value.lat;
+  longitude.value = coordinates.value.lng;
+  console.log("Drag ended:", coordinates.value.lat, coordinates.value.lng);
+
+  // Get address from coordinates
+  getAddressFromCoordinates(coordinates.value.lat, coordinates.value.lng);
 }
 
-// Show/hide details panel
-const showDetails = ref(false);
-const selectedArticle = ref<ArticleDetailsItem | null>(null);
+async function getAddressFromCoordinates(lat: number, lng: number) {
+  try {
+    // Using OpenStreetMap Nominatim API for reverse geocoding
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+      {
+        headers: {
+          "Accept-Language": "de", // Get results in German
+          "User-Agent": "ProvMaterial", // Replace with your application name
+        },
+      },
+    );
 
-// Function to open article details
-function openArticleDetails(article: ArticleDetailsItem) {
-  selectedArticle.value = article;
-  showDetails.value = true;
+    const data = await response.json();
+
+    if (data && data.display_name) {
+      address.value = data.display_name;
+    }
+  } catch (error) {
+    console.error("Error fetching address:", error);
+  }
 }
-
-// Your existing logic for fetching and displaying articles
 </script>
+
+<style></style>

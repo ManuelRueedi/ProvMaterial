@@ -16,7 +16,7 @@ export default defineEventHandler(async (event): Promise<HistoryView[]> => {
   try {
     // Get raw param directly from the request URL to avoid potential decoding issues
     const rawId = getRouterParam(event, "articleId") ?? "";
-    console.log("Raw articleId from URL:", rawId);
+    //console.log("Raw articleId from URL:", rawId);
 
     // Basic validation
     if (!rawId || rawId.trim() === "") {
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event): Promise<HistoryView[]> => {
 
     // Decode manually if needed (h3 should do this automatically but just to be safe)
     const articleId = decodeURIComponent(rawId);
-    console.log("Decoded articleId:", articleId);
+    //console.log("Decoded articleId:", articleId);
 
     /* ── 2. fetch data ───────────────────────────────────────── */
     try {

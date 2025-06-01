@@ -32,7 +32,7 @@ const {
 } = useLazyAsyncData<HistoryView[]>(
   "article-history",
   () =>
-    $fetch(
+    $fetch<HistoryView[]>(
       `/api/articles/${encodeURIComponent(props.selectedArticle!.number)}/history`,
     ),
   { immediate: false },
