@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { HistoryView } from "~~/server/api/articles/[articleId]/history.get";
-import type { Connector, Type, Tags } from "@/composables/articles/types";
+import type { Connector, Type, Tag } from "@/composables/articles/types";
 
 /* external state — provide these from the parent */
 const props = defineProps<{
@@ -11,7 +11,7 @@ const props = defineProps<{
     length?: string;
     connector?: Connector;
     outputs?: Partial<Record<Connector, number>>;
-    tags?: Tags[];
+    tags?: Tag[];
     storageLocation?: string;
     storageLocationSection?: number | string;
   } | null;
@@ -75,140 +75,42 @@ watch(
 <template>
   <USlideover
     :side="isDesktop ? 'right' : 'bottom'"
-    :close="{
-      color: 'primary',
-      variant: 'solid',
-      size: 'xl',
-    }"
     :open="props.showDetails"
     @update:open="emit('update:showDetails', $event)"
-    :ui="{
-      title: 'text-center text-3xl font-bold',
-      description: 'text-center text-2xl ',
-      header: 'justify-center py-7',
-    }"
   >
-    <!-- Header mit Titel und Close-Icon -->
+    <!-- Hidden title for accessibility -->
     <template #title>
-      <h1>
-        {{ props.selectedArticle?.number }}
-      </h1>
+      <span class="sr-only">Artikelinfo</span>
     </template>
 
-    <!-- Beschreibung unter dem Titel -->
+    <!-- Hidden description for accessibility -->
     <template #description>
-      <h2>
-        {{ props.selectedArticle?.type }}
-      </h2>
+      <span class="sr-only"
+        >Zeigt Artikeldetails und Verlaufsinformationen an</span
+      >
     </template>
 
     <!-- Scrollbarer Haupt-Content -->
-    <template #body>
+    <template #content>
       <div class="flex-1 overflow-y-auto">
+        <!-- Close Button -->
+        <div class="absolute top-5 right-10 z-10 flex shadow-sm">
+          <UButton
+            icon="ic:baseline-close"
+            variant="soft"
+            color="error"
+            size="xl"
+            @click="emit('update:showDetails', false)"
+          />
+        </div>
+
         <!-- Details -->
-        <div class="space-y-6 px-4">
-          <!-- Länge -->
-          <div
-            v-if="props.selectedArticle?.length !== '0m'"
-            class="flex flex-col items-center"
-          >
-            <h3
-              class="mb-2 text-xl font-medium text-gray-800 dark:text-gray-200"
-            >
-              Länge
-            </h3>
-            <UBadge class="text-lg" color="neutral">
-              {{ props.selectedArticle?.length }}
-            </UBadge>
-          </div>
-
-          <!-- Anschluss -->
-          <div
-            v-if="props.selectedArticle?.connector"
-            class="flex flex-col items-center"
-          >
-            <h3
-              class="mb-2 text-xl font-medium text-gray-800 dark:text-gray-200"
-            >
-              Anschluss
-            </h3>
-            <UBadge class="text-lg" color="neutral">
-              {{ props.selectedArticle.connector }}
-            </UBadge>
-          </div>
-
-          <!-- Abgänge -->
-          <div
-            v-if="
-              props.selectedArticle?.outputs &&
-              Object.keys(props.selectedArticle.outputs).length
-            "
-            class="flex flex-col items-center"
-          >
-            <h3
-              class="mb-2 text-xl font-medium text-gray-800 dark:text-gray-200"
-            >
-              Abgänge
-            </h3>
-            <div class="flex flex-wrap justify-center gap-2">
-              <UBadge
-                class="text-lg"
-                v-for="(value, key) in props.selectedArticle.outputs"
-                :key="key"
-                color="neutral"
-              >
-                {{ value }}x {{ key }}
-              </UBadge>
-            </div>
-          </div>
-
-          <!-- Tags -->
-          <div
-            v-if="
-              props.selectedArticle?.tags && props.selectedArticle.tags.length
-            "
-            class="flex flex-col items-center"
-          >
-            <h3
-              class="mb-2 text-xl font-medium text-gray-800 dark:text-gray-200"
-            >
-              Tags
-            </h3>
-            <div class="flex flex-wrap justify-center gap-2">
-              <UBadge
-                class="text-lg"
-                v-for="tag in props.selectedArticle.tags"
-                :key="tag"
-                :color="tag === 'defekt' ? 'error' : 'neutral'"
-              >
-                {{ tag }}
-              </UBadge>
-            </div>
-          </div>
-
-          <!-- Lagerort -->
-          <div
-            v-if="props.selectedArticle?.storageLocation"
-            class="flex flex-col items-center"
-          >
-            <h3
-              class="mb-2 text-xl font-medium text-gray-800 dark:text-gray-200"
-            >
-              Lagerort
-            </h3>
-            <div class="flex flex-wrap gap-1">
-              <UBadge class="text-lg" color="neutral">
-                {{ props.selectedArticle.storageLocation }}
-              </UBadge>
-              <UBadge
-                v-if="props.selectedArticle.storageLocationSection"
-                class="text-lg"
-                color="neutral"
-              >
-                Nr.{{ props.selectedArticle.storageLocationSection }}
-              </UBadge>
-            </div>
-          </div>
+        <div class="px-4 pb-4">
+          <ArticleInfoDisplay
+            v-if="props.selectedArticle"
+            :article="props.selectedArticle"
+          />
+          <USeparator label="Verlauf" />
 
           <!-- Verlauf -->
           <div class="mt-12">

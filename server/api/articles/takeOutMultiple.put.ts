@@ -1,58 +1,23 @@
 import { z } from "zod";
 import { eq, and, isNull, inArray } from "drizzle-orm";
-import { projects } from "~~/server/database/schema";
 import { getRouterParam } from "h3";
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle();
 
   /* ─────────────── Eingaben prüfen ─────────────── */
-  // Get articleId from route parameter
-  const rawArticleId = getRouterParam(event, "articleId") ?? "";
-  if (!rawArticleId || rawArticleId.trim() === "") {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Missing articleId parameter",
-    });
-  }
-  const articleId = decodeURIComponent(rawArticleId);
-
   // Validate request body
   const schema = z.object({
+    articleIds: z.array(z.string().min(1)).min(1).max(100), // Allow up to 100 articles at once
     newLocationId: z.number().int().positive(),
     newProjectId: z.number().int().positive().optional(),
-    additionalArticleIds: z.array(z.string().min(1)).optional(), // Support for additional articles
   });
 
   const result = await readValidatedBody(event, (body) =>
     schema.safeParse(body),
   );
   if (!result.success) throw result.error.issues;
-  const { newLocationId, newProjectId, additionalArticleIds } = result.data;
-
-  // Combine route parameter articleId with additional articleIds from body
-  const allArticleIds = [articleId, ...(additionalArticleIds || [])];
-  const uniqueArticleIds = [...new Set(allArticleIds)]; // Remove duplicates
-
-  /* ─────────────── Artikel prüfen ─────────────── */
-  const articles = await db.query.articles.findMany({
-    where: inArray(tables.articles.id, uniqueArticleIds),
-    columns: {
-      id: true,
-    },
-  });
-
-  const foundArticleIds = articles.map((article) => article.id);
-  const notFoundIds = uniqueArticleIds.filter(
-    (id) => !foundArticleIds.includes(id),
-  );
-
-  if (notFoundIds.length > 0) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: `Folgende Artikel wurden nicht gefunden: ${notFoundIds.join(", ")}`,
-    });
-  }
+  const { articleIds, newLocationId, newProjectId } = result.data;
 
   /* ─────────────── Standort prüfen ─────────────── */
   const location = await db.query.locations.findFirst({
@@ -71,10 +36,28 @@ export default defineEventHandler(async (event) => {
         "Der angegebene Standort ist ein Lager und kann nicht als Einsatzort gewählt werden.",
     });
 
+  /* ─────────────── Artikel prüfen ─────────────── */
+  const articles = await db.query.articles.findMany({
+    where: inArray(tables.articles.id, articleIds),
+    columns: {
+      id: true,
+    },
+  });
+
+  const foundArticleIds = articles.map((article) => article.id);
+  const notFoundIds = articleIds.filter((id) => !foundArticleIds.includes(id));
+
+  if (notFoundIds.length > 0) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: `Folgende Artikel wurden nicht gefunden: ${notFoundIds.join(", ")}`,
+    });
+  }
+
   /* ───── Prüfen, ob Artikel bereits unterwegs sind ───── */
   const openHistories = await db.query.articleLocationHistory.findMany({
     where: and(
-      inArray(tables.articleLocationHistory.articleId, uniqueArticleIds),
+      inArray(tables.articleLocationHistory.articleId, articleIds),
       isNull(tables.articleLocationHistory.toTs),
     ),
     columns: {
@@ -89,18 +72,21 @@ export default defineEventHandler(async (event) => {
       statusMessage: `Folgende Artikel befinden sich bereits ausserhalb des Lagers: ${alreadyOutIds.join(", ")}`,
     });
   }
-  /* ─────────────── Transaktion ─────────────── */
+
+  /* ─────────────── Projekt prüfen ─────────────── */
   const project =
     newProjectId !== undefined
       ? await db.query.projects.findFirst({
           where: eq(tables.projects.id, newProjectId),
         })
       : null;
+
+  /* ─────────────── Transaktion ─────────────── */
   try {
-    const historyRecords = uniqueArticleIds.map((id) => ({
-      articleId: id,
+    const historyRecords = articleIds.map((articleId) => ({
+      articleId,
       locationName: location.name,
-      locationaddress: location.address ?? "", // ggf. null-able machen
+      locationaddress: location.address ?? "",
       locationLatitude: location.latitude ?? null,
       locationLongitude: location.longitude ?? null,
       locationID: location.id,
@@ -109,7 +95,7 @@ export default defineEventHandler(async (event) => {
       projectId: project?.id ?? null,
     }));
 
-    const updateRecords = uniqueArticleIds.map((id) =>
+    const updateRecords = articleIds.map((articleId) =>
       db
         .update(tables.articles)
         .set({
@@ -117,7 +103,7 @@ export default defineEventHandler(async (event) => {
           currentProjectId: project?.id ?? null,
           updatedAt: new Date(),
         })
-        .where(eq(tables.articles.id, id)),
+        .where(eq(tables.articles.id, articleId)),
     );
 
     return await db.batch([

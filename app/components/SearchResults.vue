@@ -41,7 +41,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { TableItem } from "@/composables/articles/useArticleSearch";
+import type { TableItem } from "@/composables/articles/types";
 
 interface Props {
   items: TableItem[];
@@ -52,12 +52,12 @@ interface Props {
 
 defineProps<Props>();
 
-defineEmits<{
+const emit = defineEmits<{
   selectArticle: [row: { original: TableItem }];
+  selectBundle: [bundle: TableItem[]];
 }>();
 
 const handleSelectAllFromBundle = (bundle: TableItem[]) => {
-  // TODO: Implement bulk selection logic
-  console.log("Select all from bundle:", bundle);
+  emit("selectBundle", bundle);
 };
 </script>

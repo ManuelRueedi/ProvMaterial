@@ -1,8 +1,43 @@
 <template>
   <!-- Article Search Form Component -->
-  <ArticlesArticleSearchForm @select-article="openDetails" />
-
+  <ArticleSearchForm
+    ref="searchFormRef"
+    @select-article="openDetails"
+    @select-bundle="openBundleDetails"
+  />
+  <!-- ensure the map is only rendered on the client side -->
   <ClientOnly>
+    <!-- Single Article Slideover -->
+    <USlideover
+      :side="isDesktop ? 'right' : 'bottom'"
+      v-model:open="showDetails"
+    >
+      <!-- Hidden title for accessibility -->
+      <template #title>
+        <span class="sr-only">Artikelinfo</span>
+      </template>
+
+      <!-- Hidden description for accessibility -->
+      <template #description>
+        <span class="sr-only"
+          >Detailansicht des Artikels mit Austragemöglichkeit</span
+        >
+      </template>
+      <template #content>
+        <div class="absolute top-5 right-10 z-10 flex shadow-sm">
+          <UButton
+            icon="ic:baseline-close"
+            variant="soft"
+            color="error"
+            size="xl"
+            @click="showDetails = false"
+          />
+        </div>
+        <ArticleDetails :article="selectedArticle" @take-out="handleTakeOut" />
+      </template>
+    </USlideover>
+
+    <!-- Bundle Slideover -->
     <USlideover
       :close="{
         color: 'primary',
@@ -10,7 +45,7 @@
         size: 'xl',
       }"
       :side="isDesktop ? 'right' : 'bottom'"
-      v-model:open="showDetails"
+      v-model:open="showBundleDetails"
       :ui="{
         title: 'text-center text-3xl font-bold',
         description: 'text-center text-2xl ',
@@ -18,43 +53,29 @@
         body: 'flex flex-col gap-5',
       }"
     >
-      <template #title>
-        {{ selectedArticle?.number }}
-      </template>
+      <template #title> {{ selectedBundle?.length }} Artikel </template>
       <template #description>
-        {{ selectedArticle?.type }}
+        {{ selectedBundle?.map((article) => article.number).join(", ") }}
       </template>
       <template #body>
-        <ArticleDetails :article="selectedArticle">
-          <UButton
-            size="xl"
-            class="mt-6 mb-4 flex w-full justify-center gap-4"
-            @click="showTakeOut = true"
-            >Austragen
-          </UButton>
-        </ArticleDetails>
+        <ArticleBundleDetails
+          :articles="selectedBundle || []"
+          @take-out="handleBundleTakeOut"
+        />
       </template>
     </USlideover>
-  </ClientOnly>
-
-  <!-- Take Out Slideover -->
-  <ClientOnly>
-    <ArticlesTakeOutSlideover
-      v-model:open="showTakeOut"
-      :article="selectedArticle"
-      @take-out="handleTakeOut"
-    />
   </ClientOnly>
 </template>
 
 <script lang="ts" setup>
-import type { Type, Connector, Tags } from "@/composables/articles/types";
+import type { TableItem } from "@/composables/articles/types";
 
 const { isDesktop } = useDevice();
 
 const toast = useToast();
 
-const showTakeOut = ref(false);
+// Template ref for the search form component
+const searchFormRef = ref<{ refreshSearch: () => void } | null>(null);
 
 async function handleTakeOut(
   articleId: string,
@@ -72,11 +93,16 @@ async function handleTakeOut(
         method: "PUT",
       },
     );
-    console.log(data);
     toast.add({
       title: "Artikel erfolgreich ausgetragen",
       color: "success",
     });
+
+    // Refresh search results to reflect the change
+    searchFormRef.value?.refreshSearch();
+
+    // Close the slideover after successful take out
+    showDetails.value = false;
   } catch (error) {
     toast.add({
       title: "Fehler beim Austragen",
@@ -88,20 +114,50 @@ async function handleTakeOut(
 
 const showDetails = ref(false);
 const selectedArticle = ref<TableItem | null>(null);
-
-interface TableItem {
-  number: string;
-  length: string; // "12.5 m"
-  locationName: string; // warehouse name
-  storageLocationId: string; // section code
-  type: Type;
-  connector: Connector;
-  outputs: Record<Connector, number>;
-  tags: Tags[];
-}
+const showBundleDetails = ref(false);
+const selectedBundle = ref<TableItem[] | null>(null);
 
 function openDetails(article: TableItem) {
   selectedArticle.value = article;
   showDetails.value = true;
+}
+
+function openBundleDetails(bundle: TableItem[]) {
+  selectedBundle.value = bundle;
+  showBundleDetails.value = true;
+}
+
+async function handleBundleTakeOut(
+  articleIds: string[],
+  locationId: number,
+  projectId?: number,
+) {
+  try {
+    const data = await $fetch("/api/articles/takeOutMultiple", {
+      body: {
+        articleIds: articleIds,
+        newLocationId: locationId,
+        newProjectId: projectId,
+      },
+      method: "PUT",
+    });
+    toast.add({
+      title: "Artikel erfolgreich ausgetragen",
+      description: `${articleIds.length} Artikel wurden erfolgreich ausgetragen`,
+      color: "success",
+    });
+
+    // Refresh search results to reflect the change
+    searchFormRef.value?.refreshSearch();
+
+    // Close the slideover after successful take out
+    showBundleDetails.value = false;
+  } catch (error) {
+    toast.add({
+      title: "Fehler beim Austragen",
+      description: "Die Artikel konnten nicht ausgetragen werden.",
+      color: "error",
+    });
+  }
 }
 </script>

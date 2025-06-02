@@ -1,28 +1,6 @@
 <template>
-  <USlideover
-    :close="{
-      color: 'primary',
-      variant: 'solid',
-      size: 'xl',
-    }"
-    :side="isDesktop ? 'right' : 'bottom'"
-    v-model:open="open"
-    :ui="{
-      title: 'text-center text-3xl font-bold',
-      description: 'text-center text-2xl ',
-      header: 'justify-center py-7',
-      body: 'flex flex-col gap-5',
-    }"
-  >
-    <template #title>
-      <h1>Austragen</h1>
-    </template>
-    <template #description>
-      <h2>
-        {{ article?.number }}
-      </h2>
-    </template>
-    <template #body>
+  <div>
+    <div class="flex flex-col gap-5 px-3">
       <div class="flex flex-row justify-center gap-1">
         <USelectMenu
           class="w-4/4"
@@ -34,7 +12,11 @@
           placeholder="Projekt"
         >
         </USelectMenu>
-        <UButton class="ml-2 justify-center p-2" color="neutral">
+        <UButton
+          class="ml-2 justify-center p-2"
+          color="neutral"
+          @click="openCreateProject = true"
+        >
           Hinzufügen
         </UButton>
       </div>
@@ -61,31 +43,35 @@
           Hinzufügen
         </UButton>
 
-        <CreateLocationSlideover v-model:open="openCreateLocation">
+        <CreateLocationSlideover
+          v-model:open="openCreateLocation"
+          @location-created="handleLocationCreated"
+        >
         </CreateLocationSlideover>
+
+        <CreateProjectSlideover
+          v-model:open="openCreateProject"
+          @project-created="handleProjectCreated"
+        >
+        </CreateProjectSlideover>
       </div>
       <div v-if="selectedLocation">
         {{ selectedLocation.address }}
       </div>
+
       <UButton
         size="xl"
-        :disabled="selectedLocation === undefined"
+        :disabled="!selectedLocation || disabled"
         @click="handleTakeOut"
         class="mt-6 flex w-full justify-center"
-        >Austragen
+      >
+        {{ buttonText || "Austragen" }}
       </UButton>
-    </template>
-  </USlideover>
+    </div>
+  </div>
 </template>
 
 <script lang="ts" setup>
-const { isDesktop } = useDevice();
-
-interface Article {
-  number: string;
-  type: string;
-}
-
 interface Project {
   id: number;
   name: string;
@@ -101,51 +87,54 @@ interface Location {
   isStorageLocation: boolean;
 }
 
-const props = defineProps<{
-  article?: Article | null;
-}>();
+interface Props {
+  disabled?: boolean;
+  buttonText?: string;
+}
 
-const open = defineModel<boolean>("open", { required: true });
+defineProps<Props>();
 
 const emit = defineEmits<{
-  takeOut: [articleId: string, locationId: number, projectId?: number];
+  takeOut: [locationId: number, projectId?: number];
 }>();
 
 const openCreateLocation = ref(false);
+const openCreateProject = ref(false);
 
-const { data: projects, pending: projectsPending } = await useFetch<Project[]>(
-  "/api/projects/getAll",
-  { lazy: true },
-);
+const {
+  data: projects,
+  pending: projectsPending,
+  refresh: refreshProjects,
+} = await useFetch<Project[]>("/api/projects/getAll", { lazy: true });
 
-const { data: locations, pending: locationsPending } = await useFetch<
-  Location[]
->("/api/locations/getAll", { lazy: true });
+const {
+  data: locations,
+  pending: locationsPending,
+  refresh: refreshLocations,
+} = await useFetch<Location[]>("/api/locations/getAll", { lazy: true });
 
 const selectedProject = ref<Project>();
 const selectedLocation = ref<Location>();
 
 async function handleTakeOut() {
-  if (!props.article || !selectedLocation.value) return;
+  if (!selectedLocation.value) return;
 
-  emit(
-    "takeOut",
-    props.article.number,
-    selectedLocation.value.id,
-    selectedProject.value?.id,
-  );
+  emit("takeOut", selectedLocation.value.id, selectedProject.value?.id);
 
   // Reset form
   selectedProject.value = undefined;
   selectedLocation.value = undefined;
-  open.value = false;
 }
 
-// Reset form when component is closed
-watch(open, (newValue) => {
-  if (!newValue) {
-    selectedProject.value = undefined;
-    selectedLocation.value = undefined;
-  }
-});
+// Handle project creation and refresh the projects list
+async function handleProjectCreated(newProject: Project) {
+  await refreshProjects();
+  selectedProject.value = newProject;
+}
+
+// Handle location creation and refresh the locations list
+async function handleLocationCreated(newLocation: Location) {
+  await refreshLocations();
+  selectedLocation.value = newLocation;
+}
 </script>

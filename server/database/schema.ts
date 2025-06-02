@@ -5,7 +5,7 @@ import type {
   Type,
   Ampacity,
   Connector,
-  Tags,
+  Tag,
 } from "@/composables/articles/types";
 
 // auth
@@ -69,7 +69,7 @@ export const articles = sqliteTable("articles", {
   tags: text({ mode: "json" })
     .notNull()
     .default(sql`'[]'`)
-    .$type<Tags[]>(),
+    .$type<Tag[]>(),
   lengthInMeter: real().notNull(),
   locationId: integer()
     .references(() => locations.id, { onUpdate: "cascade" })

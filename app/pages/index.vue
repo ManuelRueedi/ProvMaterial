@@ -8,7 +8,7 @@ import {
 import { upperFirst } from "scule";
 const { isDesktop } = useDevice();
 import type { TableColumn, TableRow } from "@nuxt/ui";
-import type { Connector, Type, Tags } from "@/composables/articles/types";
+import type { Connector, Type, Tag } from "@/composables/articles/types";
 
 const UBadge = resolveComponent("UBadge");
 const table = useTemplateRef("table");
@@ -56,7 +56,7 @@ type ArticleView = {
   type: Type;
   connector: Connector;
   outputs: Partial<Record<Connector, number>>;
-  tags: Tags[];
+  tags: Tag[];
 };
 
 const columns: TableColumn<ArticleView>[] = [
@@ -132,7 +132,7 @@ const columns: TableColumn<ArticleView>[] = [
     accessorKey: "tags",
     header: "Tags",
     cell: ({ row }) => {
-      const tags = (row.getValue("tags") || []) as Tags[];
+      const tags = (row.getValue("tags") || []) as Tag[];
       if (tags.length === 0) return "";
       return h(
         "div",
@@ -231,60 +231,51 @@ const globalFilter = ref("");
       </UDropdownMenu>
     </div>
 
-    <!-- Wrap table with ClientOnly to prevent server-side rendering -->
-    <ClientOnly>
-      <UTable
-        sticky
-        ref="table"
-        v-model:column-visibility="columnVisibility"
-        @select="openDetails"
-        :data="data"
-        :columns="columns"
-        v-model:global-filter="globalFilter"
-        v-model:column-pinning="columnPinning"
-        :grouping="['projectName', 'locationName']"
-        :grouping-options="grouping_options"
-        :ui="{
-          root: 'min-w-full',
-          td: 'empty:p-0', // helps with the colspaned row added for expand slot
-        }"
-      >
-        <template #title-cell="{ row }">
-          <div v-if="row.getIsGrouped()" class="flex items-center">
-            <span
-              class="inline-block"
-              :style="{ width: `calc(${row.depth} * 1rem)` }"
-            />
+    <UTable
+      sticky
+      ref="table"
+      v-model:column-visibility="columnVisibility"
+      @select="openDetails"
+      :data="data"
+      :columns="columns"
+      v-model:global-filter="globalFilter"
+      v-model:column-pinning="columnPinning"
+      :grouping="['projectName', 'locationName']"
+      :grouping-options="grouping_options"
+      :ui="{
+        root: 'min-w-full',
+        td: 'empty:p-0', // helps with the colspaned row added for expand slot
+      }"
+    >
+      <template #title-cell="{ row }">
+        <div v-if="row.getIsGrouped()" class="flex items-center">
+          <span
+            class="inline-block"
+            :style="{ width: `calc(${row.depth} * 1rem)` }"
+          />
 
-            <UButton
-              variant="outline"
-              color="neutral"
-              class="mr-2"
-              size="xs"
-              :icon="
-                row.getIsExpanded() ? 'ic:baseline-minus' : 'ic:baseline-plus'
-              "
-              @click="row.toggleExpanded()"
-            />
-            <strong v-if="row.groupingColumnId === 'projectName'">{{
-              row.original.projectName
-            }}</strong>
-            <strong v-else-if="row.groupingColumnId === 'locationName'">{{
-              row.original.locationName
-            }}</strong>
-          </div>
-        </template>
-        <template #empty>
-          <UCard>Keine Daten</UCard>
-        </template>
-      </UTable>
-
-      <template #fallback>
-        <div class="flex items-center justify-center p-12">
-          <UButton loading label="Tabelle wird geladen..." :disabled="true" />
+          <UButton
+            variant="outline"
+            color="neutral"
+            class="mr-2"
+            size="xs"
+            :icon="
+              row.getIsExpanded() ? 'ic:baseline-minus' : 'ic:baseline-plus'
+            "
+            @click="row.toggleExpanded()"
+          />
+          <strong v-if="row.groupingColumnId === 'projectName'">{{
+            row.original.projectName
+          }}</strong>
+          <strong v-else-if="row.groupingColumnId === 'locationName'">{{
+            row.original.locationName
+          }}</strong>
         </div>
       </template>
-    </ClientOnly>
+      <template #empty>
+        <UCard>Keine Daten</UCard>
+      </template>
+    </UTable>
   </div>
   <ArticleHistoryDrawer
     v-model:showDetails="showDetails"

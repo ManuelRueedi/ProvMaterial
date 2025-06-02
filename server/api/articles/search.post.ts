@@ -1,14 +1,12 @@
 import { and, eq, gte, lt, lte, asc, desc, sql, inArray } from "drizzle-orm";
-import { z } from "zod";
-import { ConfigSchema } from "@/composables/articles/types";
-import { articles } from "~~/server/database/schema";
-import type {
-  Type,
-  Ampacity,
-  Connector,
-  Tags,
-  Config,
+import {
+  ConfigSchema,
+  type Ampacity,
+  type Connector,
+  type Config,
+  type ArticleSearchResponse,
 } from "@/composables/articles/types";
+import { articles } from "~~/server/database/schema";
 
 export default defineEventHandler(async (event) => {
   requireUserSession(event);
@@ -106,7 +104,7 @@ export default defineEventHandler(async (event) => {
         statusMessage: "No matching items",
       });
     }
-    return { items } as HandlerResult;
+    return { items } as ArticleSearchResponse;
   }
 
   /* ---------- length > 0 : singles then bundles ---------- */
@@ -130,7 +128,7 @@ export default defineEventHandler(async (event) => {
     limit: 3,
   });
 
-  if (items.length >= 3) return { items } as HandlerResult;
+  if (items.length >= 3) return { items } as ArticleSearchResponse;
 
   const pool = await drizzle.query.articles.findMany({
     columns: {
@@ -219,40 +217,20 @@ export default defineEventHandler(async (event) => {
         lengthInMeter: true,
         storageLocationSection: true,
         tags: true,
+        outputs: true,
       },
       with: { storageLocation: { columns: { id: false } } },
       where: inArray(articles.id, comboIds),
     });
     const byId = new Map(comboRows.map((r) => [r.id, r]));
     const bundles = combos.map((arr) => arr.map((r) => byId.get(r.id)!));
-    return { items, bundles } as HandlerResult;
+    return { items, bundles } as ArticleSearchResponse;
   }
 
   // 5) No bundles found?
   if (!items.length) {
     throw createError({ statusCode: 404, statusMessage: "No matching items" });
   }
+
+  return { items } as ArticleSearchResponse;
 });
-
-export interface Article {
-  id: string;
-  type: Type;
-  connector: Connector;
-  outputs: Record<Connector, number>;
-  lengthInMeter: number;
-  storageLocationSection: string;
-  tags: Tags[];
-  storageLocation: {
-    name: string;
-    address: string;
-    latitude: number;
-    longitude: number;
-    isStorageLocation: boolean;
-  };
-}
-
-export type HandlerResult =
-  | { items: Article[] }
-  | { items: Article[]; bundles: Article[][] };
-
-export type HandlerReturn = Promise<HandlerResult>;

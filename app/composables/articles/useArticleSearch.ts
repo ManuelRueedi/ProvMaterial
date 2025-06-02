@@ -1,29 +1,14 @@
 import { ref, computed } from "vue";
 import type {
   Config,
-  Type,
-  Connector,
-  Tags,
+  ArticleSearchResult,
+  ArticleSearchResponse,
+  TableItem,
 } from "@/composables/articles/types";
-import type {
-  HandlerResult,
-  Article,
-} from "~~/server/api/articles/search.post";
 import { errorMap } from "@/composables/useFriendlyError";
 
-export interface TableItem {
-  number: string;
-  length: string;
-  locationName: string;
-  storageLocationId: string;
-  type: Type;
-  connector: Connector;
-  outputs: Record<Connector, number>;
-  tags: Tags[];
-}
-
 // Transform article to table item
-const articleToTableItem = (a: Article): TableItem => ({
+const articleToTableItem = (a: ArticleSearchResult): TableItem => ({
   number: a.id,
   length: `${a.lengthInMeter}m`,
   locationName: a.storageLocation.name,
@@ -38,19 +23,22 @@ export function useArticleSearch() {
   const toast = useToast();
 
   // Search state
-  const foundArticls = ref<HandlerResult | null>(null);
+  const foundArticles = ref<ArticleSearchResponse | null>({
+    items: [],
+    bundles: [],
+  });
   const isLoading = ref(false);
   const error = ref<string | null>(null);
 
   // Computed table data
   const tableItems = computed<TableItem[]>(() => {
-    if (!foundArticls.value) return [];
-    return foundArticls.value.items.map(articleToTableItem);
+    if (!foundArticles.value) return [];
+    return foundArticles.value.items.map(articleToTableItem);
   });
 
   const tableBundles = computed<TableItem[][]>(() => {
-    if (!foundArticls.value || !("bundles" in foundArticls.value)) return [];
-    return foundArticls.value.bundles.map((bundle) =>
+    if (!foundArticles.value || !("bundles" in foundArticles.value)) return [];
+    return foundArticles.value.bundles.map((bundle) =>
       bundle.map(articleToTableItem),
     );
   });
@@ -61,22 +49,23 @@ export function useArticleSearch() {
     error.value = null;
 
     try {
-      const data = await $fetch<HandlerResult>("/api/articles/search", {
+      const data = await $fetch<ArticleSearchResponse>("/api/articles/search", {
         method: "POST",
         body: config,
         headers: { "Content-Type": "application/json" },
       });
-      foundArticls.value = data;
+      foundArticles.value = data;
     } catch (err: any) {
       toast.add(errorMap(err));
       error.value = err;
+      foundArticles.value = null;
     } finally {
       isLoading.value = false;
     }
   }
 
   return {
-    foundArticls,
+    foundArticles,
     isLoading,
     error,
     tableItems,

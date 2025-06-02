@@ -40,8 +40,6 @@ export type Connector = z.infer<typeof ConnectorEnum>;
  */
 export const TagEnum = z.enum(["Zähler", "Hauptschalter", "defekt"]);
 export type Tag = z.infer<typeof TagEnum>;
-// For backward compatibility
-export type Tags = Tag;
 
 /**
  * Search configuration schema for filtering articles
@@ -57,24 +55,54 @@ export const ConfigSchema = z.object({
 export type Config = z.infer<typeof ConfigSchema>;
 
 /**
- * Base article properties that are common across the application
+ * Location information interface
  */
-export interface ArticleBase {
-  id: string;
-  type: Type;
-  ampacity: number;
-  connector: Connector | null;
-  outputs: Partial<Record<Connector, number>>;
-  tags: Tag[];
-  lengthInMeter: number;
+export interface Location {
+  id: number;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  isStorageLocation: boolean;
 }
 
 /**
- * Article with location information
+ * Article response from search API with storage location details
+ * This is the main type returned by the /api/articles/search endpoint
+ * Used by both frontend and backend
  */
-export interface ArticleWithLocation extends ArticleBase {
-  locationId: number;
-  storageLocationId: number;
-  storageLocationSection: string | null;
-  currentProjectId: number | null;
+export interface ArticleSearchResult {
+  id: string;
+  type: Type;
+  connector: Connector;
+  outputs: Partial<Record<Connector, number>>;
+  lengthInMeter: number;
+  storageLocationSection: string;
+  tags: Tag[];
+  storageLocation: Location;
+}
+
+/**
+ * Response format for article search endpoint
+ * Used by both frontend and backend - single source of truth
+ * Can return either just items or items with bundles
+ */
+export type ArticleSearchResponse =
+  | { items: ArticleSearchResult[] }
+  | { items: ArticleSearchResult[]; bundles: ArticleSearchResult[][] };
+
+/**
+ * Table item format for frontend display
+ * Transformed version of ArticleSearchResult optimized for UI components
+ * Used across all frontend components that display article data
+ */
+export interface TableItem {
+  number: string; // Article ID (mapped from ArticleSearchResult.id)
+  length: string; // Formatted length with unit (e.g., "12.5m")
+  locationName: string; // Storage location name
+  storageLocationId: string; // Storage section identifier
+  type: Type; // Equipment type
+  connector: Connector; // Connection type
+  outputs: Partial<Record<Connector, number>>; // Available outputs
+  tags: Tag[]; // Special properties/features
 }

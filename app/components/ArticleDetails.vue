@@ -1,78 +1,29 @@
 <template>
-  <div v-if="article?.length !== '0m'" class="flex flex-col items-center">
-    <h1 class="mb-2 text-xl">Länge</h1>
-    <UBadge class="text-lg" color="neutral">{{ article?.length }}</UBadge>
-  </div>
+  <!-- Article Details Section -->
+  <div class="flex flex-col gap-6">
+    <ArticleInfoDisplay v-if="article" :article="article" />
 
-  <div v-if="article?.connector !== null" class="flex flex-col items-center">
-    <h1 class="mb-2 text-xl">Anschluss</h1>
-    <UBadge class="text-lg" color="neutral">{{ article?.connector }}</UBadge>
-  </div>
+    <slot></slot>
 
-  <div
-    v-if="article?.outputs && Object.keys(article.outputs).length"
-    class="flex flex-col items-center"
-  >
-    <h1 class="mb-2 text-xl">Abgänge</h1>
-    <div class="flex flex-wrap justify-center gap-2">
-      <UBadge
-        class="text-lg"
-        v-for="(value, key) in article.outputs"
-        :key="key"
-        color="neutral"
-      >
-        {{ value }}x {{ key }}
-      </UBadge>
-    </div>
+    <USeparator label="Austragen" />
+    <!-- Take Out Form Section -->
+    <TakeOutForm :disabled="!article" @take-out="handleTakeOut" />
   </div>
-
-  <div v-if="article?.tags?.length" class="flex flex-col items-center">
-    <h1 class="mb-2 text-xl">Tags</h1>
-    <div class="flex flex-wrap justify-center gap-2">
-      <UBadge
-        class="text-lg"
-        v-for="tag in article.tags"
-        :key="tag"
-        color="neutral"
-      >
-        {{ tag }}
-      </UBadge>
-    </div>
-  </div>
-
-  <!-- Lagerort -->
-  <div v-if="article?.locationName" class="flex flex-col items-center">
-    <h3 class="mb-2 text-xl font-medium text-gray-800 dark:text-gray-200">
-      Lagerort
-    </h3>
-    <div class="flex flex-wrap gap-1">
-      <UBadge class="text-lg" color="neutral">
-        {{ article.locationName }}
-      </UBadge>
-      <UBadge v-if="article.storageLocationId" class="text-lg" color="neutral">
-        Nr.{{ article.storageLocationId }}
-      </UBadge>
-    </div>
-  </div>
-
-  <slot></slot>
 </template>
 
 <script lang="ts" setup>
-import type { Type, Connector, Tags } from "@/composables/articles/types";
-
-interface ArticleDetailsItem {
-  number: string;
-  length: string; // "12.5 m"
-  locationName: string; // warehouse name
-  storageLocationId: string; // section code
-  type: Type;
-  connector: Connector;
-  outputs: Record<Connector, number>;
-  tags: Tags[];
-}
-
-defineProps<{
-  article: ArticleDetailsItem | null;
+import type { TableItem } from "@/composables/articles/types";
+const props = defineProps<{
+  article: TableItem | null;
 }>();
+
+const emit = defineEmits<{
+  takeOut: [articleId: string, locationId: number, projectId?: number];
+}>();
+
+async function handleTakeOut(locationId: number, projectId?: number) {
+  if (!props.article) return;
+
+  emit("takeOut", props.article.number, locationId, projectId);
+}
 </script>

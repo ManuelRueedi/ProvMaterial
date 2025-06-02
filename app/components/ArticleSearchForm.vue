@@ -90,28 +90,58 @@
 
     <!-- Search Results -->
     <SearchResults
+      v-if="tableItems.length > 0 || tableBundles.length > 0"
       :items="tableItems"
       :bundles="tableBundles"
       :columns="tableColumns"
       :loading="isLoading"
       @select-article="(row) => $emit('selectArticle', row.original)"
+      @select-bundle="(bundle) => $emit('selectBundle', bundle)"
     />
+    <!-- No Results Message -->
+    <UCard
+      v-if="!isLoading && foundArticles === null"
+      class="mx-auto my-8 max-w-lg"
+      :ui="{ body: 'text-center space-y-4' }"
+    >
+      <div class="flex flex-col items-center space-y-4">
+        <div class="rounded-full">
+          <UIcon name="i-heroicons-magnifying-glass" class="h-8 w-8" />
+        </div>
+
+        <div class="space-y-2">
+          <h3 class="text-lg font-semibold">Keine Artikel gefunden</h3>
+          <p class="max-w-sm text-sm">
+            Es wurden keine Artikel gefunden, die Ihren Suchkriterien
+            entsprechen. Versuchen Sie es mit anderen Filtereinstellungen.
+          </p>
+        </div>
+      </div>
+    </UCard>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { useConfigurator } from "@/composables/articles/useConfigurator";
-import { TypeEnum } from "@/composables/articles/types";
-import {
-  useArticleSearch,
-  type TableItem,
-} from "@/composables/articles/useArticleSearch";
+import { TypeEnum, type TableItem } from "@/composables/articles/types";
+import { useArticleSearch } from "@/composables/articles/useArticleSearch";
 import { useSocketSelection } from "@/composables/articles/useSocketSelection";
 
 // Define emits
 const emit = defineEmits<{
   selectArticle: [article: TableItem];
+  selectBundle: [bundle: TableItem[]];
 }>();
+
+// Define expose for parent component access
+defineExpose({
+  refreshSearch: () => {
+    // Only refresh if we have some search criteria
+    if (config.type) {
+      findArticles(config);
+    }
+  },
+});
 
 // Table configuration
 const tableColumns = [
@@ -146,7 +176,7 @@ const {
 
 // Search functionality
 const {
-  foundArticls,
+  foundArticles,
   isLoading,
   error,
   tableItems,
