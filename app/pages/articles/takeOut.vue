@@ -39,19 +39,10 @@
 
     <!-- Bundle Slideover -->
     <USlideover
-      :close="{
-        color: 'primary',
-        variant: 'solid',
-        size: 'xl',
-      }"
+      :close="bundleClose"
       :side="isDesktop ? 'right' : 'bottom'"
       v-model:open="showBundleDetails"
-      :ui="{
-        title: 'text-center text-3xl font-bold',
-        description: 'text-center text-2xl ',
-        header: 'justify-center py-7',
-        body: 'flex flex-col gap-5',
-      }"
+      :ui="bundleUi"
     >
       <template #title> {{ selectedBundle?.length }} Artikel </template>
       <template #description>
@@ -73,6 +64,19 @@ import type { TableItem } from "@/composables/articles/types";
 const { isDesktop } = useDevice();
 
 const toast = useToast();
+
+const bundleClose = reactive({
+  color: 'primary',
+  variant: 'solid',
+  size: 'xl',
+});
+
+const bundleUi = reactive({
+  title: 'text-center text-3xl font-bold',
+  description: 'text-center text-2xl ',
+  header: 'justify-center py-7',
+  body: 'flex flex-col gap-5',
+});
 
 // Template ref for the search form component
 const searchFormRef = ref<{ refreshSearch: () => void } | null>(null);

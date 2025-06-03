@@ -2,6 +2,18 @@
 import type { NavigationMenuItem } from "@nuxt/ui";
 const { isMobile } = useDevice();
 
+const navigationMenuUi = reactive({
+  root: "shadow-md",
+  linkLabel: "font-semibold text-lg relative  hidden md:inline",
+  linkLeadingIcon: "shrink-0 size-10",
+  link: "w-full px-8",
+});
+
+const modalUi = reactive({ header: "hidden" });
+const modalButtonUi = reactive({
+  leadingIcon: "size-13",
+});
+
 const items = ref<NavigationMenuItem[][]>([
   [
     {
@@ -38,12 +50,7 @@ const handleModalLeave = () => {
       highlight-color="error"
       color="primary"
       class="fixed bottom-0 left-1/2 w-[95vw] -translate-x-1/2 justify-evenly rounded-t-3xl bg-neutral-50 lg:w-3/4"
-      :ui="{
-        root: 'shadow-md',
-        linkLabel: 'font-semibold text-lg relative  hidden md:inline',
-        linkLeadingIcon: 'shrink-0 size-10',
-        link: 'w-full px-8',
-      }"
+      :ui="navigationMenuUi"
     />
     <UButton
       size="xl"
@@ -55,7 +62,7 @@ const handleModalLeave = () => {
     <UModal
       v-if="isMobile"
       @after:leave="handleModalLeave"
-      :ui="{ header: 'hidden' }"
+      :ui="modalUi"
       description="scanning.."
       title="QrCode Scanner"
     >
@@ -64,9 +71,7 @@ const handleModalLeave = () => {
         color="neutral"
         icon="ic:baseline-qr-code-scanner"
         class="fixed right-10 bottom-23 opacity-80"
-        :ui="{
-          leadingIcon: 'size-13',
-        }"
+        :ui="modalButtonUi"
       />
       <template #body>
         <qrCodeScanner></qrCodeScanner>

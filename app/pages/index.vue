@@ -10,6 +10,11 @@ const { isDesktop } = useDevice();
 import type { TableColumn, TableRow } from "@nuxt/ui";
 import type { Connector, Type, Tag } from "@/composables/articles/types";
 
+const tableUi = reactive({
+  root: 'min-w-full',
+  td: 'empty:p-0', // helps with the colspaned row added for expand slot
+});
+
 const UBadge = resolveComponent("UBadge");
 const table = useTemplateRef("table");
 const showDetails = ref(false);
@@ -242,10 +247,7 @@ const globalFilter = ref("");
       v-model:column-pinning="columnPinning"
       :grouping="['projectName', 'locationName']"
       :grouping-options="grouping_options"
-      :ui="{
-        root: 'min-w-full',
-        td: 'empty:p-0', // helps with the colspaned row added for expand slot
-      }"
+      :ui="tableUi"
     >
       <template #title-cell="{ row }">
         <div v-if="row.getIsGrouped()" class="flex items-center">

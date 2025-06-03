@@ -102,7 +102,7 @@
     <UCard
       v-if="!isLoading && foundArticles === null"
       class="mx-auto my-8 max-w-lg"
-      :ui="{ body: 'text-center space-y-4' }"
+      :ui="emptyResultsUi"
     >
       <div class="flex flex-col items-center space-y-4">
         <div class="rounded-full">
@@ -126,6 +126,8 @@ import { useConfigurator } from "@/composables/articles/useConfigurator";
 import { TypeEnum, type TableItem } from "@/composables/articles/types";
 import { useArticleSearch } from "@/composables/articles/useArticleSearch";
 import { useSocketSelection } from "@/composables/articles/useSocketSelection";
+
+const emptyResultsUi = reactive({ body: 'text-center space-y-4' });
 
 // Define emits
 const emit = defineEmits<{
