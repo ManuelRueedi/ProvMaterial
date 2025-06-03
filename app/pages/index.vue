@@ -10,6 +10,11 @@ const { isDesktop } = useDevice();
 import type { TableColumn, TableRow } from "@nuxt/ui";
 import type { Connector, Type, Tag } from "@/composables/articles/types";
 
+const tableUi = reactive({
+  root: "min-w-full",
+  td: "empty:p-0", // helps with the colspaned row added for expand slot
+});
+
 const UBadge = resolveComponent("UBadge");
 const table = useTemplateRef("table");
 const showDetails = ref(false);
@@ -198,7 +203,7 @@ const globalFilter = ref("");
 </script>
 
 <template>
-  <div class="flex h-full w-full flex-1 flex-col">
+  <div class="flex w-full flex-col">
     <div class="border-accented flex justify-center gap-2 border-b px-4 py-3.5">
       <UInput v-model="globalFilter" class="max-w-sm" placeholder="Filter..." />
       <UDropdownMenu
@@ -231,51 +236,57 @@ const globalFilter = ref("");
       </UDropdownMenu>
     </div>
 
-    <UTable
-      sticky
-      ref="table"
-      v-model:column-visibility="columnVisibility"
-      @select="openDetails"
-      :data="data"
-      :columns="columns"
-      v-model:global-filter="globalFilter"
-      v-model:column-pinning="columnPinning"
-      :grouping="['projectName', 'locationName']"
-      :grouping-options="grouping_options"
-      :ui="{
-        root: 'min-w-full',
-        td: 'empty:p-0', // helps with the colspaned row added for expand slot
-      }"
-    >
-      <template #title-cell="{ row }">
-        <div v-if="row.getIsGrouped()" class="flex items-center">
-          <span
-            class="inline-block"
-            :style="{ width: `calc(${row.depth} * 1rem)` }"
-          />
+    <!-- Wrap table with ClientOnly to prevent server-side rendering -->
+    <ClientOnly>
+      <UTable
+        sticky
+        ref="table"
+        v-model:column-visibility="columnVisibility"
+        @select="openDetails"
+        :data="data"
+        :columns="columns"
+        v-model:global-filter="globalFilter"
+        v-model:column-pinning="columnPinning"
+        :grouping="['projectName', 'locationName']"
+        :grouping-options="grouping_options"
+        :ui="tableUi"
+      >
+        <template #title-cell="{ row }">
+          <div v-if="row.getIsGrouped()" class="flex items-center">
+            <span
+              class="inline-block"
+              :style="{ width: `calc(${row.depth} * 1rem)` }"
+            />
 
-          <UButton
-            variant="outline"
-            color="neutral"
-            class="mr-2"
-            size="xs"
-            :icon="
-              row.getIsExpanded() ? 'ic:baseline-minus' : 'ic:baseline-plus'
-            "
-            @click="row.toggleExpanded()"
-          />
-          <strong v-if="row.groupingColumnId === 'projectName'">{{
-            row.original.projectName
-          }}</strong>
-          <strong v-else-if="row.groupingColumnId === 'locationName'">{{
-            row.original.locationName
-          }}</strong>
+            <UButton
+              variant="outline"
+              color="neutral"
+              class="mr-2"
+              size="xs"
+              :icon="
+                row.getIsExpanded() ? 'ic:baseline-minus' : 'ic:baseline-plus'
+              "
+              @click="row.toggleExpanded()"
+            />
+            <strong v-if="row.groupingColumnId === 'projectName'">{{
+              row.original.projectName
+            }}</strong>
+            <strong v-else-if="row.groupingColumnId === 'locationName'">{{
+              row.original.locationName
+            }}</strong>
+          </div>
+        </template>
+        <template #empty>
+          <UCard>Keine Daten</UCard>
+        </template>
+      </UTable>
+
+      <template #fallback>
+        <div class="flex items-center justify-center p-12">
+          <UButton loading label="Tabelle wird geladen..." :disabled="true" />
         </div>
       </template>
-      <template #empty>
-        <UCard>Keine Daten</UCard>
-      </template>
-    </UTable>
+    </ClientOnly>
   </div>
   <ArticleHistoryDrawer
     v-model:showDetails="showDetails"

@@ -3,17 +3,8 @@
     :open="localOpen"
     @update:open="localOpen = $event"
     :side="isDesktop ? 'right' : 'bottom'"
-    :ui="{
-      title: 'text-center text-3xl font-bold',
-      description: 'text-center text-xl',
-      header: 'justify-center py-7',
-      body: 'flex flex-col gap-5 px-4 sm:px-6',
-    }"
-    :close="{
-      color: 'primary',
-      variant: 'solid',
-      size: 'xl',
-    }"
+    :ui="slideoverUi"
+    :close="slideoverClose"
   >
     <template #title>
       <h1>Projekt erstellen</h1>
@@ -81,6 +72,19 @@ const emit = defineEmits<{
 
 const { isDesktop } = useDevice();
 const toast = useToast();
+
+const slideoverUi = reactive({
+  title: 'text-center text-3xl font-bold',
+  description: 'text-center text-xl',
+  header: 'justify-center py-7',
+  body: 'flex flex-col gap-5 px-4 sm:px-6',
+});
+
+const slideoverClose = reactive({
+  color: 'primary',
+  variant: 'solid',
+  size: 'xl',
+});
 
 // Two-way binding for open state
 const localOpen = computed({

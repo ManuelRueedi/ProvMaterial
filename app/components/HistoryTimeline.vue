@@ -11,6 +11,12 @@ type HistoryView = {
   id?: string | number;
 };
 
+const timelineCardUi = reactive({
+  root: 'rounded-xl overflow-hidden',
+  header: 'px-6 py-4',
+  body: 'px-6 pb-6',
+});
+
 const props = defineProps<{
   history: HistoryView[];
 }>();
@@ -99,11 +105,7 @@ function getItemKey(item: HistoryView, index: number): string | number {
                 ? 'shadow-primary-500/10 border-primary-500 border-l-4 shadow-xl'
                 : 'shadow-md hover:shadow-lg',
             ]"
-            :ui="{
-              root: 'rounded-xl overflow-hidden',
-              header: 'px-6 py-4',
-              body: 'px-6 pb-6',
-            }"
+            :ui="timelineCardUi"
           >
             <template #header>
               <div class="flex items-start justify-between">

@@ -3,17 +3,8 @@
     :open="localOpen"
     @update:open="localOpen = $event"
     :side="isDesktop ? 'right' : 'bottom'"
-    :ui="{
-      title: 'text-center text-3xl font-bold',
-      description: 'text-center text-xl',
-      header: 'justify-center py-7',
-      body: 'flex flex-col gap-5 px-4 sm:px-6',
-    }"
-    :close="{
-      color: 'primary',
-      variant: 'solid',
-      size: 'xl',
-    }"
+    :ui="slideoverUi"
+    :close="slideoverClose"
   >
     <template #title>
       <h1>Standort erstellen</h1>
@@ -123,8 +114,8 @@ async function getAddressFromCoordinates(lat: number, lng: number) {
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
       {
         headers: {
-          "Accept-Language": "de", // Get results in German
-          "User-Agent": "ProvMaterial", // Replace with your application name
+          "Accept-Language": "de",
+          "User-Agent": "ProvMaterial",
         },
       },
     );
@@ -155,6 +146,19 @@ const emit = defineEmits<{
 
 const { isDesktop } = useDevice();
 const toast = useToast();
+
+const slideoverUi = reactive({
+  title: 'text-center text-3xl font-bold',
+  description: 'text-center text-xl',
+  header: 'justify-center py-7',
+  body: 'flex flex-col gap-5 px-4 sm:px-6',
+});
+
+const slideoverClose = reactive({
+  color: 'primary',
+  variant: 'solid',
+  size: 'xl',
+});
 
 // Two-way binding for open state
 const localOpen = computed({
