@@ -114,8 +114,8 @@ async function getAddressFromCoordinates(lat: number, lng: number) {
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
       {
         headers: {
-          "Accept-Language": "de", // Get results in German
-          "User-Agent": "ProvMaterial", // Replace with your application name
+          "Accept-Language": "de",
+          "User-Agent": "ProvMaterial",
         },
       },
     );
