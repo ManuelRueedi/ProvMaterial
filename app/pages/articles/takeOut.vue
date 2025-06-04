@@ -47,7 +47,17 @@
     >
       <template #title> {{ selectedBundle?.length }} Artikel </template>
       <template #description>
-        {{ selectedBundle?.map((article) => article.id).join(", ") }}
+        <div class="flex flex-wrap gap-2">
+          <UBadge
+            v-for="article in selectedBundle"
+            :key="article.id"
+            variant="soft"
+            color="primary"
+            class="text-xl"
+          >
+            {{ article.id }}
+          </UBadge>
+        </div>
       </template>
       <template #body>
         <ArticleBundleDetails

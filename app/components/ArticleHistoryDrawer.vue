@@ -99,40 +99,38 @@ watch(
 
     <!-- Scrollbarer Haupt-Content -->
     <template #content>
-      <div class="flex h-full flex-col">
-        <!-- Close Button -->
-        <div class="absolute top-5 right-10 z-10 flex shadow-sm">
-          <UButton
-            icon="ic:baseline-close"
-            variant="soft"
-            color="error"
-            size="xl"
-            @click="emit('update:showDetails', false)"
-          />
-        </div>
+      <!-- Close Button -->
+      <div class="absolute top-5 right-10 z-10 flex shadow-sm">
+        <UButton
+          icon="ic:baseline-close"
+          variant="soft"
+          color="error"
+          size="xl"
+          @click="emit('update:showDetails', false)"
+        />
+      </div>
 
-        <!-- Scrollable Content -->
-        <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4">
-          <ArticleInfoDisplay
-            v-if="props.selectedArticle"
-            :article="props.selectedArticle"
-          />
-          <USeparator label="Verlauf" />
+      <!-- Scrollable Content -->
+      <div class="h-full overflow-y-auto px-4 pt-5 pb-4">
+        <ArticleInfoDisplay
+          v-if="props.selectedArticle"
+          :article="props.selectedArticle"
+        />
+        <USeparator label="Verlauf" />
 
-          <!-- Verlauf -->
-          <div class="mt-12">
-            <div v-if="pending" class="flex justify-center">
-              <UButton loading label="Lade Verlauf..." :disabled="true" />
-            </div>
-
-            <UAlert
-              v-else-if="error"
-              color="error"
-              :title="error.statusMessage ?? 'Fehler'"
-            />
-
-            <HistoryTimeline v-else :history="transformedHistory" />
+        <!-- Verlauf -->
+        <div class="mt-12">
+          <div v-if="pending" class="flex justify-center">
+            <UButton loading label="Lade Verlauf..." :disabled="true" />
           </div>
+
+          <UAlert
+            v-else-if="error"
+            color="error"
+            :title="error.statusMessage ?? 'Fehler'"
+          />
+
+          <HistoryTimeline v-else :history="transformedHistory" />
         </div>
       </div>
     </template>
