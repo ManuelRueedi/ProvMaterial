@@ -99,7 +99,7 @@ watch(
 
     <!-- Scrollbarer Haupt-Content -->
     <template #content>
-      <div class="flex-1 overflow-y-auto">
+      <div class="flex h-full flex-col">
         <!-- Close Button -->
         <div class="absolute top-5 right-10 z-10 flex shadow-sm">
           <UButton
@@ -111,8 +111,8 @@ watch(
           />
         </div>
 
-        <!-- Details -->
-        <div class="px-4 pb-4">
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4">
           <ArticleInfoDisplay
             v-if="props.selectedArticle"
             :article="props.selectedArticle"
