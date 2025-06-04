@@ -92,11 +92,11 @@ const testLogin = async () => {
     toast.add({
       title: "Erfolgreich",
       description: "Test-Anmeldung erfolgreich",
-      color: "green",
+      color: "success",
     });
   } catch (err: any) {
     console.error("❌ Test login failed:", err.message);
-    toast.add(errorMap(err));
+    toast.add(err.message || "Test-Anmeldung fehlgeschlagen");
   } finally {
     isTestLoggingIn.value = false;
   }
@@ -150,7 +150,7 @@ const isDark = computed({
         v-if="user?.mail === 'test@example.com'"
         class="mb-4 flex justify-center"
       >
-        <UBadge color="orange" variant="subtle" size="lg"> Test-Konto </UBadge>
+        <UBadge color="warning" variant="subtle" size="lg"> Test-Konto </UBadge>
       </div>
 
       <div class="space-y-1 text-center text-base">
@@ -163,13 +163,13 @@ const isDark = computed({
       >
         <UButton color="error" @click="logout" label="Logout" />
         <UButton
-          :disabled="user?.hasWebauthn"
+          :disabled="user?.hasWebauthn || user?.mail === 'test@example.com'"
           label="Passkey einrichten"
           @click="signUp"
         />
         <UButton
           color="warning"
-          :disabled="!user?.hasWebauthn"
+          :disabled="!user?.hasWebauthn || user?.mail === 'test@example.com'"
           label="Passkey löschen"
           @click="deleteKey"
         />

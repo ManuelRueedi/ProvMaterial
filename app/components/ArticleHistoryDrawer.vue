@@ -84,53 +84,56 @@ watch(
     :side="isDesktop ? 'right' : 'bottom'"
     :open="props.showDetails"
     @update:open="emit('update:showDetails', $event)"
+    :close="false"
+    :ui="{
+      header: 'hidden',
+    }"
   >
+    <template #header class=""> </template>
     <!-- Hidden title for accessibility -->
     <template #title>
-      <span class="sr-only">Artikelinfo</span>
+      <span class="sr-only hidden">Artikelinfo</span>
     </template>
 
     <!-- Hidden description for accessibility -->
     <template #description>
-      <span class="sr-only"
+      <span class="sr-only hidden"
         >Zeigt Artikeldetails und Verlaufsinformationen an</span
       >
     </template>
 
     <!-- Scrollbarer Haupt-Content -->
-    <template #content>
-      <div class="flex-1 overflow-y-auto p-4 sm:p-6">
-        <!-- Close Button -->
-        <div class="absolute top-5 right-10 z-10 flex shadow-sm">
-          <UButton
-            icon="ic:baseline-close"
-            variant="soft"
-            color="error"
-            size="xl"
-            @click="emit('update:showDetails', false)"
-          />
-        </div>
-
-        <ArticleInfoDisplay
-          v-if="props.selectedArticle"
-          :article="props.selectedArticle"
+    <template #body>
+      <!-- Close Button -->
+      <div class="absolute top-5 right-10 z-10 flex shadow-sm">
+        <UButton
+          icon="ic:baseline-close"
+          variant="soft"
+          color="error"
+          size="xl"
+          @click="emit('update:showDetails', false)"
         />
-        <USeparator label="Verlauf" />
+      </div>
 
-        <!-- Verlauf -->
-        <div class="mt-12">
-          <div v-if="pending" class="flex justify-center">
-            <UButton loading label="Lade Verlauf..." :disabled="true" />
-          </div>
+      <ArticleInfoDisplay
+        v-if="props.selectedArticle"
+        :article="props.selectedArticle"
+      />
+      <USeparator label="Verlauf" />
 
-          <UAlert
-            v-else-if="error"
-            color="error"
-            :title="error.statusMessage ?? 'Fehler'"
-          />
-
-          <HistoryTimeline v-else :history="transformedHistory" />
+      <!-- Verlauf -->
+      <div class="mt-12">
+        <div v-if="pending" class="flex justify-center">
+          <UButton loading label="Lade Verlauf..." :disabled="true" />
         </div>
+
+        <UAlert
+          v-else-if="error"
+          color="error"
+          :title="error.statusMessage ?? 'Fehler'"
+        />
+
+        <HistoryTimeline v-else :history="transformedHistory" />
       </div>
     </template>
   </USlideover>

@@ -12,6 +12,10 @@
     <USlideover
       :side="isDesktop ? 'right' : 'bottom'"
       v-model:open="showDetails"
+      :close="false"
+      :ui="{
+        header: 'hidden',
+      }"
     >
       <!-- Hidden title for accessibility -->
       <template #title>
@@ -24,7 +28,7 @@
           >Detailansicht des Artikels mit Austragemöglichkeit</span
         >
       </template>
-      <template #content>
+      <template #body>
         <div class="absolute top-5 right-10 z-10 flex shadow-sm">
           <UButton
             icon="ic:baseline-close"
