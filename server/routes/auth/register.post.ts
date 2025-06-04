@@ -28,7 +28,7 @@ export default defineWebAuthnRegisterEventHandler({
     }
     // check if the logged in user.id has a row in webauthnCredentials which matches the user id
     const response = await useDrizzle().query.webauthnCredentials.findFirst({
-      where: eq(tables.webauthnCredentials.userId, Number(session.user.userId)),
+      where: eq(tables.webauthnCredentials.userId, session.user.userId),
     });
     if (response) {
       await setUserSession(event, {
@@ -45,16 +45,14 @@ export default defineWebAuthnRegisterEventHandler({
 
   async onSuccess(event, { credential, user }) {
     const session = await requireUserSession(event);
-    await useDrizzle()
-      .insert(tables.webauthnCredentials)
-      .values({
-        id: credential.id,
-        userId: Number(session.user.userId),
-        publicKey: credential.publicKey,
-        counter: credential.counter,
-        backedUp: credential.backedUp,
-        transports: credential.transports,
-      });
+    await useDrizzle().insert(tables.webauthnCredentials).values({
+      id: credential.id,
+      userId: session.user.userId,
+      publicKey: credential.publicKey,
+      counter: credential.counter,
+      backedUp: credential.backedUp,
+      transports: credential.transports,
+    });
     // set the user session with the webauthnID
     await setUserSession(event, {
       user: {

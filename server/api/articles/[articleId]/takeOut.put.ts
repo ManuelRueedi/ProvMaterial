@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { eq, and, isNull, inArray } from "drizzle-orm";
-import { projects } from "~~/server/database/schema";
 import { getRouterParam } from "h3";
+import type { Article, Location, Project } from "@/composables/articles/types";
 
 export default defineEventHandler(async (event) => {
   const db = useDrizzle();

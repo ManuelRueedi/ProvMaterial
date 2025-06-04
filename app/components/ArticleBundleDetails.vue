@@ -5,9 +5,9 @@
       <TransitionGroup name="list" tag="div" class="grid gap-4" appear>
         <UCard
           v-for="(article, index) in articles"
-          :key="article.number"
+          :key="article.id"
           class="group relative overflow-hidden transition-all duration-500 ease-out hover:-translate-y-0.5 hover:shadow-2xl"
-  :style="{
+          :style="{
             animationDelay: `${index * 100}ms`,
             animationDuration: '800ms',
             animationFillMode: 'both',
@@ -34,14 +34,14 @@
 </template>
 
 <script lang="ts" setup>
-import type { TableItem } from "@/composables/articles/types";
+import type { Article } from "@/composables/articles/types";
 
 const cardUi = reactive({
-  root: 'bg-default border border-default rounded-xl shadow-sm hover:shadow-xl transition-shadow duration-300',
+  root: "bg-default border border-default rounded-xl shadow-sm hover:shadow-xl transition-shadow duration-300",
 });
 
 const props = defineProps<{
-  articles: TableItem[];
+  articles: Article[];
 }>();
 
 const emit = defineEmits<{
@@ -51,7 +51,7 @@ const emit = defineEmits<{
 async function handleTakeOut(locationId: number, projectId?: number) {
   if (!props.articles.length) return;
 
-  const articleIds = props.articles.map((article) => article.number);
+  const articleIds = props.articles.map((article) => article.id);
   emit("takeOut", articleIds, locationId, projectId);
 }
 </script>

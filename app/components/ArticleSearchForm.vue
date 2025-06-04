@@ -87,12 +87,11 @@
     >
       Suchen
     </UButton>
-
     <!-- Search Results -->
     <SearchResults
-      v-if="tableItems.length > 0 || tableBundles.length > 0"
-      :items="tableItems"
-      :bundles="tableBundles"
+      v-if="articles.length > 0 || articleBundles.length > 0"
+      :items="articles"
+      :bundles="articleBundles"
       :columns="tableColumns"
       :loading="isLoading"
       @select-article="(row) => $emit('selectArticle', row.original)"
@@ -123,16 +122,16 @@
 
 <script lang="ts" setup>
 import { useConfigurator } from "@/composables/articles/useConfigurator";
-import { TypeEnum, type TableItem } from "@/composables/articles/types";
+import { TypeEnum, type Article } from "@/composables/articles/types";
 import { useArticleSearch } from "@/composables/articles/useArticleSearch";
 import { useSocketSelection } from "@/composables/articles/useSocketSelection";
 
-const emptyResultsUi = reactive({ body: 'text-center space-y-4' });
+const emptyResultsUi = reactive({ body: "text-center space-y-4" });
 
 // Define emits
 const emit = defineEmits<{
-  selectArticle: [article: TableItem];
-  selectBundle: [bundle: TableItem[]];
+  selectArticle: [article: Article];
+  selectBundle: [bundle: Article[]];
 }>();
 
 // Define expose for parent component access
@@ -148,19 +147,21 @@ defineExpose({
 // Table configuration
 const tableColumns = [
   {
-    accessorKey: "number" as keyof TableItem,
+    accessorKey: "id",
     header: "Nummer",
   },
   {
-    accessorKey: "length" as keyof TableItem,
+    accessorKey: "lengthInMeter",
     header: "Länge",
+    cell: ({ row }: any) => `${row.getValue("lengthInMeter")}m`,
   },
   {
-    accessorKey: "locationName" as keyof TableItem,
+    accessorKey: "storageLocation",
     header: "Ort",
+    cell: ({ row }: any) => row.getValue("storageLocation")?.name || "",
   },
   {
-    accessorKey: "storageLocationId" as keyof TableItem,
+    accessorKey: "storageLocationSection",
     header: "Platz",
   },
 ];
@@ -181,8 +182,8 @@ const {
   foundArticles,
   isLoading,
   error,
-  tableItems,
-  tableBundles,
+  articles,
+  articleBundles,
   findArticles,
 } = useArticleSearch();
 

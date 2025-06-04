@@ -1,23 +1,10 @@
 import { ref, computed } from "vue";
 import type {
   Config,
-  ArticleSearchResult,
+  Article,
   ArticleSearchResponse,
-  TableItem,
 } from "@/composables/articles/types";
 import { errorMap } from "@/composables/useFriendlyError";
-
-// Transform article to table item
-const articleToTableItem = (a: ArticleSearchResult): TableItem => ({
-  number: a.id,
-  length: `${a.lengthInMeter}m`,
-  locationName: a.storageLocation.name,
-  storageLocationId: a.storageLocationSection,
-  type: a.type,
-  connector: a.connector,
-  outputs: a.outputs,
-  tags: a.tags,
-});
 
 export function useArticleSearch() {
   const toast = useToast();
@@ -30,17 +17,15 @@ export function useArticleSearch() {
   const isLoading = ref(false);
   const error = ref<string | null>(null);
 
-  // Computed table data
-  const tableItems = computed<TableItem[]>(() => {
+  // Computed article data (no transformation needed)
+  const articles = computed<Article[]>(() => {
     if (!foundArticles.value) return [];
-    return foundArticles.value.items.map(articleToTableItem);
+    return foundArticles.value.items;
   });
 
-  const tableBundles = computed<TableItem[][]>(() => {
+  const articleBundles = computed<Article[][]>(() => {
     if (!foundArticles.value || !("bundles" in foundArticles.value)) return [];
-    return foundArticles.value.bundles.map((bundle) =>
-      bundle.map(articleToTableItem),
-    );
+    return foundArticles.value.bundles;
   });
 
   // Search function
@@ -68,8 +53,8 @@ export function useArticleSearch() {
     foundArticles,
     isLoading,
     error,
-    tableItems,
-    tableBundles,
+    articles,
+    articleBundles,
     findArticles,
   };
 }

@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
+import type { Project } from "@/composables/articles/types";
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event): Promise<Project[]> => {
   const session = requireUserSession(event);
 
   if (!(await session).rights.useArticles) {
@@ -25,7 +26,12 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    return allProjects;
+    // Transform to match Project interface (convert null to undefined)
+    return allProjects.map((project) => ({
+      id: project.id,
+      name: project.name,
+      description: project.description ?? undefined,
+    }));
   } catch (error: any) {
     console.error("Fehler beim Abrufen aller Projekte:", error);
     throw createError({

@@ -1,23 +1,23 @@
-import type { Type } from "@/composables/articles/types";
+import type { Type, Article } from "@/composables/articles/types";
 
 export const useBringBack = (
-  deployedArticles: Ref<any[]>,
+  deployedArticles: Ref<Article[]>,
   selectedArticles: Ref<string[]>,
 ) => {
-  const isArticleSelected = (articleNumber: string): boolean =>
-    selectedArticles.value.includes(articleNumber);
+  const isArticleSelected = (articleId: string): boolean =>
+    selectedArticles.value.includes(articleId);
 
-  const toggleArticleSelection = (articleNumber: string) => {
-    const index = selectedArticles.value.indexOf(articleNumber);
+  const toggleArticleSelection = (articleId: string) => {
+    const index = selectedArticles.value.indexOf(articleId);
     if (index > -1) {
       selectedArticles.value.splice(index, 1);
     } else {
-      selectedArticles.value.push(articleNumber);
+      selectedArticles.value.push(articleId);
     }
   };
 
   const selectAll = () => {
-    selectedArticles.value = deployedArticles.value.map((a) => a.number);
+    selectedArticles.value = deployedArticles.value.map((a) => a.id);
   };
 
   const deselectAll = () => {
@@ -26,8 +26,8 @@ export const useBringBack = (
 
   const selectLocationArticles = (locationName: string) => {
     const locationArticles = deployedArticles.value
-      .filter((a) => a.locationName === locationName)
-      .map((a) => a.number);
+      .filter((a) => a.location && a.location.name === locationName)
+      .map((a) => a.id);
 
     locationArticles.forEach((id) => {
       if (!selectedArticles.value.includes(id)) {
@@ -38,8 +38,11 @@ export const useBringBack = (
 
   const selectTypeArticles = (locationName: string, type: Type) => {
     const typeArticles = deployedArticles.value
-      .filter((a) => a.locationName === locationName && a.type === type)
-      .map((a) => a.number);
+      .filter(
+        (a) =>
+          a.location && a.location.name === locationName && a.type === type,
+      )
+      .map((a) => a.id);
 
     typeArticles.forEach((id) => {
       if (!selectedArticles.value.includes(id)) {
@@ -50,8 +53,8 @@ export const useBringBack = (
 
   const isLocationFullySelected = (locationName: string): boolean => {
     const locationArticles = deployedArticles.value
-      .filter((a) => a.locationName === locationName)
-      .map((a) => a.number);
+      .filter((a) => a.location && a.location.name === locationName)
+      .map((a) => a.id);
 
     return (
       locationArticles.length > 0 &&
@@ -61,8 +64,11 @@ export const useBringBack = (
 
   const isTypeFullySelected = (locationName: string, type: Type): boolean => {
     const typeArticles = deployedArticles.value
-      .filter((a) => a.locationName === locationName && a.type === type)
-      .map((a) => a.number);
+      .filter(
+        (a) =>
+          a.location && a.location.name === locationName && a.type === type,
+      )
+      .map((a) => a.id);
 
     return (
       typeArticles.length > 0 &&
@@ -75,8 +81,11 @@ export const useBringBack = (
     type: Type,
   ): boolean => {
     const typeArticles = deployedArticles.value
-      .filter((a) => a.locationName === locationName && a.type === type)
-      .map((a) => a.number);
+      .filter(
+        (a) =>
+          a.location && a.location.name === locationName && a.type === type,
+      )
+      .map((a) => a.id);
 
     const selectedCount = typeArticles.filter((id) =>
       selectedArticles.value.includes(id),
@@ -87,8 +96,11 @@ export const useBringBack = (
   const toggleTypeSelection = (locationName: string, type: Type) => {
     if (isTypeFullySelected(locationName, type)) {
       const typeArticles = deployedArticles.value
-        .filter((a) => a.locationName === locationName && a.type === type)
-        .map((a) => a.number);
+        .filter(
+          (a) =>
+            a.location && a.location.name === locationName && a.type === type,
+        )
+        .map((a) => a.id);
 
       selectedArticles.value = selectedArticles.value.filter(
         (id) => !typeArticles.includes(id),

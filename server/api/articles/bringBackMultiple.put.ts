@@ -1,6 +1,7 @@
 import { createError, defineEventHandler, readValidatedBody } from "h3";
 import { eq, and, isNull, inArray } from "drizzle-orm";
 import { z } from "zod";
+import type { Article, Location, Project } from "@/composables/articles/types";
 
 const schema = z.object({
   articleIds: z.array(z.string()).min(1).max(100),

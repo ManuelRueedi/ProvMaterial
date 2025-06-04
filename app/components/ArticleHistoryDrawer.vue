@@ -6,12 +6,15 @@ import type { Connector, Type, Tag } from "@/composables/articles/types";
 const props = defineProps<{
   showDetails: boolean;
   selectedArticle: {
-    number: string;
+    id?: string;
+    number?: string;
     type?: Type;
     length?: string;
+    lengthInMeter?: number;
     connector?: Connector;
     outputs?: Partial<Record<Connector, number>>;
     tags?: Tag[];
+    locationName?: string;
     storageLocation?: string;
     storageLocationSection?: number | string;
   } | null;
@@ -31,10 +34,14 @@ const {
   refresh,
 } = useLazyAsyncData<HistoryView[]>(
   "article-history",
-  () =>
-    $fetch<HistoryView[]>(
-      `/api/articles/${encodeURIComponent(props.selectedArticle!.number)}/history`,
-    ),
+  () => {
+    const articleId =
+      props.selectedArticle?.id || props.selectedArticle?.number;
+    if (!articleId) throw new Error("No article ID available");
+    return $fetch<HistoryView[]>(
+      `/api/articles/${encodeURIComponent(articleId)}/history`,
+    );
+  },
   { immediate: false },
 );
 

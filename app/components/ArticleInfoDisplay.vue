@@ -5,7 +5,7 @@
       <div class="flex flex-col gap-3">
         <!-- Main Article Number -->
         <h2 class="text-3xl font-bold">
-          {{ article.number }}
+          {{ articleNumber }}
         </h2>
 
         <!-- Type and Length Group -->
@@ -144,36 +144,55 @@
 
 <script lang="ts" setup>
 import type {
-  TableItem,
+  Article,
   Connector,
   Type,
   Tag,
 } from "@/composables/articles/types";
 
-type Article =
-  | TableItem
+type ArticleDisplayData =
+  | Article
   | {
-      number: string;
+      number?: string;
+      id?: string;
       type?: Type;
       length?: string;
+      lengthInMeter?: number;
       connector?: Connector;
       outputs?: Partial<Record<Connector, number>>;
       tags?: Tag[];
-      storageLocation?: string;
+      locationName?: string;
+      storageLocation?: { name: string } | string;
       storageLocationSection?: number | string;
     };
 
 const props = defineProps<{
-  article: Article;
+  article: ArticleDisplayData;
 }>();
 
 // Computed properties to handle different property names
+const articleNumber = computed(() => {
+  if ("id" in props.article && props.article.id) return props.article.id;
+  if ("number" in props.article && props.article.number)
+    return props.article.number;
+  return "";
+});
+
 const locationName = computed(() => {
   if ("locationName" in props.article) {
     return props.article.locationName;
   }
   if ("storageLocation" in props.article) {
-    return props.article.storageLocation;
+    // Handle both string and object formats
+    if (typeof props.article.storageLocation === "string") {
+      return props.article.storageLocation;
+    }
+    if (
+      typeof props.article.storageLocation === "object" &&
+      props.article.storageLocation?.name
+    ) {
+      return props.article.storageLocation.name;
+    }
   }
   return null;
 });
@@ -193,6 +212,15 @@ const articleType = computed(() => {
 });
 
 const articleLength = computed(() => {
-  return props.article.length || "0m";
+  if ("length" in props.article && props.article.length) {
+    return props.article.length;
+  }
+  if (
+    "lengthInMeter" in props.article &&
+    props.article.lengthInMeter !== undefined
+  ) {
+    return `${props.article.lengthInMeter}m`;
+  }
+  return "0m";
 });
 </script>

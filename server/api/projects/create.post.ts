@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Project } from "@/composables/articles/types";
 
 // Define validation schema for project creation
 const ProjectSchema = z.object({
@@ -8,15 +9,14 @@ const ProjectSchema = z.object({
 
 export type CreateProjectRequest = z.infer<typeof ProjectSchema>;
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event): Promise<Project> => {
   // Check user permissions
   const session = requireUserSession(event);
 
   if (!(await session).rights.useArticles) {
     throw createError({
       statusCode: 403,
-      statusMessage:
-        "Benutzer hat keine Berechtigung auf Projekte zuzugreifen",
+      statusMessage: "Benutzer hat keine Berechtigung auf Projekte zuzugreifen",
     });
   }
 
@@ -50,7 +50,13 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    return newProject[0];
+    // Transform to match Project interface (convert null to undefined)
+    const created = newProject[0]!; // Safe to use ! since we checked length above
+    return {
+      id: created.id,
+      name: created.name,
+      description: created.description ?? undefined,
+    };
   } catch (error: any) {
     console.error("Error creating project:", error);
 

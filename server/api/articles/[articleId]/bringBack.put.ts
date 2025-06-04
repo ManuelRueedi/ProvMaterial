@@ -6,6 +6,7 @@ import {
 } from "h3";
 import { eq, and, isNull, inArray } from "drizzle-orm";
 import { z } from "zod";
+import type { Article, Location, Project } from "@/composables/articles/types";
 
 const schema = z.object({
   additionalArticleIds: z.array(z.string()).max(99).optional(),

@@ -1,4 +1,3 @@
-// ~/schemas/config.ts
 import { z } from "zod";
 
 /**
@@ -58,12 +57,17 @@ export type Config = z.infer<typeof ConfigSchema>;
  * Location information interface
  */
 export interface Location {
-  id: number;
+  id?: number;
   name: string;
   address: string;
-  latitude: number;
-  longitude: number;
-  isStorageLocation: boolean;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface Project {
+  id?: number;
+  name: string;
+  description?: string;
 }
 
 /**
@@ -71,15 +75,17 @@ export interface Location {
  * This is the main type returned by the /api/articles/search endpoint
  * Used by both frontend and backend
  */
-export interface ArticleSearchResult {
+export interface Article {
   id: string;
   type: Type;
+  lengthInMeter: number;
   connector: Connector;
   outputs: Partial<Record<Connector, number>>;
-  lengthInMeter: number;
-  storageLocationSection: string;
   tags: Tag[];
+  location?: Location;
   storageLocation: Location;
+  storageLocationSection: string;
+  project?: Project;
 }
 
 /**
@@ -88,21 +94,5 @@ export interface ArticleSearchResult {
  * Can return either just items or items with bundles
  */
 export type ArticleSearchResponse =
-  | { items: ArticleSearchResult[] }
-  | { items: ArticleSearchResult[]; bundles: ArticleSearchResult[][] };
-
-/**
- * Table item format for frontend display
- * Transformed version of ArticleSearchResult optimized for UI components
- * Used across all frontend components that display article data
- */
-export interface TableItem {
-  number: string; // Article ID (mapped from ArticleSearchResult.id)
-  length: string; // Formatted length with unit (e.g., "12.5m")
-  locationName: string; // Storage location name
-  storageLocationId: string; // Storage section identifier
-  type: Type; // Equipment type
-  connector: Connector; // Connection type
-  outputs: Partial<Record<Connector, number>>; // Available outputs
-  tags: Tag[]; // Special properties/features
-}
+  | { items: Article[] }
+  | { items: Article[]; bundles: Article[][] };

@@ -1,19 +1,13 @@
-import type { Connector, Type, Tag } from "@/composables/articles/types";
+import type {
+  Connector,
+  Type,
+  Tag,
+  Article,
+  Location,
+  Project,
+} from "@/composables/articles/types";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
-
-type APIReturnType = {
-  projectName: string;
-  locationName: string;
-  number: string;
-  length: number;
-  storageLocation: string;
-  storageLocationSection: number;
-  type: Type;
-  connector: Connector;
-  outputs: Partial<Record<Connector, number>>;
-  tags: Tag[];
-};
 
 const querySchema = z.object({
   projectId: z.coerce.number().int().positive().optional(),
@@ -24,7 +18,7 @@ const querySchema = z.object({
     .optional(),
 });
 
-export default defineEventHandler(async (event): Promise<APIReturnType[]> => {
+export default defineEventHandler(async (event): Promise<Article[]> => {
   const session = requireUserSession(event);
 
   if (!(await session).rights.useArticles) {
@@ -100,11 +94,13 @@ export default defineEventHandler(async (event): Promise<APIReturnType[]> => {
             name: true,
           },
         },
-        location: {
-          columns: {
-            name: true,
+        ...(inStorage !== true && {
+          location: {
+            columns: {
+              name: true,
+            },
           },
-        },
+        }),
         project: {
           columns: {
             name: true,
@@ -113,21 +109,33 @@ export default defineEventHandler(async (event): Promise<APIReturnType[]> => {
       },
     });
 
-    // Map DB result to APIReturnType
+    // Map DB result to Article interface
     return (result ?? []).map(
-      (row: any) =>
-        ({
-          projectName: row.project?.name ?? "",
-          locationName: row.location?.name ?? "",
-          number: row.id,
-          length: row.lengthInMeter,
-          storageLocation: row.storageLocation?.name ?? "",
-          storageLocationSection: row.storageLocationSection,
-          type: row.type,
-          connector: row.connector,
-          outputs: row.outputs,
-          tags: row.tags,
-        }) as APIReturnType,
+      (row: any): Article => ({
+        id: row.id,
+        type: row.type,
+        lengthInMeter: row.lengthInMeter,
+        connector: row.connector,
+        outputs: row.outputs,
+        tags: row.tags,
+        ...(inStorage !== true &&
+          row.location && {
+            location: {
+              name: row.location.name,
+              address: "", // Minimal data - not fetched
+            },
+          }),
+        storageLocation: {
+          name: row.storageLocation.name,
+          address: "", // Minimal data - not fetched
+        },
+        storageLocationSection: row.storageLocationSection,
+        ...(row.project && {
+          project: {
+            name: row.project.name,
+          },
+        }),
+      }),
     );
   } catch (error) {
     console.error("Error fetching articles:", error);

@@ -74,17 +74,17 @@ const { isDesktop } = useDevice();
 const toast = useToast();
 
 const slideoverUi = reactive({
-  title: 'text-center text-3xl font-bold',
-  description: 'text-center text-xl',
-  header: 'justify-center py-7',
-  body: 'flex flex-col gap-5 px-4 sm:px-6',
-});
+  title: "text-center text-3xl font-bold",
+  description: "text-center text-xl",
+  header: "justify-center py-7",
+  body: "flex flex-col gap-5 px-4 sm:px-6",
+} as const);
 
 const slideoverClose = reactive({
-  color: 'primary',
-  variant: 'solid',
-  size: 'xl',
-});
+  color: "primary" as const,
+  variant: "solid" as const,
+  size: "xl" as const,
+} as const);
 
 // Two-way binding for open state
 const localOpen = computed({

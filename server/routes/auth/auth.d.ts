@@ -1,6 +1,6 @@
 declare module "#auth-utils" {
   interface User {
-    userId: string;
+    userId: number;
     firstName: string;
     lastName: string;
     mail: string;
@@ -19,8 +19,8 @@ declare module "#auth-utils" {
   }
 
   interface SecureSessionData {
-    microsoftID: string;
-    webauthnID: string;
+    microsoftId: string;
+    webauthnId: string;
   }
 }
 

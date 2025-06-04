@@ -12,9 +12,9 @@
 </template>
 
 <script lang="ts" setup>
-import type { TableItem } from "@/composables/articles/types";
+import type { Article } from "@/composables/articles/types";
 const props = defineProps<{
-  article: TableItem | null;
+  article: Article | null;
 }>();
 
 const emit = defineEmits<{
@@ -24,6 +24,6 @@ const emit = defineEmits<{
 async function handleTakeOut(locationId: number, projectId?: number) {
   if (!props.article) return;
 
-  emit("takeOut", props.article.number, locationId, projectId);
+  emit("takeOut", props.article.id, locationId, projectId);
 }
 </script>

@@ -1,35 +1,68 @@
 <template>
-  <div class="relative">
-    <div class="absolute top-0 z-10 w-full">
-      <div class="flex flex-col items-center">
-        <p class="rounded-b-2xl bg-neutral-900 px-3 pb-2 text-neutral-50">
-          {{ selectedConstraints.label }}
-        </p>
-        <p class="error rounded-2xl bg-neutral-900 px-3">{{ error }}</p>
-      </div>
-    </div>
-    <div class="relative">
-      <u-button
-        color="neutral"
-        class="absolute bottom-5 left-5 z-10 shadow-xl"
-        @click="toggleConstraint"
-        size="lg"
-        icon="ic:baseline-cameraswitch"
-      />
-      <qrcode-stream
-        :constraints="selectedConstraints.constraints"
-        :track="paintOutline"
-        @error="onError"
-        @detect="onDetect"
-        @camera-on="onCameraReady"
-      />
-    </div>
+  <div>
+    <UModal
+      v-model:open="isModalOpen"
+      @after:leave="handleModalLeave"
+      title="QrCode Scanner"
+      description="scanning.."
+    >
+      <template #content>
+        <UCard>
+          <div class="relative">
+            <div class="absolute top-0 z-10 w-full">
+              <div class="flex flex-col items-center">
+                <p
+                  class="rounded-b-2xl bg-neutral-900 px-3 pb-2 text-neutral-50"
+                >
+                  {{ selectedConstraints.label }}
+                </p>
+                <p class="error rounded-2xl bg-neutral-900 px-3">{{ error }}</p>
+              </div>
+            </div>
+            <div class="relative">
+              <u-button
+                color="neutral"
+                class="absolute bottom-5 left-5 z-10 shadow-xl"
+                @click="toggleConstraint"
+                size="lg"
+                icon="ic:baseline-cameraswitch"
+              />
+              <qrcode-stream
+                :constraints="selectedConstraints.constraints"
+                :track="paintOutline"
+                @error="onError"
+                @detect="onDetect"
+                @camera-on="onCameraReady"
+              />
+            </div>
+          </div>
+          <USelect
+            v-if="ScannedQrCodes.length > 0"
+            class="mt-3 w-full"
+            v-model="selectedQrCodes"
+            multiple
+            :items="ScannedQrCodes"
+          />
+        </UCard>
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { QrcodeStream } from "vue-qrcode-reader";
 import type { DetectedBarcode, EmittedError } from "vue-qrcode-reader";
+
+// Device detection and modal state
+const { isMobile } = useDevice();
+const showQrCodeIcon = useShowQrCodeIcon();
+const isModalOpen = computed({
+  get: () => showQrCodeIcon.value,
+  set: (value) => (showQrCodeIcon.value = value),
+});
+
+// Modal UI configuration
+const modalUi = reactive({ header: "hidden" });
 
 /*** detection handling ***/
 
@@ -53,6 +86,13 @@ function onDetect(detectedCodes: DetectedBarcode[]) {
     }
   });
 }
+
+// Modal leave handler
+const handleModalLeave = () => {
+  if (selectedQrCodes.value.length > 0) {
+    //navigateTo("/articles/scannedArticles");
+  }
+};
 
 /*** select camera ***/
 

@@ -37,11 +37,14 @@ export default defineOAuthMicrosoftEventHandler({
       ) {
         console.log("User found in database, updating it");
         // Update the user in the database
-        await useDrizzle().update(tables.users).set({
-          firstName: user.givenName,
-          lastName: user.surname,
-          jobtitle: user.jobTitle,
-        });
+        await useDrizzle()
+          .update(tables.users)
+          .set({
+            firstName: user.givenName,
+            lastName: user.surname,
+            jobtitle: user.jobTitle,
+          })
+          .where(eq(tables.users.microsoftID, user.id));
       }
     }
     // wait till db is updated then get the user from the database
@@ -62,7 +65,7 @@ export default defineOAuthMicrosoftEventHandler({
           mail: dbUser.mail,
           jobtitle: dbUser.jobtitle,
           hasWebauthn: (await useDrizzle().query.webauthnCredentials.findFirst({
-            where: eq(tables.webauthnCredentials.userId, Number(dbUser.id)),
+            where: eq(tables.webauthnCredentials.userId, dbUser.id),
           }))
             ? true
             : false,
@@ -76,7 +79,7 @@ export default defineOAuthMicrosoftEventHandler({
           removeArticles: dbUser.rights?.removeArticles ?? false,
         },
         secure: {
-          microsoftID: dbUser.microsoftID,
+          microsoftId: dbUser.microsoftID,
         },
       });
       return sendRedirect(event, "/");

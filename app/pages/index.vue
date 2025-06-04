@@ -8,7 +8,12 @@ import {
 import { upperFirst } from "scule";
 const { isDesktop } = useDevice();
 import type { TableColumn, TableRow } from "@nuxt/ui";
-import type { Connector, Type, Tag } from "@/composables/articles/types";
+import type {
+  Connector,
+  Type,
+  Tag,
+  Article,
+} from "@/composables/articles/types";
 
 const tableUi = reactive({
   root: "min-w-full",
@@ -32,14 +37,18 @@ var { data } = await useFetch("/api/articles/getAll", {
       return [];
     }
     return apiArticles.map((apiArticle) => {
-      // Perform the transformation for each article
+      // Transform Article interface to ArticleView for the table
       const articleView = {
-        ...apiArticle,
-        projectName:
-          apiArticle.projectName === ""
-            ? "Ohne Project"
-            : apiArticle.projectName,
-        length: `${apiArticle.length}m`, // Transform length to string with unit
+        projectName: apiArticle.project?.name || "Ohne Project",
+        locationName: apiArticle.location?.name || "Unbekannt",
+        number: apiArticle.id,
+        length: `${apiArticle.lengthInMeter}m`, // Transform length to string with unit
+        storageLocation: apiArticle.storageLocation.name,
+        storageLocationSection: apiArticle.storageLocationSection,
+        type: apiArticle.type,
+        connector: apiArticle.connector,
+        outputs: apiArticle.outputs,
+        tags: apiArticle.tags,
       };
       return articleView;
     });
@@ -57,7 +66,7 @@ type ArticleView = {
   number: string;
   length: string; // e.g. "12m"
   storageLocation: string;
-  storageLocationSection?: number;
+  storageLocationSection: string;
   type: Type;
   connector: Connector;
   outputs: Partial<Record<Connector, number>>;
@@ -203,91 +212,90 @@ const globalFilter = ref("");
 </script>
 
 <template>
-  <div class="flex w-full flex-col">
-    <div class="border-accented flex justify-center gap-2 border-b px-4 py-3.5">
-      <UInput v-model="globalFilter" class="max-w-sm" placeholder="Filter..." />
-      <UDropdownMenu
-        :items="
-          table?.tableApi
-            ?.getAllColumns()
-            .filter((column) => column.getCanHide())
-            .map((column) => ({
-              label: upperFirst(column.id),
-              type: 'checkbox' as const,
-              checked: column.getIsVisible(),
-              onUpdateChecked(checked: boolean) {
-                table?.tableApi
-                  ?.getColumn(column.id)
-                  ?.toggleVisibility(!!checked);
-              },
-              onSelect(e?: Event) {
-                e?.preventDefault();
-              },
-            }))
-        "
-        :content="{ align: 'end' }"
-      >
-        <UButton
-          label="Spalten"
-          color="neutral"
-          variant="outline"
-          trailing-icon="ic:baseline-arrow-downward"
-        />
-      </UDropdownMenu>
-    </div>
+  <h1 class="my-5 text-center text-3xl font-bold">Artikel übersicht</h1>
+  <div class="border-accented flex justify-center gap-2 border-b px-4 py-3.5">
+    <UInput v-model="globalFilter" class="max-w-sm" placeholder="Filter..." />
+    <UDropdownMenu
+      :items="
+        table?.tableApi
+          ?.getAllColumns()
+          .filter((column) => column.getCanHide())
+          .map((column) => ({
+            label: upperFirst(column.id),
+            type: 'checkbox' as const,
+            checked: column.getIsVisible(),
+            onUpdateChecked(checked: boolean) {
+              table?.tableApi
+                ?.getColumn(column.id)
+                ?.toggleVisibility(!!checked);
+            },
+            onSelect(e?: Event) {
+              e?.preventDefault();
+            },
+          }))
+      "
+      :content="{ align: 'end' }"
+    >
+      <UButton
+        label="Spalten"
+        color="neutral"
+        variant="outline"
+        trailing-icon="ic:baseline-arrow-downward"
+      />
+    </UDropdownMenu>
+  </div>
 
-    <!-- Wrap table with ClientOnly to prevent server-side rendering -->
-    <ClientOnly>
-      <UTable
-        sticky
-        ref="table"
-        v-model:column-visibility="columnVisibility"
-        @select="openDetails"
-        :data="data"
-        :columns="columns"
-        v-model:global-filter="globalFilter"
-        v-model:column-pinning="columnPinning"
-        :grouping="['projectName', 'locationName']"
-        :grouping-options="grouping_options"
-        :ui="tableUi"
-      >
-        <template #title-cell="{ row }">
-          <div v-if="row.getIsGrouped()" class="flex items-center">
-            <span
-              class="inline-block"
-              :style="{ width: `calc(${row.depth} * 1rem)` }"
-            />
+  <!-- Wrap table with ClientOnly to prevent server-side rendering -->
+  <ClientOnly>
+    <UTable
+      sticky
+      ref="table"
+      v-model:column-visibility="columnVisibility"
+      @select="openDetails"
+      :data="data"
+      :columns="columns"
+      v-model:global-filter="globalFilter"
+      v-model:column-pinning="columnPinning"
+      :grouping="['projectName', 'locationName']"
+      :grouping-options="grouping_options"
+      :ui="tableUi"
+    >
+      <template #title-cell="{ row }">
+        <div v-if="row.getIsGrouped()" class="flex items-center">
+          <span
+            class="inline-block"
+            :style="{ width: `calc(${row.depth} * 1rem)` }"
+          />
 
-            <UButton
-              variant="outline"
-              color="neutral"
-              class="mr-2"
-              size="xs"
-              :icon="
-                row.getIsExpanded() ? 'ic:baseline-minus' : 'ic:baseline-plus'
-              "
-              @click="row.toggleExpanded()"
-            />
-            <strong v-if="row.groupingColumnId === 'projectName'">{{
-              row.original.projectName
-            }}</strong>
-            <strong v-else-if="row.groupingColumnId === 'locationName'">{{
-              row.original.locationName
-            }}</strong>
-          </div>
-        </template>
-        <template #empty>
-          <UCard>Keine Daten</UCard>
-        </template>
-      </UTable>
-
-      <template #fallback>
-        <div class="flex items-center justify-center p-12">
-          <UButton loading label="Tabelle wird geladen..." :disabled="true" />
+          <UButton
+            variant="outline"
+            color="neutral"
+            class="mr-2"
+            size="xs"
+            :icon="
+              row.getIsExpanded() ? 'ic:baseline-minus' : 'ic:baseline-plus'
+            "
+            @click="row.toggleExpanded()"
+          />
+          <strong v-if="row.groupingColumnId === 'projectName'">{{
+            row.original.projectName
+          }}</strong>
+          <strong v-else-if="row.groupingColumnId === 'locationName'">{{
+            row.original.locationName
+          }}</strong>
         </div>
       </template>
-    </ClientOnly>
-  </div>
+      <template #empty>
+        <UCard>Keine Daten</UCard>
+      </template>
+    </UTable>
+
+    <template #fallback>
+      <div class="flex items-center justify-center p-12">
+        <UButton loading label="Tabelle wird geladen..." :disabled="true" />
+      </div>
+    </template>
+  </ClientOnly>
   <ArticleHistoryDrawer
     v-model:showDetails="showDetails"
     :selectedArticle="selectedArticle"

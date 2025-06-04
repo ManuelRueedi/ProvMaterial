@@ -86,7 +86,7 @@ export default defineWebAuthnAuthenticateEventHandler({
         removeArticles: dbUser.rights?.removeArticles ?? false,
       },
       secure: {
-        webauthnID: credential.id,
+        webauthnId: credential.id,
       },
     });
   },

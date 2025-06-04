@@ -41,11 +41,11 @@
 </template>
 
 <script lang="ts" setup>
-import type { TableItem } from "@/composables/articles/types";
+import type { Article } from "@/composables/articles/types";
 
 interface Props {
-  items: TableItem[];
-  bundles: TableItem[][];
+  items: Article[];
+  bundles: Article[][];
   columns: any[];
   loading: boolean;
 }
@@ -53,11 +53,11 @@ interface Props {
 defineProps<Props>();
 
 const emit = defineEmits<{
-  selectArticle: [row: { original: TableItem }];
-  selectBundle: [bundle: TableItem[]];
+  selectArticle: [row: { original: Article }];
+  selectBundle: [bundle: Article[]];
 }>();
 
-const handleSelectAllFromBundle = (bundle: TableItem[]) => {
+const handleSelectAllFromBundle = (bundle: Article[]) => {
   emit("selectBundle", bundle);
 };
 </script>

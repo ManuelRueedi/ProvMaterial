@@ -1,4 +1,5 @@
 <template>
+  <h1 class="my-5 text-center text-3xl font-bold">Artikel auslagern</h1>
   <!-- Article Search Form Component -->
   <ArticleSearchForm
     ref="searchFormRef"
@@ -46,7 +47,7 @@
     >
       <template #title> {{ selectedBundle?.length }} Artikel </template>
       <template #description>
-        {{ selectedBundle?.map((article) => article.number).join(", ") }}
+        {{ selectedBundle?.map((article) => article.id).join(", ") }}
       </template>
       <template #body>
         <ArticleBundleDetails
@@ -59,23 +60,23 @@
 </template>
 
 <script lang="ts" setup>
-import type { TableItem } from "@/composables/articles/types";
+import type { Article } from "@/composables/articles/types";
 
 const { isDesktop } = useDevice();
 
 const toast = useToast();
 
 const bundleClose = reactive({
-  color: 'primary',
-  variant: 'solid',
-  size: 'xl',
+  color: "primary" as const,
+  variant: "solid" as const,
+  size: "xl" as const,
 });
 
 const bundleUi = reactive({
-  title: 'text-center text-3xl font-bold',
-  description: 'text-center text-2xl ',
-  header: 'justify-center py-7',
-  body: 'flex flex-col gap-5',
+  title: "text-center text-3xl font-bold",
+  description: "text-center text-2xl ",
+  header: "justify-center py-7",
+  body: "flex flex-col gap-5",
 });
 
 // Template ref for the search form component
@@ -117,16 +118,16 @@ async function handleTakeOut(
 }
 
 const showDetails = ref(false);
-const selectedArticle = ref<TableItem | null>(null);
+const selectedArticle = ref<Article | null>(null);
 const showBundleDetails = ref(false);
-const selectedBundle = ref<TableItem[] | null>(null);
+const selectedBundle = ref<Article[] | null>(null);
 
-function openDetails(article: TableItem) {
+function openDetails(article: Article) {
   selectedArticle.value = article;
   showDetails.value = true;
 }
 
-function openBundleDetails(bundle: TableItem[]) {
+function openBundleDetails(bundle: Article[]) {
   selectedBundle.value = bundle;
   showBundleDetails.value = true;
 }
