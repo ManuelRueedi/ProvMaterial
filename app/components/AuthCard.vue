@@ -65,6 +65,43 @@ const deleteKey = async () => {
   }
 };
 
+/** Test login functionality */
+const testPassword = ref("");
+const isTestLoginVisible = ref(false);
+const isTestLoggingIn = ref(false);
+
+const testLogin = async () => {
+  if (!testPassword.value) {
+    toast.add({
+      title: "Fehler",
+      description: "Bitte geben Sie das Test-Passwort ein",
+      color: "red",
+    });
+    return;
+  }
+
+  isTestLoggingIn.value = true;
+  try {
+    await $fetch("/auth/testLogin", {
+      method: "POST",
+      body: { password: testPassword.value },
+    });
+    await fetchUserSession();
+    testPassword.value = "";
+    isTestLoginVisible.value = false;
+    toast.add({
+      title: "Erfolgreich",
+      description: "Test-Anmeldung erfolgreich",
+      color: "green",
+    });
+  } catch (err: any) {
+    console.error("❌ Test login failed:", err.message);
+    toast.add(errorMap(err));
+  } finally {
+    isTestLoggingIn.value = false;
+  }
+};
+
 const colorMode = useColorMode();
 const isDark = computed({
   get() {
@@ -108,6 +145,14 @@ const isDark = computed({
         Hallo, {{ user?.firstName }}!
       </h1>
 
+      <!-- Test Account Badge -->
+      <div
+        v-if="user?.mail === 'test@example.com'"
+        class="mb-4 flex justify-center"
+      >
+        <UBadge color="orange" variant="subtle" size="lg"> Test-Konto </UBadge>
+      </div>
+
       <div class="space-y-1 text-center text-base">
         <p>{{ user?.jobtitle }}</p>
         <p>{{ user?.mail }}</p>
@@ -150,6 +195,51 @@ const isDark = computed({
           @click="signIn"
           label="Login mit WebAuthn"
         />
+
+        <!-- Test Login Section -->
+        <div class="mt-4 w-full pt-4">
+          <div v-if="!isTestLoginVisible" class="text-center">
+            <UButton
+              variant="outline"
+              color="neutral"
+              size="sm"
+              @click="isTestLoginVisible = true"
+              label="Test-Anmeldung"
+              icon="i-lucide-key"
+            />
+          </div>
+
+          <div v-else class="space-y-3">
+            <UFormField label="Test-Passwort">
+              <UInput
+                v-model="testPassword"
+                type="password"
+                placeholder="Test-Passwort eingeben"
+                @keyup.enter="testLogin"
+              />
+            </UFormField>
+            <div class="flex gap-2">
+              <UButton
+                :loading="isTestLoggingIn"
+                @click="testLogin"
+                label="Anmelden"
+                size="sm"
+                class="flex-1"
+              />
+              <UButton
+                variant="outline"
+                @click="
+                  isTestLoginVisible = false;
+                  testPassword = '';
+                "
+                label="Abbrechen"
+                size="sm"
+                class="flex-1"
+              />
+            </div>
+            <p class="text-center text-xs text-gray-500">Nur für Testzwecke</p>
+          </div>
+        </div>
       </div>
     </UContainer>
   </UCard>

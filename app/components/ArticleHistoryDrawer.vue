@@ -99,19 +99,18 @@ watch(
 
     <!-- Scrollbarer Haupt-Content -->
     <template #content>
-      <!-- Close Button -->
-      <div class="absolute top-5 right-10 z-10 flex shadow-sm">
-        <UButton
-          icon="ic:baseline-close"
-          variant="soft"
-          color="error"
-          size="xl"
-          @click="emit('update:showDetails', false)"
-        />
-      </div>
+      <div class="flex-1 overflow-y-auto p-4 sm:p-6">
+        <!-- Close Button -->
+        <div class="absolute top-5 right-10 z-10 flex shadow-sm">
+          <UButton
+            icon="ic:baseline-close"
+            variant="soft"
+            color="error"
+            size="xl"
+            @click="emit('update:showDetails', false)"
+          />
+        </div>
 
-      <!-- Scrollable Content -->
-      <div class="h-full overflow-y-auto px-4 pt-5 pb-4">
         <ArticleInfoDisplay
           v-if="props.selectedArticle"
           :article="props.selectedArticle"
