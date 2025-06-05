@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const toast = useToast();
+const config = useRuntimeConfig();
 
 const {
   loggedIn,
@@ -75,7 +76,7 @@ const testLogin = async () => {
     toast.add({
       title: "Fehler",
       description: "Bitte geben Sie das Test-Passwort ein",
-      color: "red",
+      color: "error",
     });
     return;
   }
@@ -95,8 +96,15 @@ const testLogin = async () => {
       color: "success",
     });
   } catch (err: any) {
-    console.error("❌ Test login failed:", err.message);
-    toast.add(err.message || "Test-Anmeldung fehlgeschlagen");
+    console.error("❌ Test login failed:", err);
+    toast.add({
+      title: "Fehler",
+      description:
+        err?.data?.statusMessage ||
+        err?.statusMessage ||
+        "Test-Anmeldung fehlgeschlagen",
+      color: "error",
+    });
   } finally {
     isTestLoggingIn.value = false;
   }
@@ -197,7 +205,7 @@ const isDark = computed({
         />
 
         <!-- Test Login Section -->
-        <div class="mt-4 w-full pt-4">
+        <div v-if="config.public.testLoginEnabled" class="mt-4 w-full pt-4">
           <div v-if="!isTestLoginVisible" class="text-center">
             <UButton
               variant="outline"
@@ -237,7 +245,7 @@ const isDark = computed({
                 class="flex-1"
               />
             </div>
-            <p class="text-center text-xs text-gray-500">Nur für Testzwecke</p>
+            <p class="text-muted text-center text-xs">Nur für Testzwecke</p>
           </div>
         </div>
       </div>

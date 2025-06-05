@@ -87,6 +87,7 @@ watch(
     :close="false"
     :ui="{
       header: 'hidden',
+      body: 'flex-1 overflow-y-auto p-4 sm:p-6 overscroll-behavior-none',
     }"
   >
     <template #header class=""> </template>
@@ -138,3 +139,11 @@ watch(
     </template>
   </USlideover>
 </template>
+
+<style scoped>
+/* Ensure consistent overscroll behavior across browsers */
+:deep(.overflow-y-auto) {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+</style>

@@ -65,5 +65,8 @@ export default defineNuxtConfig({
       // provider in lowercase (github, google, etc.)
       microsoft: {},
     },
+    public: {
+      testLoginEnabled: process.env.NUXT_TEST_LOGIN_ENABLED === "true",
+    },
   },
 });
