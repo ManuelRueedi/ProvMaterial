@@ -6,10 +6,10 @@
     <UCard v-if="items.length" class="h-fit w-full max-w-xl shadow-sm">
       <UTable
         class="w-full"
-        @select="$emit('selectArticle', $event)"
         :loading="loading"
         :columns="columns"
         :data="items"
+        @select="$emit('selectArticle', $event)"
       />
     </UCard>
 
@@ -21,10 +21,10 @@
         class="flex w-full max-w-xl flex-col shadow-sm"
       >
         <UTable
-          @select="$emit('selectArticle', $event)"
           :loading="loading"
           :columns="columns"
           :data="bundle"
+          @select="$emit('selectArticle', $event)"
         />
 
         <template #footer>

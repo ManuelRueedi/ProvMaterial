@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
 
   const type = body.type;
 
-  var searchQuery;
+  let searchQuery;
   const inStorage = eq(articles.locationId, articles.storageLocationId);
 
   if (body.ampacity !== null) {

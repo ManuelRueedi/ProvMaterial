@@ -11,7 +11,7 @@
     >
       <slot></slot>
     </UBadge>
-    <USelect class="flex-2/3" :items="items" v-model="innerValue" />
+    <USelect v-model="innerValue" class="flex-2/3" :items="items" />
   </div>
 </template>
 

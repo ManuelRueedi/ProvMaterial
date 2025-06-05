@@ -24,7 +24,7 @@
       v-else
       v-model="selectedProject"
       :items="projects"
-      labelKey="name"
+      label-key="name"
       placeholder="Wählen Sie ein Projekt..."
       searchable
       class="w-full max-w-md"
@@ -52,20 +52,20 @@
         </div>
         <div class="flex gap-2">
           <UButton
-            @click="addScannedToSelection"
             color="primary"
             :disabled="ScannedQrCodes.length === 0"
             icon="i-heroicons-plus"
             size="sm"
+            @click="addScannedToSelection"
           >
             Zur Auswahl hinzufügen
           </UButton>
           <UButton
-            @click="clearScannedCodes"
             color="neutral"
             variant="outline"
             icon="i-heroicons-trash"
             size="sm"
+            @click="clearScannedCodes"
           >
             Codes löschen
           </UButton>
@@ -81,18 +81,18 @@
         <h2 class="text-xl font-semibold">Ausgelagerte Artikel</h2>
         <div class="flex gap-2">
           <UButton
-            @click="selectAll"
             variant="outline"
             size="sm"
             :disabled="!deployedArticles.length"
+            @click="selectAll"
           >
             Alle auswählen
           </UButton>
           <UButton
-            @click="deselectAll"
             variant="outline"
             size="sm"
             :disabled="selectedArticles.length === 0"
+            @click="deselectAll"
           >
             Auswahl aufheben
           </UButton>
@@ -156,10 +156,10 @@
             />
           </div>
           <UButton
-            @click="selectLocationArticles(location.locationName)"
             variant="outline"
             size="sm"
             :disabled="isLocationFullySelected(location.locationName)"
+            @click="selectLocationArticles(location.locationName)"
           >
             Alle von hier
           </UButton>
@@ -185,13 +185,13 @@
                   />
                 </div>
                 <UButton
-                  @click="
-                    selectTypeArticles(location.locationName, typeGroup.type)
-                  "
                   variant="ghost"
                   size="sm"
                   :disabled="
                     isTypeFullySelected(location.locationName, typeGroup.type)
+                  "
+                  @click="
+                    selectTypeArticles(location.locationName, typeGroup.type)
                   "
                 >
                   Alle auswählen
@@ -302,12 +302,12 @@
         {{ selectedArticles.length }} Artikel ausgewählt
       </span>
       <UButton
-        @click="bringBackSelected"
         color="primary"
         size="lg"
         :loading="bringingBack"
         :disabled="selectedArticles.length === 0"
         icon="i-heroicons-archive-box-arrow-down"
+        @click="bringBackSelected"
       >
         Einlagern
       </UButton>

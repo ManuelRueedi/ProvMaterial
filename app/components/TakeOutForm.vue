@@ -3,12 +3,12 @@
     <div class="flex flex-col gap-5 px-3">
       <div class="flex flex-row justify-center gap-1">
         <USelectMenu
+          v-model="selectedProject"
           class="w-4/4"
           size="lg"
           :items="projects"
-          labelKey="name"
+          label-key="name"
           :loading="projectsPending"
-          v-model="selectedProject"
           placeholder="Projekt"
         >
         </USelectMenu>
@@ -26,12 +26,12 @@
 
       <div class="flex flex-row justify-center gap-1">
         <USelectMenu
+          v-model="selectedLocation"
           class="w-3/4"
           size="lg"
           :items="locations"
-          labelKey="name"
+          label-key="name"
           :loading="locationsPending"
-          v-model="selectedLocation"
           placeholder="Standort"
         >
         </USelectMenu>
@@ -62,8 +62,8 @@
       <UButton
         size="xl"
         :disabled="!selectedLocation || disabled"
-        @click="handleTakeOut"
         class="mt-6 flex w-full justify-center"
+        @click="handleTakeOut"
       >
         {{ buttonText || "Austragen" }}
       </UButton>

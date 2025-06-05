@@ -1,10 +1,10 @@
 <template>
   <USlideover
     :open="localOpen"
-    @update:open="localOpen = $event"
     :side="isDesktop ? 'right' : 'bottom'"
     :ui="slideoverUi"
     :close="slideoverClose"
+    @update:open="localOpen = $event"
   >
     <template #title>
       <h1>Projekt erstellen</h1>
@@ -23,10 +23,10 @@
           <UInput
             v-model="formData.name"
             placeholder="Projektname"
-            @blur="validateName"
             :status="validationErrors.name ? 'error' : undefined"
             size="xl"
             class="w-full"
+            @blur="validateName"
           />
           <p v-if="validationErrors.name" class="mt-1 text-xs text-red-500">
             {{ validationErrors.name }}

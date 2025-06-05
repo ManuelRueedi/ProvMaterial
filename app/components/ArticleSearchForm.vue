@@ -6,18 +6,18 @@
     >
       <!-- Type Selection -->
       <labeledSelection
+        v-model="config.type"
         icon="ic:baseline-view-in-ar"
         :items="TypeEnum.options"
-        v-model="config.type"
       >
         Typ
       </labeledSelection>
 
       <!-- Ampacity Selection -->
       <labeledSelection
+        v-model="config.ampacity"
         icon="ic:baseline-electric-bolt"
         :items="ampacityOptions"
-        v-model="config.ampacity"
       >
         Nennstrom
       </labeledSelection>
@@ -25,9 +25,9 @@
       <!-- Connector Selection -->
       <labeledSelection
         v-if="connectorOptions.length"
+        v-model="config.connector"
         icon="ic:baseline-power"
         :items="connectorOptions"
-        v-model="config.connector"
       >
         Anschluss
       </labeledSelection>
@@ -35,19 +35,19 @@
       <!-- Length Input -->
       <SearchFormField icon="ic:baseline-settings-ethernet" label="Länge">
         <UInputNumber
+          v-model="config.length"
           class="flex-2/3"
           :step="5"
           :min="0"
           :max="250"
-          v-model="config.length"
         />
       </SearchFormField>
 
       <!-- Tags Selection -->
       <SearchFormField v-if="tagsEnabled" icon="ic:baseline-tag" label="Tags">
         <USelect
-          class="flex-2/3"
           v-model="config.tags"
+          class="flex-2/3"
           multiple
           :items="tagsOptions"
         />
@@ -56,9 +56,9 @@
       <!-- Sockets Configuration -->
       <SocketsConfiguration
         v-if="socketsEnabled"
-        :options="socketsOptions"
         v-model:selected="selectedSocket"
         v-model:number="selectedSocketNumber"
+        :options="socketsOptions"
         @add="handleAddSocket"
       />
     </div>

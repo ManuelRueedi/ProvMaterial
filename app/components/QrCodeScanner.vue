@@ -2,9 +2,9 @@
   <div>
     <UModal
       v-model:open="isModalOpen"
-      @after:leave="handleModalLeave"
       title="QrCode Scanner"
       description="scanning.."
+      @after:leave="handleModalLeave"
     >
       <template #content>
         <UCard>
@@ -23,9 +23,9 @@
               <u-button
                 color="neutral"
                 class="absolute bottom-5 left-5 z-10 shadow-xl"
-                @click="toggleConstraint"
                 size="lg"
                 icon="ic:baseline-cameraswitch"
+                @click="toggleConstraint"
               />
               <qrcode-stream
                 :constraints="selectedConstraints.constraints"
@@ -38,8 +38,8 @@
           </div>
           <USelect
             v-if="ScannedQrCodes.length > 0"
-            class="mt-3 w-full"
             v-model="selectedQrCodes"
+            class="mt-3 w-full"
             multiple
             :items="ScannedQrCodes"
           />

@@ -12,9 +12,9 @@ type HistoryView = {
 };
 
 const timelineCardUi = reactive({
-  root: 'rounded-xl overflow-hidden',
-  header: 'px-6 py-4',
-  body: 'px-6 pb-6',
+  root: "rounded-xl overflow-hidden",
+  header: "px-6 py-4",
+  body: "px-6 pb-6",
 });
 
 const props = defineProps<{

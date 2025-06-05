@@ -6,7 +6,6 @@ import {
   type GroupingOptions,
 } from "@tanstack/vue-table";
 import { upperFirst } from "scule";
-const { isDesktop } = useDevice();
 import type { TableColumn, TableRow } from "@nuxt/ui";
 import type {
   Connector,
@@ -14,6 +13,7 @@ import type {
   Tag,
   Article,
 } from "@/composables/articles/types";
+const { isDesktop } = useDevice();
 
 const tableUi = reactive({
   root: "min-w-full",
@@ -28,7 +28,7 @@ const selectedArticle = ref<ArticleView | null>(null);
 const columnVisibility = ref({});
 
 // Change to client-side only data fetching
-var { data } = await useFetch("/api/articles/getAll", {
+const { data } = await useFetch("/api/articles/getAll", {
   key: "ArticleData",
   lazy: true,
   server: false, // Only fetch on client side to avoid hydration mismatch
@@ -248,17 +248,17 @@ const globalFilter = ref("");
   <!-- Wrap table with ClientOnly to prevent server-side rendering -->
   <ClientOnly>
     <UTable
-      sticky
       ref="table"
       v-model:column-visibility="columnVisibility"
-      @select="openDetails"
-      :data="data"
-      :columns="columns"
       v-model:global-filter="globalFilter"
       v-model:column-pinning="columnPinning"
+      sticky
+      :data="data"
+      :columns="columns"
       :grouping="['projectName', 'locationName']"
       :grouping-options="grouping_options"
       :ui="tableUi"
+      @select="openDetails"
     >
       <template #title-cell="{ row }">
         <div v-if="row.getIsGrouped()" class="flex items-center">
@@ -297,7 +297,7 @@ const globalFilter = ref("");
     </template>
   </ClientOnly>
   <ArticleHistoryDrawer
-    v-model:showDetails="showDetails"
-    :selectedArticle="selectedArticle"
+    v-model:show-details="showDetails"
+    :selected-article="selectedArticle"
   />
 </template>

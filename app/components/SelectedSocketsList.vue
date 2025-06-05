@@ -6,10 +6,10 @@
       class="flex w-full max-w-xl gap-2 justify-self-center px-10 pb-2"
     >
       <UButton
-        @click="$emit('remove', key)"
         class="min-w-30 flex-1/3 justify-center"
         color="error"
         icon="ic:baseline-remove"
+        @click="$emit('remove', key)"
       />
       <UBadge color="neutral" class="flex-2/3 justify-center">
         {{ value }} X {{ key }}

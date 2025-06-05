@@ -140,8 +140,8 @@ const isDark = computed({
             color="neutral"
             variant="ghost"
             size="xl"
-            @click="isDark = !isDark"
             background="primary"
+            @click="isDark = !isDark"
           />
 
           <template #fallback>
@@ -169,7 +169,7 @@ const isDark = computed({
       <div
         class="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center"
       >
-        <UButton color="error" @click="logout" label="Logout" />
+        <UButton color="error" label="Logout" @click="logout" />
         <UButton
           :disabled="user?.hasWebauthn || user?.mail === 'test@example.com'"
           label="Passkey einrichten"
@@ -195,13 +195,13 @@ const isDark = computed({
       <div class="flex flex-col items-center gap-4">
         <UButton
           class="w-full sm:w-auto"
-          @click="loginWithMicrosoft()"
           label="Login mit Microsoft"
+          @click="loginWithMicrosoft()"
         />
         <UButton
           class="w-full sm:w-auto"
-          @click="signIn"
           label="Login mit WebAuthn"
+          @click="signIn"
         />
 
         <!-- Test Login Section -->
@@ -211,9 +211,9 @@ const isDark = computed({
               variant="outline"
               color="neutral"
               size="sm"
-              @click="isTestLoginVisible = true"
               label="Test-Anmeldung"
               icon="i-lucide-key"
+              @click="isTestLoginVisible = true"
             />
           </div>
 
@@ -229,20 +229,20 @@ const isDark = computed({
             <div class="flex gap-2">
               <UButton
                 :loading="isTestLoggingIn"
-                @click="testLogin"
                 label="Anmelden"
                 size="sm"
                 class="flex-1"
+                @click="testLogin"
               />
               <UButton
                 variant="outline"
+                label="Abbrechen"
+                size="sm"
+                class="flex-1"
                 @click="
                   isTestLoginVisible = false;
                   testPassword = '';
                 "
-                label="Abbrechen"
-                size="sm"
-                class="flex-1"
               />
             </div>
             <p class="text-muted text-center text-xs">Nur für Testzwecke</p>

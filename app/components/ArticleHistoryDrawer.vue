@@ -83,14 +83,13 @@ watch(
   <USlideover
     :side="isDesktop ? 'right' : 'bottom'"
     :open="props.showDetails"
-    @update:open="emit('update:showDetails', $event)"
     :close="false"
     :ui="{
-      header: 'hidden',
-      body: 'flex-1 overflow-y-auto p-4 sm:p-6 overscroll-behavior-none',
+      header: 'min-h-0 p-0 border-0',
     }"
+    @update:open="emit('update:showDetails', $event)"
   >
-    <template #header class=""> </template>
+    <template #header> </template>
     <!-- Hidden title for accessibility -->
     <template #title>
       <span class="sr-only hidden">Artikelinfo</span>
@@ -139,11 +138,3 @@ watch(
     </template>
   </USlideover>
 </template>
-
-<style scoped>
-/* Ensure consistent overscroll behavior across browsers */
-:deep(.overflow-y-auto) {
-  overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
-}
-</style>

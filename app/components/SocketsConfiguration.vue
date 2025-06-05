@@ -18,13 +18,13 @@
       />
     </div>
     <div class="mb-5 flex w-full gap-2">
-      <UButton @click="$emit('add')" class="min-w-30 flex-1/3 justify-center">
+      <UButton class="min-w-30 flex-1/3 justify-center" @click="$emit('add')">
         hinzufügen
       </UButton>
       <UInputNumber
         :model-value="number"
-        @update:model-value="$emit('update:number', $event)"
         class="flex-2/3"
+        @update:model-value="$emit('update:number', $event)"
       />
     </div>
   </div>

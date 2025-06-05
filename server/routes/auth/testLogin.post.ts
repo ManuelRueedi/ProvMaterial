@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   // Only allow test login in development or when explicitly enabled
   const config = useRuntimeConfig();
   const allowTestLogin =
-    process.env.NUXT_TEST_LOGIN_ENABLED === "true" || process.dev;
+    process.env.NUXT_TEST_LOGIN_ENABLED === "true" || import.meta.dev;
 
   if (!allowTestLogin) {
     throw createError({

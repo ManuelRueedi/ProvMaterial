@@ -136,6 +136,7 @@ const items = ref<NavigationMenuItem[][]>([
       class="fixed top-3 left-3 z-10 opacity-90"
     />
     <UButton
+      v-if="isMobile"
       variant="subtle"
       color="neutral"
       icon="ic:baseline-qr-code-scanner"

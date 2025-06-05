@@ -10,11 +10,11 @@
   <ClientOnly>
     <!-- Single Article Slideover -->
     <USlideover
-      :side="isDesktop ? 'right' : 'bottom'"
       v-model:open="showDetails"
+      :side="isDesktop ? 'right' : 'bottom'"
       :close="false"
       :ui="{
-        header: 'hidden',
+        header: 'min-h-0 p-0 border-0',
       }"
     >
       <!-- Hidden title for accessibility -->
@@ -44,9 +44,9 @@
 
     <!-- Bundle Slideover -->
     <USlideover
+      v-model:open="showBundleDetails"
       :close="bundleClose"
       :side="isDesktop ? 'right' : 'bottom'"
-      v-model:open="showBundleDetails"
       :ui="bundleUi"
     >
       <template #title> {{ selectedBundle?.length }} Artikel </template>
