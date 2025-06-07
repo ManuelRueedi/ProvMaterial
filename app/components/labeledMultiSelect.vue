@@ -7,20 +7,13 @@
       </label>
     </div>
     <USelectMenu
-      v-if="searchable"
       v-model="innerValue"
       :items="items"
-      size="lg"
       :placeholder="placeholder"
-      class="w-full"
-    />
-    <USelect
-      v-else
-      v-model="innerValue"
-      :items="items"
+      :clearable="clearable"
       size="lg"
-      :placeholder="placeholder"
       class="w-full"
+      multiple
     />
   </div>
 </template>
@@ -30,24 +23,22 @@ import type { PropType } from "vue";
 import type { SelectItem, ArrayOrNested } from "@nuxt/ui";
 
 const props = defineProps({
-  /** Leading icon */
+  /** Leading icon on the badge */
   icon: {
     type: String,
-    default: "i-heroicons-rocket-launch",
+    default: "i-lucide-tags",
   },
 
   /** Options for the select */
   items: {
-    /*  strings | numbers | booleans | SelectItem objects,
-        or nested arrays of those                         */
     type: Array as PropType<ArrayOrNested<SelectItem>>,
     required: true,
   },
 
   /** v‑model value */
   modelValue: {
-    type: [String, Number, null] as PropType<string | number | null>,
-    default: null,
+    type: Array as PropType<(string | number)[]>,
+    default: () => [],
   },
 
   /** Placeholder text for the select */
@@ -56,15 +47,15 @@ const props = defineProps({
     default: "Auswählen...",
   },
 
-  /** Whether to use USelectMenu (searchable) or USelect */
-  searchable: {
+  /** Whether the select can be cleared */
+  clearable: {
     type: Boolean,
     default: false,
   },
 });
 
 const emit = defineEmits<{
-  "update:modelValue": [string | number | null];
+  "update:modelValue": [(string | number)[]];
 }>();
 
 const innerValue = computed({
@@ -72,5 +63,3 @@ const innerValue = computed({
   set: (v) => emit("update:modelValue", v),
 });
 </script>
-
-<style></style>

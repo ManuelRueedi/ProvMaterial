@@ -7,7 +7,7 @@
     @update:open="localOpen = $event"
   >
     <template #title>
-      <h1>Artikel bearbeiten</h1>
+      <h1>Bearbeiten</h1>
     </template>
     <template #description>
       <h2>
@@ -16,8 +16,8 @@
     </template>
 
     <template #body>
-      <div v-if="isLoading" class="flex items-center justify-center py-8">
-        <USpinner size="xl" />
+      <div v-if="isLoading" class="flex items-center justify-center">
+        <UIcon name="i-heroicons-arrow-path" class="h-8 w-8 animate-spin" />
         <span class="ml-2">Artikel wird geladen...</span>
       </div>
 
@@ -28,107 +28,96 @@
         </UButton>
       </div>
 
-      <div v-else class="space-y-6">
+      <div v-else class="space-y-10">
         <!-- Article ID Field (Read-only for editing) -->
-        <div class="form-group">
-          <label class="mb-1 block text-sm font-medium"> Artikel-ID </label>
-          <UInput
+        <div>
+          <labeledInput
             :model-value="articleId"
+            icon="i-lucide-id-card"
+            badge-color="neutral"
             :disabled="true"
-            size="xl"
-            class="w-full"
-            :ui="{ base: 'bg-gray-50 text-gray-500' }"
-          />
-          <p class="mt-1 text-xs text-gray-500">
+            placeholder=""
+          >
+            Artikel-ID
+          </labeledInput>
+          <p class="mt-2 px-4 text-xs text-gray-500">
             Die Artikel-ID kann nicht geändert werden
           </p>
         </div>
 
         <!-- Article Type Field -->
-        <div class="form-group">
-          <label class="mb-1 block text-sm font-medium">
-            Typ <span class="text-red-500">*</span>
-          </label>
-          <USelectMenu
+        <div>
+          <labeledSelection
             v-model="config.type"
             :items="typeOptions"
+            icon="i-lucide-package"
+            :badge-color="validationErrors.type ? 'error' : 'primary'"
             placeholder="Typ auswählen"
-            size="xl"
-            class="w-full"
-            @change="validateType"
-          />
-          <p v-if="validationErrors.type" class="mt-1 text-xs text-red-500">
+            searchable
+            @update:model-value="validateType"
+          >
+            Typ <span class="text-red-500">*</span>
+          </labeledSelection>
+          <p
+            v-if="validationErrors.type"
+            class="mt-2 px-4 text-xs text-red-500"
+          >
             {{ validationErrors.type }}
           </p>
         </div>
 
         <!-- Ampacity Field -->
-        <div class="form-group">
-          <label class="mb-1 block text-sm font-medium">
-            Stromstärke <span class="text-red-500">*</span>
-          </label>
-          <USelectMenu
+        <div>
+          <labeledSelection
             v-model="ampacityModel"
             :items="ampacityOptions"
+            icon="i-lucide-zap"
+            :badge-color="validationErrors.ampacity ? 'error' : 'warning'"
             placeholder="Stromstärke auswählen"
-            size="xl"
-            class="w-full"
-            @change="validateAmpacity"
-          />
-          <p v-if="validationErrors.ampacity" class="mt-1 text-xs text-red-500">
+            @update:model-value="validateAmpacity"
+          >
+            Stromstärke <span class="text-red-500">*</span>
+          </labeledSelection>
+          <p
+            v-if="validationErrors.ampacity"
+            class="mt-2 px-4 text-xs text-red-500"
+          >
             {{ validationErrors.ampacity }}
           </p>
         </div>
 
         <!-- Length Field -->
-        <div class="form-group">
-          <label class="mb-1 block text-sm font-medium">
-            Länge in Metern
-          </label>
-          <UInputNumber
-            v-model.number="config.length"
-            type="number"
+        <div>
+          <labeledNumberInput
+            v-model="config.length"
+            icon="i-lucide-ruler"
             placeholder="z.B. 10"
             :status="validationErrors.lengthInMeter ? 'error' : undefined"
-            size="xl"
-            class="w-full"
+            :badge-color="validationErrors.lengthInMeter ? 'error' : 'info'"
             :min="0"
             :step="0.5"
-          />
+          >
+            Länge in Metern
+          </labeledNumberInput>
           <p
             v-if="validationErrors.lengthInMeter"
-            class="mt-1 text-xs text-red-500"
+            class="mt-2 px-4 text-xs text-red-500"
           >
             {{ validationErrors.lengthInMeter }}
           </p>
         </div>
 
         <!-- Connector Field (Optional) -->
-        <div class="form-group">
-          <label class="mb-1 block text-sm font-medium">Stecker</label>
-          <div class="relative">
-            <USelectMenu
-              v-model="connectorModel"
-              :items="connectorOptions"
-              placeholder="Stecker auswählen"
-              size="xl"
-              class="w-full"
-              :ui="{ trailing: connectorModel ? 'pe-10' : undefined }"
-            />
-            <div
-              v-if="connectorModel"
-              class="absolute inset-y-0 end-0 flex items-center pe-2"
-            >
-              <UButton
-                color="neutral"
-                variant="link"
-                size="sm"
-                icon="i-lucide-x"
-                aria-label="Stecker entfernen"
-                @click="connectorModel = undefined"
-              />
-            </div>
-          </div>
+        <div>
+          <labeledSelection
+            v-model="connectorModel"
+            :items="connectorOptions"
+            icon="i-lucide-plug"
+            badge-color="secondary"
+            placeholder="Stecker auswählen"
+          >
+            Stecker
+          </labeledSelection>
         </div>
 
         <!-- Outputs/Sockets Configuration -->
@@ -146,117 +135,84 @@
         />
 
         <!-- Tags Field (Optional) -->
-        <div v-if="tagsEnabled" class="form-group">
-          <label class="mb-1 block text-sm font-medium">Tags (optional)</label>
-          <div class="relative">
-            <USelectMenu
-              v-model="config.tags"
-              :items="tagsOptions"
-              placeholder="Tags auswählen"
-              size="xl"
-              class="w-full"
-              multiple
-              :ui="{ trailing: config.tags?.length > 0 ? 'pe-10' : undefined }"
-            />
-            <div
-              v-if="config.tags?.length > 0"
-              class="absolute inset-y-0 end-0 flex items-center pe-2"
-            >
-              <UButton
-                color="neutral"
-                variant="link"
-                size="sm"
-                icon="i-lucide-x"
-                aria-label="Alle Tags entfernen"
-                @click="config.tags = []"
-              />
-            </div>
-          </div>
+        <div v-if="tagsEnabled">
+          <labeledMultiSelect
+            v-model="config.tags"
+            :items="tagsOptions"
+            icon="i-lucide-tags"
+            badge-color="info"
+            placeholder="Tags auswählen"
+          >
+            Tags
+          </labeledMultiSelect>
         </div>
 
         <!-- Location Field -->
-        <div class="form-group">
-          <label class="mb-1 block text-sm font-medium">
-            Standort <span class="text-red-500">*</span>
-          </label>
-          <USelectMenu
+        <div>
+          <labeledObjectSelection
             v-model="selectedLocation"
             :items="locationOptions"
+            icon="i-lucide-map-pin"
+            :badge-color="validationErrors.locationId ? 'error' : 'success'"
             placeholder="Standort auswählen"
-            size="xl"
-            class="w-full"
-            @change="validateLocation"
-          />
+            @update:model-value="validateLocation"
+          >
+            Standort <span class="text-red-500">*</span>
+          </labeledObjectSelection>
           <p
             v-if="validationErrors.locationId"
-            class="mt-1 text-xs text-red-500"
+            class="mt-2 px-4 text-xs text-red-500"
           >
             {{ validationErrors.locationId }}
           </p>
         </div>
 
         <!-- Storage Location Field -->
-        <div class="form-group">
-          <label class="mb-1 block text-sm font-medium">
-            Lagerstandort <span class="text-red-500">*</span>
-          </label>
-          <USelectMenu
+        <div>
+          <labeledObjectSelection
             v-model="selectedStorageLocation"
             :items="storageLocationOptions"
+            icon="i-lucide-warehouse"
+            :badge-color="
+              validationErrors.storageLocationId ? 'error' : 'success'
+            "
             placeholder="Lagerstandort auswählen"
-            size="xl"
-            class="w-full"
-            @change="validateStorageLocation"
-          />
+            @update:model-value="validateStorageLocation"
+          >
+            Lagerstandort <span class="text-red-500">*</span>
+          </labeledObjectSelection>
           <p
             v-if="validationErrors.storageLocationId"
-            class="mt-1 text-xs text-red-500"
+            class="mt-2 px-4 text-xs text-red-500"
           >
             {{ validationErrors.storageLocationId }}
           </p>
         </div>
 
         <!-- Storage Location Section Field (Optional) -->
-        <div class="form-group">
-          <label class="mb-1 block text-sm font-medium"
-            >Lagerbereich (optional)</label
-          >
-          <UInput
+        <div>
+          <labeledInput
             v-model="formData.storageLocationSection"
+            icon="i-lucide-archive"
+            badge-color="neutral"
             placeholder="z.B. Regal A, Fach 3"
-            size="xl"
-            class="w-full"
-          />
+          >
+            Lagerbereich
+          </labeledInput>
         </div>
 
         <!-- Current Project Field (Optional) -->
-        <div class="form-group">
-          <label class="mb-1 block text-sm font-medium"
-            >Aktuelles Projekt (optional)</label
+        <div>
+          <labeledObjectSelection
+            v-model="selectedProject"
+            :items="projectOptions"
+            icon="i-lucide-folder"
+            badge-color="neutral"
+            placeholder="Projekt auswählen"
+            clearable
           >
-          <div class="relative">
-            <USelectMenu
-              v-model="selectedProject"
-              :items="projectOptions"
-              placeholder="Projekt auswählen"
-              size="xl"
-              class="w-full"
-              :ui="{ trailing: selectedProject ? 'pe-10' : undefined }"
-            />
-            <div
-              v-if="selectedProject"
-              class="absolute inset-y-0 end-0 flex items-center pe-2"
-            >
-              <UButton
-                color="neutral"
-                variant="link"
-                size="sm"
-                icon="i-lucide-x"
-                aria-label="Projekt entfernen"
-                @click="selectedProject = undefined"
-              />
-            </div>
-          </div>
+            Aktuelles Projekt
+          </labeledObjectSelection>
         </div>
       </div>
 
@@ -277,6 +233,7 @@
 
 <script setup lang="ts">
 import type { Location, Project, Article } from "~/composables/articles/types";
+import { TypeEnum } from "~/composables/articles/types";
 import { useConfigurator } from "~/composables/articles/useConfigurator";
 import { useSocketSelection } from "~/composables/articles/useSocketSelection";
 
@@ -380,14 +337,7 @@ const storageLocations = ref<Location[]>([]);
 const projects = ref<Project[]>([]);
 
 // Type options for the select menu
-const typeOptions = [
-  "Kabel",
-  "Verlängerung",
-  "Verteiler",
-  "Box",
-  "Kabelrolle",
-  "Steckerleiste",
-];
+const typeOptions = TypeEnum.options;
 
 const locationOptions = computed(
   () =>

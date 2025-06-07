@@ -7,21 +7,23 @@
       </label>
     </div>
     <USelectMenu
-      v-if="searchable"
       v-model="innerValue"
       :items="items"
-      size="lg"
       :placeholder="placeholder"
-      class="w-full"
-    />
-    <USelect
-      v-else
-      v-model="innerValue"
-      :items="items"
       size="lg"
-      :placeholder="placeholder"
       class="w-full"
-    />
+    >
+      <template v-if="clearable && innerValue" #trailing>
+        <UButton
+          v-show="innerValue"
+          color="neutral"
+          variant="link"
+          icon="i-heroicons-x-mark-20-solid"
+          :padded="false"
+          @click="clearValue"
+        />
+      </template>
+    </USelectMenu>
   </div>
 </template>
 
@@ -30,23 +32,21 @@ import type { PropType } from "vue";
 import type { SelectItem, ArrayOrNested } from "@nuxt/ui";
 
 const props = defineProps({
-  /** Leading icon */
+  /** Leading icon on the badge */
   icon: {
     type: String,
-    default: "i-heroicons-rocket-launch",
+    default: "i-lucide-list",
   },
 
   /** Options for the select */
   items: {
-    /*  strings | numbers | booleans | SelectItem objects,
-        or nested arrays of those                         */
     type: Array as PropType<ArrayOrNested<SelectItem>>,
     required: true,
   },
 
   /** v‑model value */
   modelValue: {
-    type: [String, Number, null] as PropType<string | number | null>,
+    type: [Object, null] as PropType<SelectItem | null>,
     default: null,
   },
 
@@ -56,21 +56,23 @@ const props = defineProps({
     default: "Auswählen...",
   },
 
-  /** Whether to use USelectMenu (searchable) or USelect */
-  searchable: {
+  /** Whether the select can be cleared */
+  clearable: {
     type: Boolean,
     default: false,
   },
 });
 
 const emit = defineEmits<{
-  "update:modelValue": [string | number | null];
+  "update:modelValue": [SelectItem | null];
 }>();
 
 const innerValue = computed({
   get: () => props.modelValue,
   set: (v) => emit("update:modelValue", v),
 });
-</script>
 
-<style></style>
+function clearValue() {
+  innerValue.value = null;
+}
+</script>

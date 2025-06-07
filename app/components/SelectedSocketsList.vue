@@ -1,19 +1,32 @@
 <template>
-  <div class="flex flex-col items-center gap-2">
-    <div
-      v-for="(value, key) in sockets"
-      :key="key"
-      class="flex w-full max-w-xl gap-2 justify-self-center pb-2"
-    >
-      <UButton
-        class="min-w-30 flex-1/3 justify-center"
-        color="error"
-        icon="ic:baseline-remove"
-        @click="$emit('remove', key)"
-      />
-      <UBadge color="neutral" class="flex-2/3 justify-center">
-        {{ value }} X {{ key }}
-      </UBadge>
+  <div
+    v-if="Object.keys(sockets).length > 0"
+    class="mt-2 flex w-full max-w-xl flex-col gap-3"
+  >
+    <div class="flex items-center gap-2">
+      <UIcon name="i-lucide-list" class="h-4 w-4" />
+      <label class="text-md font-medium"> Ausgewählte Abgänge </label>
+    </div>
+    <div class="space-y-2">
+      <div
+        v-for="(value, key) in sockets"
+        :key="key"
+        class="border-default flex items-center gap-3 rounded-md border p-3"
+      >
+        <UButton
+          color="error"
+          icon="i-lucide-x"
+          size="sm"
+          variant="soft"
+          @click="$emit('remove', key)"
+        />
+        <div class="flex flex-1 items-center justify-between">
+          <span class="text-sm font-medium">
+            {{ key }}
+          </span>
+          <span class="text-sm">{{ value }}x</span>
+        </div>
+      </div>
     </div>
   </div>
 </template>

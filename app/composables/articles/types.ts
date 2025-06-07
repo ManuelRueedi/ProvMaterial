@@ -18,6 +18,7 @@ export const TypeEnum = z.enum([
   "Box",
   "Kabelrolle",
   "Steckerleiste",
+  "Adapterkabel",
 ]);
 export type Type = z.infer<typeof TypeEnum>;
 

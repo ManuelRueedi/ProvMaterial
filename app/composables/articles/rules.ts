@@ -7,6 +7,7 @@ export const ampacityByType: Record<Type, Ampacity[]> = {
   Box: ["32A", "63A", "≥125A"],
   Kabelrolle: ["10A", "16A", "32A"],
   Steckerleiste: ["10A", "16A"],
+  Adapterkabel: ["10A", "16A", "32A", "63A", "≥125A"],
 };
 
 export const connectorByType: Record<Type, Connector[]> = {
@@ -25,6 +26,17 @@ export const connectorByType: Record<Type, Connector[]> = {
   Box: ["CEE32", "CEE63", "CEE125"],
   Kabelrolle: ["T13", "T23", "CEE16", "CEE32"],
   Steckerleiste: ["T13", "T23"],
+  Adapterkabel: [
+    "T13",
+    "T23",
+    "CEE16",
+    "CEE32",
+    "CEE63",
+    "CEE125",
+    "J40",
+    "Powerlock 500A",
+    "Powerlock 800A",
+  ],
 };
 
 export const connectorByAmpacity: Record<Ampacity, Connector[]> = {
@@ -43,6 +55,17 @@ export const socketsByType: Record<Type, Connector[]> = {
   Box: ["CEE32", "CEE63", "CEE125"],
   Kabelrolle: ["T13", "T23", "CEE16"],
   Steckerleiste: ["T13", "T23"],
+  Adapterkabel: [
+    "T13",
+    "T23",
+    "CEE16",
+    "CEE32",
+    "CEE63",
+    "CEE125",
+    "J40",
+    "Powerlock 500A",
+    "Powerlock 800A",
+  ],
 };
 
 export const tagsByType: Record<Type, Tag[]> = {
@@ -52,4 +75,5 @@ export const tagsByType: Record<Type, Tag[]> = {
   Box: ["Hauptschalter", "Zähler"],
   Kabelrolle: [],
   Steckerleiste: [],
+  Adapterkabel: [],
 };

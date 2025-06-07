@@ -41,6 +41,7 @@
         v-model="config.type"
         icon="ic:baseline-view-in-ar"
         :items="TypeEnum.options"
+        searchable
       >
         Typ
       </labeledSelection>
@@ -65,28 +66,32 @@
       </labeledSelection>
 
       <!-- Length Input -->
-      <SearchFormField icon="ic:baseline-settings-ethernet" label="Länge">
-        <UInputNumber
-          v-model="config.length"
-          class="flex-2/3"
-          :step="5"
-          :min="0"
-          :max="250"
-        />
-      </SearchFormField>
+      <labeledNumberInput
+        v-model="config.length"
+        icon="i-lucide-ruler"
+        badge-color="info"
+        placeholder="Länge in Metern"
+        :step="5"
+        :min="0"
+        :max="250"
+      >
+        Länge
+      </labeledNumberInput>
 
       <!-- Tags Selection -->
-      <SearchFormField v-if="tagsEnabled" icon="ic:baseline-tag" label="Tags">
-        <USelect
-          v-model="config.tags"
-          class="flex-2/3"
-          multiple
-          :items="tagsOptions"
-        />
-      </SearchFormField>
+      <labeledMultiSelect
+        v-if="tagsEnabled"
+        v-model="config.tags"
+        :items="tagsOptions"
+        icon="i-lucide-tags"
+        badge-color="info"
+        placeholder="Tags auswählen"
+      >
+        Tags
+      </labeledMultiSelect>
 
       <!-- Sockets Configuration -->
-      <div class="flex w-full max-w-xl flex-col gap-2 px-10">
+      <div class="flex w-full max-w-xl flex-col gap-2">
         <SocketsConfiguration
           v-if="socketsEnabled"
           v-model:selected="selectedSocket"
