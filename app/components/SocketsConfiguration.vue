@@ -1,5 +1,5 @@
 <template>
-  <div class="flex w-full max-w-xl flex-col gap-2 px-10">
+  <div class="flex w-full max-w-xl flex-col gap-3">
     <div class="flex w-full flex-col gap-2 [@media(min-width:400px)]:flex-row">
       <UBadge
         icon="ic:baseline-outlet"

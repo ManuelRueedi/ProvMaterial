@@ -128,9 +128,9 @@ export const inspections = sqliteTable("inspections", {
 // ───────────────────────── change_log ───────────────────────
 export const changeLog = sqliteTable("change_log", {
   id: integer().primaryKey({ autoIncrement: true }),
+  userId: integer({ mode: "number" }).references(() => users.id),
   articleId: text().references(() => articles.id),
   changeTs: integer({ mode: "timestamp" }).default(sql`(unixepoch())`),
-  userId: integer().references(() => users.id),
   old: text({ mode: "json" }).$type<Partial<typeof articles>>(),
   new: text({ mode: "json" }).$type<Partial<typeof articles>>(),
 });
@@ -139,6 +139,12 @@ export const changeLog = sqliteTable("change_log", {
 
 export const usersRelations = relations(users, ({ many }) => ({
   credentials: many(webauthnCredentials),
+  takenOutHistories: many(articleLocationHistory, {
+    relationName: "takeOutUser",
+  }),
+  broughtBackHistories: many(articleLocationHistory, {
+    relationName: "bringBackUser",
+  }),
 }));
 
 export const webauthnCredentialsRelations = relations(
@@ -173,3 +179,31 @@ export const projectsRelations = relations(projects, ({ many }) => ({
 export const locationsRelations = relations(locations, ({ many }) => ({
   article: many(articles),
 }));
+
+export const articleLocationHistoryRelations = relations(
+  articleLocationHistory,
+  ({ one }) => ({
+    article: one(articles, {
+      fields: [articleLocationHistory.articleId],
+      references: [articles.id],
+    }),
+    location: one(locations, {
+      fields: [articleLocationHistory.locationID],
+      references: [locations.id],
+    }),
+    project: one(projects, {
+      fields: [articleLocationHistory.projectId],
+      references: [projects.id],
+    }),
+    takeOutUser: one(users, {
+      fields: [articleLocationHistory.takeOutUserId],
+      references: [users.id],
+      relationName: "takeOutUser",
+    }),
+    bringBackUser: one(users, {
+      fields: [articleLocationHistory.bringBackUserId],
+      references: [users.id],
+      relationName: "bringBackUser",
+    }),
+  }),
+);

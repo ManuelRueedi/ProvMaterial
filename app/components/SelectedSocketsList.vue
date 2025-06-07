@@ -3,7 +3,7 @@
     <div
       v-for="(value, key) in sockets"
       :key="key"
-      class="flex w-full max-w-xl gap-2 justify-self-center px-10 pb-2"
+      class="flex w-full max-w-xl gap-2 justify-self-center pb-2"
     >
       <UButton
         class="min-w-30 flex-1/3 justify-center"

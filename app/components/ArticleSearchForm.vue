@@ -34,7 +34,7 @@
 
     <!-- Search Form -->
     <div
-      class="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-center gap-7 pt-5"
+      class="mx-auto flex w-full max-w-7xl flex-wrap items-start justify-center gap-7 pt-5"
     >
       <!-- Type Selection -->
       <labeledSelection
@@ -86,20 +86,21 @@
       </SearchFormField>
 
       <!-- Sockets Configuration -->
-      <SocketsConfiguration
-        v-if="socketsEnabled"
-        v-model:selected="selectedSocket"
-        v-model:number="selectedSocketNumber"
-        :options="socketsOptions"
-        @add="handleAddSocket"
-      />
+      <div class="flex w-full max-w-xl flex-col gap-2 px-10">
+        <SocketsConfiguration
+          v-if="socketsEnabled"
+          v-model:selected="selectedSocket"
+          v-model:number="selectedSocketNumber"
+          :options="socketsOptions"
+          @add="handleAddSocket"
+        />
+        <SelectedSocketsList
+          :sockets="config.sockets"
+          @remove="removeSocketFromSelection"
+        />
+      </div>
     </div>
-
     <!-- Selected Sockets Display -->
-    <SelectedSocketsList
-      :sockets="config.sockets"
-      @remove="removeSocketFromSelection"
-    />
 
     <!-- Separator -->
     <div class="flex w-full justify-center">

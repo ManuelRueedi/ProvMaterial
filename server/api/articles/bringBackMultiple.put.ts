@@ -1,16 +1,15 @@
 import { createError, defineEventHandler, readValidatedBody } from "h3";
 import { eq, and, isNull, inArray } from "drizzle-orm";
 import { z } from "zod";
-import type { Article, Location, Project } from "@/composables/articles/types";
 
 const schema = z.object({
   articleIds: z.array(z.string()).min(1).max(100),
 });
 
 export default defineEventHandler(async (event) => {
-  const session = requireUserSession(event);
+  const session = await requireUserSession(event);
 
-  if (!(await session).rights.includes("useArticles")) {
+  if (!session.rights.includes("useArticles")) {
     throw createError({
       statusCode: 403,
       statusMessage: "User does not have permission to access articles",
@@ -79,7 +78,10 @@ export default defineEventHandler(async (event) => {
     for (const history of openHistories) {
       await db
         .update(tables.articleLocationHistory)
-        .set({ toTs: now })
+        .set({
+          toTs: now,
+          bringBackUserId: session.user.userId,
+        })
         .where(eq(tables.articleLocationHistory.id, history.id));
     }
 

@@ -9,6 +9,18 @@ type HistoryView = {
   from: number; // Unix Timestamp (Sekunden)
   to: number; // Unix Timestamp (Sekunden), 0 für aktuell
   id?: string | number;
+  takeOutUser?: {
+    id: number;
+    firstName: string;
+    lastName: string | null;
+    mail: string;
+  } | null;
+  bringBackUser?: {
+    id: number;
+    firstName: string;
+    lastName: string | null;
+    mail: string;
+  } | null;
 };
 
 const timelineCardUi = reactive({
@@ -140,9 +152,32 @@ function getItemKey(item: HistoryView, index: number): string | number {
               <div class="flex items-center space-x-2">
                 <UIcon
                   name="ic:baseline-location-on"
-                  class="text-primary-500 size-8"
+                  class="text-primary-500 size-5"
                 />
                 <span>{{ item.locationAddress }}</span>
+              </div>
+              <div v-if="item.takeOutUser" class="flex items-center space-x-2">
+                <UIcon
+                  name="ic:baseline-arrow-upward"
+                  class="text-secondary size-5"
+                />
+                <span
+                  >Ausgetragen von: {{ item.takeOutUser.firstName }}
+                  {{ item.takeOutUser.lastName }}</span
+                >
+              </div>
+              <div
+                v-if="item.bringBackUser"
+                class="flex items-center space-x-2"
+              >
+                <UIcon
+                  name="ic:baseline-arrow-downward"
+                  class="text-primary size-5"
+                />
+                <span
+                  >Zurückgebracht von: {{ item.bringBackUser.firstName }}
+                  {{ item.bringBackUser.lastName }}</span
+                >
               </div>
             </div>
           </UCard>

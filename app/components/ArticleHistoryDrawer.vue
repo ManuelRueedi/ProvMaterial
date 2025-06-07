@@ -10,6 +10,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "update:showDetails", value: boolean): void;
+  (e: "articleDeleted" | "articleEdited", articleId: string): void;
 }>();
 
 const { isDesktop } = useDevice();
@@ -46,6 +47,8 @@ const transformedHistory = computed(() => {
     // Convert null to 0 for current entries
     to: item.to ? Math.floor(item.to / 1000) : 0,
     id: item.from.toString(),
+    takeOutUser: item.takeOutUser,
+    bringBackUser: item.bringBackUser,
   }));
 });
 
@@ -64,6 +67,66 @@ watch(
     if (props.showDetails && props.selectedArticle) refresh();
   },
 );
+
+/* --- 4. Action handlers -------------------------------------------------- */
+const toast = useToast();
+const deleteLoading = ref(false);
+
+const handleDelete = async () => {
+  if (!props.selectedArticle) return;
+
+  // Show confirmation dialog
+  const confirmed = confirm(
+    `Sind Sie sicher, dass Sie den Artikel "${props.selectedArticle.id}" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.`,
+  );
+
+  if (!confirmed) return;
+
+  deleteLoading.value = true;
+  try {
+    await $fetch(
+      `/api/articles/${encodeURIComponent(props.selectedArticle.id)}/delete`,
+      {
+        method: "DELETE",
+      },
+    );
+
+    // Emit event to parent to handle cleanup (like refreshing article list)
+    emit("articleDeleted", props.selectedArticle.id);
+
+    // Close the drawer
+    emit("update:showDetails", false);
+  } catch (error: unknown) {
+    console.error("Error deleting article:", error);
+
+    // Extract error message from server response
+    const errorMessage =
+      error &&
+      typeof error === "object" &&
+      "data" in error &&
+      error.data &&
+      typeof error.data === "object" &&
+      "statusMessage" in error.data
+        ? String(error.data.statusMessage)
+        : "Der Artikel konnte nicht gelöscht werden.";
+
+    toast.add({
+      title: "Fehler beim Löschen",
+      description: errorMessage,
+      color: "error",
+      icon: "i-heroicons-exclamation-triangle",
+    });
+  } finally {
+    deleteLoading.value = false;
+  }
+};
+
+const handleEdit = () => {
+  if (!props.selectedArticle) return;
+
+  // Emit the articleEdited event to trigger the edit slideover
+  emit("articleEdited", props.selectedArticle.id);
+};
 </script>
 
 <template>
@@ -121,6 +184,32 @@ watch(
         />
 
         <HistoryTimeline v-else :history="transformedHistory" />
+      </div>
+
+      <!-- Floating Action Buttons -->
+      <div
+        v-if="props.selectedArticle"
+        class="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 transform gap-4"
+      >
+        <UButton
+          variant="solid"
+          color="primary"
+          size="lg"
+          icon="ic:baseline-edit"
+          @click="handleEdit"
+        >
+          Bearbeiten
+        </UButton>
+        <UButton
+          variant="solid"
+          color="error"
+          size="lg"
+          icon="ic:baseline-delete"
+          :loading="deleteLoading"
+          @click="handleDelete"
+        >
+          Löschen
+        </UButton>
       </div>
     </template>
   </USlideover>

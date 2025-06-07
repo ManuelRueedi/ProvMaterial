@@ -256,6 +256,7 @@ export function useArticleTable() {
       accessorKey: "tags",
       header: "Tags",
       cell: ({ row }) => {
+        if (row.getIsGrouped()) return "";
         const tags = (row.original.tags || []) as Tag[];
         if (tags.length === 0) return "";
 

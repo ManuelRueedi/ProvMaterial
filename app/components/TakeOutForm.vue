@@ -111,7 +111,10 @@ const {
   data: locations,
   pending: locationsPending,
   refresh: refreshLocations,
-} = await useFetch<Location[]>("/api/locations/getAll", { lazy: true });
+} = await useFetch<Location[]>(
+  "/api/locations/getAll?isStorageLocation=false",
+  { lazy: true },
+);
 
 const selectedProject = ref<Project>();
 const selectedLocation = ref<Location>();

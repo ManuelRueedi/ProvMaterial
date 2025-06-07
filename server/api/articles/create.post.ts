@@ -161,6 +161,7 @@ export default defineEventHandler(async (event) => {
         projectName: projectDetails?.name || null,
         projectDescription: projectDetails?.description || null,
         projectId: articleData.currentProjectId || null,
+        takeOutUserId: session.user.userId,
         fromTs: now,
         toTs: null, // Open history record
       });

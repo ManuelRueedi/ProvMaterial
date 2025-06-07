@@ -1,9 +1,17 @@
 import { z } from "zod";
 import { eq, and, isNull, inArray } from "drizzle-orm";
 import { getRouterParam } from "h3";
-import type { Article, Location, Project } from "@/composables/articles/types";
 
 export default defineEventHandler(async (event) => {
+  const session = await requireUserSession(event);
+
+  if (!session.rights.includes("useArticles")) {
+    throw createError({
+      statusCode: 403,
+      statusMessage: "User does not have permission to access articles",
+    });
+  }
+
   const db = useDrizzle();
 
   /* ─────────────── Eingaben prüfen ─────────────── */
@@ -107,6 +115,7 @@ export default defineEventHandler(async (event) => {
       projectName: project?.name ?? "",
       projectDescription: project?.description ?? "",
       projectId: project?.id ?? null,
+      takeOutUserId: session.user.userId,
     }));
 
     const updateRecords = uniqueArticleIds.map((id) =>

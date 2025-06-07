@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
 import { getRouterParam, createError, defineEventHandler } from "h3";
-import { z } from "zod";
 
 export type HistoryView = {
   locationName: string;
@@ -9,6 +8,18 @@ export type HistoryView = {
   projectDescription: string | null;
   from: number; // Unix ms
   to: number | null; // Unix ms
+  takeOutUser: {
+    id: number;
+    firstName: string;
+    lastName: string | null;
+    mail: string;
+  } | null;
+  bringBackUser: {
+    id: number;
+    firstName: string;
+    lastName: string | null;
+    mail: string;
+  } | null;
 };
 
 export default defineEventHandler(async (event): Promise<HistoryView[]> => {
@@ -38,6 +49,24 @@ export default defineEventHandler(async (event): Promise<HistoryView[]> => {
       const rows = await db.query.articleLocationHistory.findMany({
         where: eq(tables.articleLocationHistory.articleId, articleId),
         orderBy: (article, { desc }) => [desc(article.fromTs)],
+        with: {
+          takeOutUser: {
+            columns: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              mail: true,
+            },
+          },
+          bringBackUser: {
+            columns: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              mail: true,
+            },
+          },
+        },
       });
 
       // console.log(
@@ -52,27 +81,29 @@ export default defineEventHandler(async (event): Promise<HistoryView[]> => {
         projectDescription: r.projectDescription,
         from: new Date(r.fromTs).getTime(),
         to: r.toTs ? new Date(r.toTs).getTime() : null,
+        takeOutUser: r.takeOutUser,
+        bringBackUser: r.bringBackUser,
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Database error:", err);
       throw createError({
         statusCode: 500,
         statusMessage: "Database error",
         data: {
-          message: err?.message ?? String(err),
-          code: err?.code,
+          message: err instanceof Error ? err.message : String(err),
+          code: (err as { code?: string })?.code,
           query: "articleLocationHistory lookup",
         },
       });
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error in history handler:", err);
-    if (err.statusCode) throw err; // Already a formatted error
+    if (err && typeof err === "object" && "statusCode" in err) throw err; // Already a formatted error
 
     throw createError({
       statusCode: 500,
       statusMessage: "Server error processing request",
-      data: err?.message ?? String(err),
+      data: err instanceof Error ? err.message : String(err),
     });
   }
 });

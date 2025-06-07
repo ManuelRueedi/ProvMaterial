@@ -11,7 +11,7 @@ export default withNuxt(
     },
     // ➋ (optional) run Prettier as an ESLint rule
     rules: {
-      "prettier/prettier": "error",
+      "prettier/prettier": "off",
       "vue/no-multiple-template-root": "off",
     },
   },

@@ -60,6 +60,8 @@ const {
 const table = useTemplateRef("table");
 const showDetails = ref(false);
 const selectedArticle = ref<Article | null>(null);
+const showCreateArticle = ref(false);
+const showEditArticle = ref(false);
 
 // Watch for filter changes and expand all grouped rows when filter is applied
 watch(globalFilter, (newFilter) => {
@@ -85,15 +87,17 @@ function onRowSelect(row: TableRow<Article>, e?: Event) {
 }
 
 // Handle refresh
-async function handleRefresh() {
+async function handleRefresh(silent = false) {
   try {
     await refreshArticles();
-    toast.add({
-      title: "Artikel aktualisiert",
-      description: `${allArticles.value?.length || 0} Artikel geladen`,
-      color: "success",
-      icon: "i-heroicons-check-circle",
-    });
+    if (!silent) {
+      toast.add({
+        title: "Artikel aktualisiert",
+        description: `${allArticles.value?.length || 0} Artikel geladen`,
+        color: "success",
+        icon: "i-heroicons-check-circle",
+      });
+    }
   } catch (error) {
     console.error("Error refreshing articles:", error);
     toast.add({
@@ -103,6 +107,76 @@ async function handleRefresh() {
       icon: "i-heroicons-exclamation-triangle",
     });
   }
+}
+
+// Handle manual refresh (with toast)
+async function handleManualRefresh() {
+  await handleRefresh(false);
+}
+
+// Handle article creation
+function handleArticleCreated(newArticle: {
+  articleId: string;
+  success: boolean;
+  message: string;
+}) {
+  toast.add({
+    title: "Artikel erstellt",
+    description: `Artikel "${newArticle.articleId}" wurde erfolgreich erstellt.`,
+    color: "success",
+    icon: "i-heroicons-check-circle",
+  });
+  // Refresh articles to show the new one (silent refresh since we show our own toast)
+  handleRefresh(true);
+}
+
+// Handle article deletion
+function handleArticleDeleted(articleId: string) {
+  // Clear selected article if it was the one that got deleted
+  if (selectedArticle.value?.id === articleId) {
+    selectedArticle.value = null;
+  }
+
+  // Close the details slideover
+  showDetails.value = false;
+
+  // Refresh the articles list to reflect the deletion (silent refresh since we show our own toast)
+  handleRefresh(true);
+
+  toast.add({
+    title: "Artikel entfernt",
+    description: `Artikel "${articleId}" wurde aus der Liste entfernt.`,
+    color: "info",
+    icon: "i-heroicons-information-circle",
+  });
+}
+
+// Handle article edit (placeholder for future implementation)
+function handleArticleEdited(articleId: string) {
+  // Show the edit slideover for the selected article
+  if (selectedArticle.value && selectedArticle.value.id === articleId) {
+    showEditArticle.value = true;
+  }
+
+  // Close the details slideover
+  showDetails.value = false;
+}
+
+// Handle article update completion
+function handleArticleUpdated(response: {
+  success: boolean;
+  articleId: string;
+  message: string;
+}) {
+  // Refresh the articles list to reflect the changes (silent refresh since we show our own toast)
+  handleRefresh(true);
+
+  toast.add({
+    title: "Artikel aktualisiert",
+    description: `Artikel "${response.articleId}" wurde erfolgreich aktualisiert.`,
+    color: "success",
+    icon: "i-heroicons-check-circle",
+  });
 }
 </script>
 
@@ -120,6 +194,7 @@ async function handleRefresh() {
         color="primary"
         size="lg"
         class="sm:size-md"
+        @click="showCreateArticle = true"
       />
       <ClientOnly>
         <UTooltip text="Artikel aktualisieren">
@@ -129,7 +204,7 @@ async function handleRefresh() {
             variant="solid"
             color="neutral"
             size="lg"
-            @click="handleRefresh"
+            @click="handleManualRefresh"
           />
         </UTooltip>
         <template #fallback>
@@ -283,6 +358,17 @@ async function handleRefresh() {
     <ArticleHistoryDrawer
       v-model:show-details="showDetails"
       :selected-article="selectedArticle"
+      @article-deleted="handleArticleDeleted"
+      @article-edited="handleArticleEdited"
+    />
+    <CreateArticleSlideover
+      v-model:open="showCreateArticle"
+      @article-created="handleArticleCreated"
+    />
+    <EditArticleSlideover
+      v-model:open="showEditArticle"
+      :article-id="selectedArticle?.id || ''"
+      @article-updated="handleArticleUpdated"
     />
   </ClientOnly>
 </template>
