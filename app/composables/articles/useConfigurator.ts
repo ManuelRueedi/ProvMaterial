@@ -7,12 +7,12 @@ import {
   socketsByType,
   tagsByType,
 } from "./rules";
-import type { Config, Connector } from "./types";
+import type { Ampacity, Config, Connector } from "./types";
 
 export function useConfigurator() {
   const config = reactive<Config>({
-    type: "Kabel",
-    ampacity: null,
+    type: "Verlängerung",
+    ampacity: "32A",
     connector: null,
     sockets: {},
     length: 0,
@@ -51,11 +51,11 @@ export function useConfigurator() {
   /* ────── keep everything valid + pre-select first entry ────── */
   watchEffect(() => {
     /* Ampacity */
-    if (!ampacityOptions.value.includes(config.ampacity as any))
+    if (!ampacityOptions.value.includes(config.ampacity as Ampacity))
       config.ampacity = ampacityOptions.value[0] ?? null;
 
     /* Connector */
-    if (!connectorOptions.value.includes(config.connector as any))
+    if (!connectorOptions.value.includes(config.connector as Connector))
       config.connector = connectorOptions.value[0] ?? null;
 
     /* Sockets */
@@ -65,7 +65,7 @@ export function useConfigurator() {
       if (config.sockets && typeof config.sockets === "object") {
         for (const k of Object.keys(config.sockets) as Connector[]) {
           if (!socketsOptions.value.includes(k)) {
-            delete config.sockets[k as keyof typeof config.sockets];
+            config.sockets[k as keyof typeof config.sockets] = undefined;
           }
         }
       }

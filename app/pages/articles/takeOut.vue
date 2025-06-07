@@ -1,5 +1,5 @@
 <template>
-  <h1 class="my-5 text-center text-3xl font-bold">Artikel auslagern</h1>
+  <h1 class="my-5 text-center text-3xl font-bold">Auslagern</h1>
   <!-- Article Search Form Component -->
   <ArticleSearchForm
     ref="searchFormRef"
@@ -75,6 +75,7 @@
 
 <script lang="ts" setup>
 import type { Article } from "@/composables/articles/types";
+import { errorMap } from "@/composables/useFriendlyError";
 
 const { isDesktop } = useDevice();
 
@@ -102,16 +103,13 @@ async function handleTakeOut(
   projectId?: number,
 ) {
   try {
-    const data = await $fetch(
-      `/api/articles/${encodeURIComponent(articleId)}/takeOut`,
-      {
-        body: {
-          newLocationId: locationId,
-          newProjectId: projectId,
-        },
-        method: "PUT",
+    await $fetch(`/api/articles/${encodeURIComponent(articleId)}/takeOut`, {
+      body: {
+        newLocationId: locationId,
+        newProjectId: projectId,
       },
-    );
+      method: "PUT",
+    });
     toast.add({
       title: "Artikel erfolgreich ausgetragen",
       color: "success",
@@ -122,11 +120,20 @@ async function handleTakeOut(
 
     // Close the slideover after successful take out
     showDetails.value = false;
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error("Error taking out article:", error);
+
+    // Extract error message from server response
+    const errorMessage = "Der Artikel konnte nicht ausgetragen werden.";
+
+    // Use friendly error mapping if available, otherwise use extracted message
+    const friendlyError = errorMap(error);
+
     toast.add({
-      title: "Fehler beim Austragen",
-      description: "Der Artikel konnte nicht ausgetragen werden.",
-      color: "error",
+      title: friendlyError.title || "Fehler beim Austragen",
+      description: friendlyError.description || errorMessage,
+      color: friendlyError.color || "error",
+      icon: friendlyError.icon,
     });
   }
 }
@@ -152,7 +159,7 @@ async function handleBundleTakeOut(
   projectId?: number,
 ) {
   try {
-    const data = await $fetch("/api/articles/takeOutMultiple", {
+    await $fetch("/api/articles/takeOutMultiple", {
       body: {
         articleIds: articleIds,
         newLocationId: locationId,
@@ -171,11 +178,20 @@ async function handleBundleTakeOut(
 
     // Close the slideover after successful take out
     showBundleDetails.value = false;
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error("Error taking out articles:", error);
+
+    // Extract error message from server response
+    const errorMessage = "Die Artikel konnten nicht ausgetragen werden.";
+
+    // Use friendly error mapping if available, otherwise use extracted message
+    const friendlyError = errorMap(error);
+
     toast.add({
-      title: "Fehler beim Austragen",
-      description: "Die Artikel konnten nicht ausgetragen werden.",
-      color: "error",
+      title: friendlyError.title || "Fehler beim Austragen",
+      description: friendlyError.description || errorMessage,
+      color: friendlyError.color || "error",
+      icon: friendlyError.icon,
     });
   }
 }

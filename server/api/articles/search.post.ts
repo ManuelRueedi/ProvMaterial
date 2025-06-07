@@ -1,27 +1,58 @@
 import { and, eq, gte, lt, lte, asc, desc, sql, inArray } from "drizzle-orm";
 import {
   ConfigSchema,
-  type Ampacity,
+  AMPACITY_TO_NUMBER,
+  numberToAmpacity,
   type Connector,
   type Config,
   type ArticleSearchResponse,
+  type Article,
+  type Type,
+  type Tag,
 } from "@/composables/articles/types";
 import { articles } from "~~/server/database/schema";
 
+// Helper function to transform database result to Article format
+function transformToArticle(row: {
+  id: string;
+  type: Type;
+  ampacity: number;
+  connector: Connector | null;
+  outputs: Partial<Record<Connector, number>> | null;
+  tags: Tag[];
+  lengthInMeter: number;
+  storageLocationSection: string | null;
+  storageLocation: { name: string };
+}): Article {
+  return {
+    id: row.id,
+    type: row.type,
+    ampacity: numberToAmpacity(row.ampacity),
+    lengthInMeter: row.lengthInMeter,
+    connector: row.connector || undefined,
+    outputs: row.outputs ?? {},
+    tags: row.tags,
+    storageLocation: {
+      name: row.storageLocation.name,
+      address: "", // Minimal data - not fetched
+    },
+    storageLocationSection: row.storageLocationSection || undefined,
+  };
+}
+
 export default defineEventHandler(async (event) => {
-  requireUserSession(event);
+  const session = await requireUserSession(event);
+
+  if (!session.rights.includes("useArticles")) {
+    throw createError({
+      statusCode: 403,
+      statusMessage: "User does not have permission to search articles",
+    });
+  }
 
   const body = (await readBody(event)) as Config;
 
   ConfigSchema.parse(body);
-
-  const ampMap: Record<Ampacity, number> = {
-    "≤13A": 13,
-    "16A": 16,
-    "32A": 32,
-    "63A": 63,
-    "≥125A": 125,
-  };
 
   const type = body.type;
 
@@ -29,7 +60,7 @@ export default defineEventHandler(async (event) => {
   const inStorage = eq(articles.locationId, articles.storageLocationId);
 
   if (body.ampacity !== null) {
-    const amps = ampMap[body.ampacity];
+    const amps = AMPACITY_TO_NUMBER[body.ampacity];
     /* ---------- base WHERE for type & ampacity range ---------- */
     searchQuery =
       amps === 13
@@ -87,6 +118,7 @@ export default defineEventHandler(async (event) => {
       columns: {
         id: true,
         type: true,
+        ampacity: true,
         connector: true,
         outputs: true,
         lengthInMeter: true,
@@ -104,7 +136,7 @@ export default defineEventHandler(async (event) => {
         statusMessage: "No matching items",
       });
     }
-    return { items } as ArticleSearchResponse;
+    return { items: items.map(transformToArticle) } as ArticleSearchResponse;
   }
 
   /* ---------- length > 0 : singles then bundles ---------- */
@@ -112,6 +144,7 @@ export default defineEventHandler(async (event) => {
     columns: {
       id: true,
       type: true,
+      ampacity: true,
       connector: true,
       outputs: true,
       lengthInMeter: true,
@@ -128,7 +161,8 @@ export default defineEventHandler(async (event) => {
     limit: 3,
   });
 
-  if (items.length >= 3) return { items } as ArticleSearchResponse;
+  if (items.length >= 3)
+    return { items: items.map(transformToArticle) } as ArticleSearchResponse;
 
   const pool = await drizzle.query.articles.findMany({
     columns: {
@@ -213,6 +247,7 @@ export default defineEventHandler(async (event) => {
       columns: {
         id: true,
         type: true,
+        ampacity: true,
         connector: true,
         lengthInMeter: true,
         storageLocationSection: true,
@@ -224,7 +259,10 @@ export default defineEventHandler(async (event) => {
     });
     const byId = new Map(comboRows.map((r) => [r.id, r]));
     const bundles = combos.map((arr) => arr.map((r) => byId.get(r.id)!));
-    return { items, bundles } as ArticleSearchResponse;
+    return {
+      items: items.map(transformToArticle),
+      bundles: bundles.map((bundle) => bundle.map(transformToArticle)),
+    } as ArticleSearchResponse;
   }
 
   // 5) No bundles found?
@@ -232,5 +270,5 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "No matching items" });
   }
 
-  return { items } as ArticleSearchResponse;
+  return { items: items.map(transformToArticle) } as ArticleSearchResponse;
 });

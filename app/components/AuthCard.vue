@@ -6,7 +6,6 @@ const {
   loggedIn,
   user,
   clear: logout,
-  openInPopup,
   fetch: fetchUserSession,
 } = useUserSession();
 
@@ -16,16 +15,9 @@ const { register, authenticate } = useWebAuthn({
   authenticateEndpoint: "/auth/authenticate",
 });
 
-const { isDesktop } = useDevice();
-
 /** Microsoft login – popup on desktop, redirect on mobile */
 const loginWithMicrosoft = () => {
-  const url = "/auth/microsoft";
-  if (isDesktop) {
-    openInPopup(url);
-  } else {
-    window.location.href = url;
-  }
+  window.location.href = "/auth/microsoft";
 };
 
 /** Register a new passkey */
@@ -35,8 +27,8 @@ const signUp = async () => {
       await register({ userName: user.value.mail });
       await fetchUserSession();
     }
-  } catch (err: any) {
-    console.error("❌ Registration failed:", err.message);
+  } catch (err: unknown) {
+    console.error("❌ Registration failed:", (err as Error).message);
     toast.add(errorMap(err));
   }
 };
@@ -46,8 +38,8 @@ const signIn = async () => {
   try {
     await authenticate();
     await fetchUserSession();
-  } catch (err: any) {
-    console.error("❌ Authenticate failed:", err.message);
+  } catch (err: unknown) {
+    console.error("❌ Authenticate failed:", (err as Error).message);
     toast.add(errorMap(err));
   }
 };
@@ -60,8 +52,8 @@ const deleteKey = async () => {
     });
     await fetchUserSession();
     console.log(message);
-  } catch (err: any) {
-    console.error("❌ Delete key failed:", err.message);
+  } catch (err: unknown) {
+    console.error("❌ Delete key failed:", (err as Error).message);
     toast.add(errorMap(err));
   }
 };
@@ -95,14 +87,11 @@ const testLogin = async () => {
       description: "Test-Anmeldung erfolgreich",
       color: "success",
     });
-  } catch (err: any) {
-    console.error("❌ Test login failed:", err);
+  } catch (err: unknown) {
+    console.error("❌ Test login failed:", (err as Error).message);
     toast.add({
       title: "Fehler",
-      description:
-        err?.data?.statusMessage ||
-        err?.statusMessage ||
-        "Test-Anmeldung fehlgeschlagen",
+      description: "Test-Anmeldung fehlgeschlagen",
       color: "error",
     });
   } finally {

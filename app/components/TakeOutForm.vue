@@ -4,7 +4,7 @@
       <div class="flex flex-row justify-center gap-1">
         <USelectMenu
           v-model="selectedProject"
-          class="w-4/4"
+          class="w-3/4"
           size="lg"
           :items="projects"
           label-key="name"
@@ -13,7 +13,7 @@
         >
         </USelectMenu>
         <UButton
-          class="ml-2 justify-center p-2"
+          class="ml-2 justify-center p-2 px-3"
           color="neutral"
           @click="openCreateProject = true"
         >
@@ -36,7 +36,7 @@
         >
         </USelectMenu>
         <UButton
-          class="ml-2 justify-center p-2"
+          class="ml-2 justify-center p-2 px-3"
           color="neutral"
           @click="openCreateLocation = true"
         >

@@ -64,6 +64,20 @@
       "when": 1748686722586,
       "tag": "0008_exotic_robbie_robertson",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1749297282333,
+      "tag": "0009_wonderful_warbird",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1749305320359,
+      "tag": "0010_lovely_rictor",
+      "breakpoints": true
     }
   ]
 }

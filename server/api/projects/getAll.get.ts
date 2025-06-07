@@ -4,7 +4,7 @@ import type { Project } from "@/composables/articles/types";
 export default defineEventHandler(async (event): Promise<Project[]> => {
   const session = requireUserSession(event);
 
-  if (!(await session).rights.useArticles) {
+  if (!(await session).rights.includes("useArticles")) {
     throw createError({
       statusCode: 403,
       statusMessage: "Benutzer hat keine Berechtigung auf Projekte zuzugreifen",
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event): Promise<Project[]> => {
       name: project.name,
       description: project.description ?? undefined,
     }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Fehler beim Abrufen aller Projekte:", error);
     throw createError({
       statusCode: 500,

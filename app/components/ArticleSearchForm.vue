@@ -1,5 +1,37 @@
 <template>
   <div class="w-full">
+    <UCard
+      v-if="selectedArticles.length > 0"
+      class="mb-4 w-full max-w-xl justify-self-center border pb-4 shadow-lg"
+      variant="outline"
+    >
+      <template #header>
+        <div class="flex items-center justify-center gap-3">
+          <UIcon name="i-heroicons-qr-code" :size="30" />
+          <h1 class="text-lg font-semibold">Gescannte Artikel</h1>
+        </div>
+      </template>
+      <SearchResults
+        v-if="selectedArticles.length == 1"
+        :items="selectedArticles"
+        :bundles="[]"
+        :columns="tableColumns"
+        :loading="false"
+        @select-article="(row) => $emit('selectArticle', row.original)"
+        @select-bundle="(bundle) => $emit('selectBundle', bundle)"
+      />
+      <SearchResults
+        v-if="selectedArticles.length > 1"
+        :items="[]"
+        :bundles="[selectedArticles]"
+        :columns="tableColumns"
+        :loading="false"
+        @select-article="(row) => $emit('selectArticle', row.original)"
+        @select-bundle="(bundle) => $emit('selectBundle', bundle)"
+      />
+    </UCard>
+    <!-- Selected Scanned Articles Display -->
+
     <!-- Search Form -->
     <div
       class="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-center gap-7 pt-5"
@@ -129,7 +161,7 @@ import { useSocketSelection } from "@/composables/articles/useSocketSelection";
 const emptyResultsUi = reactive({ body: "text-center space-y-4" });
 
 // Define emits
-const emit = defineEmits<{
+defineEmits<{
   selectArticle: [article: Article];
   selectBundle: [bundle: Article[]];
 }>();
@@ -144,6 +176,21 @@ defineExpose({
   },
 });
 
+// Add useScannedArticles composable
+const { selectedArticles: rawSelectedArticles } = useScannedArticles();
+
+// Convert readonly articles to mutable articles for SearchResults
+const selectedArticles = computed(
+  () =>
+    rawSelectedArticles.value
+      .filter((article) => article.location?.id === article.storageLocation.id)
+      .map((article) => ({
+        ...article,
+        tags: [...article.tags],
+        outputs: { ...article.outputs },
+      })) as Article[],
+);
+
 // Table configuration
 const tableColumns = [
   {
@@ -153,12 +200,19 @@ const tableColumns = [
   {
     accessorKey: "lengthInMeter",
     header: "Länge",
-    cell: ({ row }: any) => `${row.getValue("lengthInMeter")}m`,
+    cell: ({ row }: { row: { getValue: (key: string) => unknown } }) =>
+      `${row.getValue("lengthInMeter")}m`,
   },
   {
     accessorKey: "storageLocation",
     header: "Ort",
-    cell: ({ row }: any) => row.getValue("storageLocation")?.name || "",
+    cell: ({ row }: { row: { getValue: (key: string) => unknown } }) => {
+      const location = row.getValue("storageLocation") as
+        | { name?: string }
+        | null
+        | undefined;
+      return location?.name || "";
+    },
   },
   {
     accessorKey: "storageLocationSection",

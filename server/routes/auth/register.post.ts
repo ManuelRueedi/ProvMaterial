@@ -43,7 +43,7 @@ export default defineWebAuthnRegisterEventHandler({
     }
   },
 
-  async onSuccess(event, { credential, user }) {
+  async onSuccess(event, { credential }) {
     const session = await requireUserSession(event);
     await useDrizzle().insert(tables.webauthnCredentials).values({
       id: credential.id,

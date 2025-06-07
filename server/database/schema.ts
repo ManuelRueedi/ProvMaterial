@@ -3,9 +3,9 @@ import { relations, sql } from "drizzle-orm";
 import type { WebAuthnCredential } from "#auth-utils";
 import type {
   Type,
-  Ampacity,
   Connector,
   Tag,
+  Rights,
 } from "@/composables/articles/types";
 
 // auth
@@ -17,12 +17,7 @@ export const users = sqliteTable("users", {
   firstName: text().notNull(),
   lastName: text(),
   jobtitle: text(),
-  rights: text({ mode: "json" }).$type<{
-    useArticles: boolean;
-    editArticles: boolean;
-    addArticles: boolean;
-    removeArticles: boolean;
-  }>(),
+  rights: text({ mode: "json" }).$type<Rights>(),
 });
 
 // ───────────────────────── webauthnCredentials  ─────────────────────────
@@ -52,7 +47,7 @@ export const projects = sqliteTable("projects", {
 // ───────────────────────── locations ────────────────────────
 export const locations = sqliteTable("locations", {
   id: integer().primaryKey({ autoIncrement: true }),
-  name: text().notNull(),
+  name: text().notNull().unique(),
   address: text(),
   latitude: real(),
   longitude: real(),
@@ -65,7 +60,9 @@ export const articles = sqliteTable("articles", {
   type: text().notNull().$type<Type>(),
   ampacity: integer().notNull(),
   connector: text().$type<Connector>(),
-  outputs: text({ mode: "json" }).$type<Partial<Record<Connector, number>>>(),
+  outputs: text({ mode: "json" })
+    .default({})
+    .$type<Partial<Record<Connector, number>>>(),
   tags: text({ mode: "json" })
     .notNull()
     .default(sql`'[]'`)
@@ -103,6 +100,10 @@ export const articleLocationHistory = sqliteTable("article_location_history", {
   projectName: text(),
   projectDescription: text(),
   projectId: integer().references(() => projects.id, { onDelete: "set null" }),
+  takeOutUserId: integer().references(() => users.id, { onDelete: "set null" }),
+  bringBackUserId: integer().references(() => users.id, {
+    onDelete: "set null",
+  }),
   fromTs: integer({ mode: "timestamp" })
     .notNull()
     .default(sql`(unixepoch())`),
@@ -129,10 +130,9 @@ export const changeLog = sqliteTable("change_log", {
   id: integer().primaryKey({ autoIncrement: true }),
   articleId: text().references(() => articles.id),
   changeTs: integer({ mode: "timestamp" }).default(sql`(unixepoch())`),
-  user: text(),
-  field: text(),
-  old: text(),
-  new: text(),
+  userId: integer().references(() => users.id),
+  old: text({ mode: "json" }).$type<Partial<typeof articles>>(),
+  new: text({ mode: "json" }).$type<Partial<typeof articles>>(),
 });
 
 // Relations

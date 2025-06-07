@@ -1,23 +1,11 @@
 <script setup lang="ts">
 import type { HistoryView } from "~~/server/api/articles/[articleId]/history.get";
-import type { Connector, Type, Tag } from "@/composables/articles/types";
+import type { Article } from "@/composables/articles/types";
 
 /* external state — provide these from the parent */
 const props = defineProps<{
   showDetails: boolean;
-  selectedArticle: {
-    id?: string;
-    number?: string;
-    type?: Type;
-    length?: string;
-    lengthInMeter?: number;
-    connector?: Connector;
-    outputs?: Partial<Record<Connector, number>>;
-    tags?: Tag[];
-    locationName?: string;
-    storageLocation?: string;
-    storageLocationSection?: number | string;
-  } | null;
+  selectedArticle: Article | null;
 }>();
 
 const emit = defineEmits<{
@@ -35,8 +23,7 @@ const {
 } = useLazyAsyncData<HistoryView[]>(
   "article-history",
   () => {
-    const articleId =
-      props.selectedArticle?.id || props.selectedArticle?.number;
+    const articleId = props.selectedArticle?.id;
     if (!articleId) throw new Error("No article ID available");
     return $fetch<HistoryView[]>(
       `/api/articles/${encodeURIComponent(articleId)}/history`,
@@ -72,7 +59,7 @@ watch(
 
 /* --- 3. also refetch if another article is selected while the drawer stays open */
 watch(
-  () => props.selectedArticle?.number,
+  () => props.selectedArticle?.id,
   () => {
     if (props.showDetails && props.selectedArticle) refresh();
   },

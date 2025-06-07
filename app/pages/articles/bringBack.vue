@@ -1,7 +1,40 @@
 <template>
-  <h1 class="my-5 text-center text-3xl font-bold">Artikel einlagern</h1>
+  <h1 class="my-5 text-center text-3xl font-bold">Einlagern</h1>
+
+  <!-- Scanned Articles Integration -->
+  <UCard
+    v-if="transformedScannedArticles.length > 0"
+    class="mb-8 border shadow-lg"
+    variant="outline"
+  >
+    <template #header>
+      <div class="flex items-center justify-center gap-3">
+        <UIcon name="i-heroicons-qr-code" :size="30" />
+        <h1 class="text-lg font-semibold">Gescannte Artikel</h1>
+      </div>
+    </template>
+    <UTable
+      :ui="{
+        td: 'px-4 py-3 text-sm text-default',
+      }"
+      :columns="scannedArticlesColumns"
+      :data="transformedScannedArticles"
+    />
+    <div class="mt-4 flex justify-center">
+      <UButton
+        variant="outline"
+        color="primary"
+        size="lg"
+        :disabled="transformedScannedArticles.length === 0"
+        @click="addScannedToSelection"
+      >
+        {{ transformedScannedArticles.length }} Artikel zur Auswahl hinzufügen
+      </UButton>
+    </div>
+  </UCard>
+
   <!-- Project Selection -->
-  <UCard class="shadow-sm">
+  <UCard class="mb-4 shadow-sm">
     <template #header>
       <h2 class="text-xl font-semibold">Projekt auswählen</h2>
     </template>
@@ -31,48 +64,6 @@
       :loading="loadingProjects"
     />
   </UCard>
-
-  <!-- QR Code Scanner Integration -->
-  <UAlert
-    v-if="ScannedQrCodes.length > 0"
-    color="primary"
-    variant="subtle"
-    :title="`${ScannedQrCodes.length} gescannte QR Codes`"
-  >
-    <template #description>
-      <div class="space-y-3">
-        <div class="flex flex-wrap gap-2">
-          <UBadge
-            v-for="code in ScannedQrCodes"
-            :key="code"
-            :label="code"
-            color="primary"
-            variant="subtle"
-          />
-        </div>
-        <div class="flex gap-2">
-          <UButton
-            color="primary"
-            :disabled="ScannedQrCodes.length === 0"
-            icon="i-heroicons-plus"
-            size="sm"
-            @click="addScannedToSelection"
-          >
-            Zur Auswahl hinzufügen
-          </UButton>
-          <UButton
-            color="neutral"
-            variant="outline"
-            icon="i-heroicons-trash"
-            size="sm"
-            @click="clearScannedCodes"
-          >
-            Codes löschen
-          </UButton>
-        </div>
-      </div>
-    </template>
-  </UAlert>
 
   <!-- Articles Table -->
   <UCard v-if="selectedProject" class="shadow-sm">
@@ -105,7 +96,7 @@
           <p class="text-sm">Gesamt ausgelagert</p>
           <p class="text-2xl font-bold">{{ deployedArticles.length }}</p>
         </UCard>
-        <UCard class="border-default border p-4">
+        <UCard class="p-4">
           <p class="text-sm">Ausgewählt</p>
           <p class="text-2xl font-bold">
             {{ selectedArticles.length }}
@@ -139,7 +130,7 @@
     </div>
 
     <!-- Articles by Location and Type -->
-    <div v-else class="divide-y">
+    <div v-else class="mb-10">
       <div
         v-for="location in groupedArticles"
         :key="location.locationName"
@@ -166,7 +157,7 @@
         </div>
 
         <!-- Articles by Type within Location -->
-        <div class="space-y-4">
+        <div class="w-full">
           <div
             v-for="typeGroup in location.typeGroups"
             :key="typeGroup.type"
@@ -226,18 +217,10 @@
                         "
                       />
                     </th>
-                    <th class="px-4 py-3 text-left text-sm font-medium">
-                      Artikel-Nr.
-                    </th>
+                    <th class="px-4 py-3 text-left text-sm font-medium">Nr.</th>
                     <th class="px-4 py-3 text-left text-sm font-medium">Typ</th>
                     <th class="px-4 py-3 text-left text-sm font-medium">
-                      Länge (m)
-                    </th>
-                    <th class="px-4 py-3 text-left text-sm font-medium">
-                      Anschluss
-                    </th>
-                    <th class="px-4 py-3 text-left text-sm font-medium">
-                      Tags
+                      Länge
                     </th>
                   </tr>
                 </thead>
@@ -265,22 +248,7 @@
                       {{ article.type }}
                     </td>
                     <td class="px-4 py-3 text-sm">
-                      {{ article.lengthInMeter }}
-                    </td>
-                    <td class="px-4 py-3 text-sm">
-                      {{ article.connector || "-" }}
-                    </td>
-                    <td class="px-4 py-3">
-                      <div class="flex flex-wrap gap-1">
-                        <UBadge
-                          v-for="tag in article.tags"
-                          :key="tag"
-                          :label="tag"
-                          color="neutral"
-                          size="sm"
-                          variant="subtle"
-                        />
-                      </div>
+                      {{ article.lengthInMeter }}m
                     </td>
                   </tr>
                 </tbody>
@@ -293,37 +261,25 @@
   </UCard>
 
   <!-- Action Buttons -->
-  <UCard
+  <UButton
     v-if="selectedArticles.length > 0"
-    class="border-default fixed bottom-24 left-1/2 z-10 -translate-x-1/2 transform rounded-md border px-2 py-2 shadow-lg"
+    class="fixed bottom-24 left-1/2 z-10 -translate-x-1/2 transform shadow-2xl"
+    color="primary"
+    size="xl"
+    :loading="bringingBack"
+    :disabled="selectedArticles.length === 0"
+    icon="i-heroicons-archive-box-arrow-down"
+    @click="bringBackSelected"
   >
-    <div class="flex items-center gap-4">
-      <span class="text-sm font-medium">
-        {{ selectedArticles.length }} Artikel ausgewählt
-      </span>
-      <UButton
-        color="primary"
-        size="lg"
-        :loading="bringingBack"
-        :disabled="selectedArticles.length === 0"
-        icon="i-heroicons-archive-box-arrow-down"
-        @click="bringBackSelected"
-      >
-        Einlagern
-      </UButton>
-    </div>
-  </UCard>
+    {{ selectedArticles.length }} Artikel Einlagern
+  </UButton>
 </template>
 
 <script lang="ts" setup>
-import type {
-  Article,
-  Project,
-  Connector,
-  Type,
-  Tag,
-} from "@/composables/articles/types";
+import { resolveComponent } from "vue";
+import type { Article, Project, Type } from "@/composables/articles/types";
 import { useBringBack } from "@/composables/articles/useBringBack";
+import { useScannedArticles } from "@/composables/useScannedArticles";
 
 interface GroupedByLocation {
   locationName: string;
@@ -332,7 +288,7 @@ interface GroupedByLocation {
 }
 
 // State
-const selectedProject = ref<any>(null);
+const selectedProject = ref<Project | undefined>(undefined); // Changed type from Project | null to Project | undefined and initialized with undefined
 const selectedArticles = ref<string[]>([]);
 const projects = ref<Project[]>([]);
 const deployedArticles = ref<Article[]>([]);
@@ -342,8 +298,10 @@ const bringingBack = ref(false);
 
 // External state
 const toast = useToast();
-const ScannedQrCodes = useState("ScannedQrCodes", () => []);
-const selectedQrCodes = useState("selectedQrCodes", () => []);
+const {
+  selectedArticles: scannedSelectedArticles,
+  deselectAll: clearScannedArticles,
+} = useScannedArticles();
 
 // Use composable for selection logic
 const {
@@ -358,6 +316,36 @@ const {
   isTypePartiallySelected,
   toggleTypeSelection,
 } = useBringBack(deployedArticles, selectedArticles);
+
+// Table columns for scanned articles
+const UBadge = resolveComponent("UBadge");
+const scannedArticlesColumns = [
+  {
+    accessorKey: "id",
+    header: "Nummer",
+  },
+  {
+    accessorKey: "type",
+    header: "Typ",
+  },
+  {
+    accessorKey: "lengthInMeter",
+    header: "Länge",
+    cell: ({ row }: { row: { getValue: (key: string) => unknown } }) =>
+      `${row.getValue("lengthInMeter")}m`,
+  },
+];
+
+// Transform scanned articles for table display
+const transformedScannedArticles = computed(() => {
+  return scannedSelectedArticles.value
+    .filter((article) => article.location?.id !== article.storageLocation.id)
+    .map((article) => ({
+      id: article.id,
+      type: article.type,
+      lengthInMeter: article.lengthInMeter,
+    }));
+});
 
 // Computed
 const groupedArticles = computed<GroupedByLocation[]>(() => {
@@ -431,11 +419,6 @@ const fetchDeployedArticles = async () => {
     deployedArticles.value = [];
   } finally {
     loadingArticles.value = false;
-    console.log(
-      selectedProject.value.id,
-      "articles fetched:",
-      deployedArticles.value,
-    );
   }
 };
 
@@ -452,19 +435,14 @@ const getTypeIcon = (type: Type): string => {
   return icons[type] || "ic:baseline-box";
 };
 
-// QR Code Methods
+// Scanned Articles Methods
 const addScannedToSelection = () => {
-  ScannedQrCodes.value.forEach((code) => {
-    if (!selectedArticles.value.includes(code)) {
-      selectedArticles.value.push(code);
+  scannedSelectedArticles.value.forEach((article) => {
+    if (!selectedArticles.value.includes(article.id)) {
+      selectedArticles.value.push(article.id);
     }
   });
-  clearScannedCodes();
-};
-
-const clearScannedCodes = () => {
-  ScannedQrCodes.value = [];
-  selectedQrCodes.value = [];
+  clearScannedArticles();
 };
 
 // Main Action

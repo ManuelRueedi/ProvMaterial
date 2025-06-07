@@ -15,7 +15,7 @@ const schema = z.object({
 export default defineEventHandler(async (event) => {
   const session = requireUserSession(event);
 
-  if (!(await session).rights.useArticles) {
+  if (!(await session).rights.includes("useArticles")) {
     throw createError({
       statusCode: 403,
       statusMessage: "User does not have permission to access articles",

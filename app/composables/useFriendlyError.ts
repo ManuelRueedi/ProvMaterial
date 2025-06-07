@@ -5,6 +5,14 @@ export const errorMap = (err: unknown): Partial<Toast> => {
   const h3 = err as Partial<H3Error>;
 
   switch (h3.statusCode) {
+    case 400:
+      return {
+        title: "Ungültige Anfrage",
+        description:
+          h3.statusMessage || "Die Anfrage konnte nicht verarbeitet werden.",
+        color: "warning",
+        icon: "ph:warning-circle",
+      };
     case 401:
       return {
         title: "Nichts gefunden",
@@ -15,9 +23,19 @@ export const errorMap = (err: unknown): Partial<Toast> => {
     case 404:
       return {
         title: "Nichts gefunden",
-        description: "Keine Artikel zu deinen Filtern gefunden.",
+        description:
+          h3.statusMessage || "Keine Artikel zu deinen Filtern gefunden.",
         color: "warning",
         icon: "ph:magnifying-glass",
+      };
+    case 409:
+      return {
+        title: "Konflikt",
+        description:
+          h3.statusMessage ||
+          "Die Aktion konnte aufgrund eines Konflikts nicht ausgeführt werden.",
+        color: "warning",
+        icon: "ph:warning-octagon",
       };
     case 500:
       return {

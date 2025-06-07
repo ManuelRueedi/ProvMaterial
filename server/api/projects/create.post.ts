@@ -13,7 +13,7 @@ export default defineEventHandler(async (event): Promise<Project> => {
   // Check user permissions
   const session = requireUserSession(event);
 
-  if (!(await session).rights.useArticles) {
+  if (!(await session).rights.includes("useArticles")) {
     throw createError({
       statusCode: 403,
       statusMessage: "Benutzer hat keine Berechtigung auf Projekte zuzugreifen",
@@ -57,11 +57,11 @@ export default defineEventHandler(async (event): Promise<Project> => {
       name: created.name,
       description: created.description ?? undefined,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating project:", error);
 
     // Check for unique constraint violation
-    if (error.message?.includes("UNIQUE constraint failed")) {
+    if ((error as Error).message?.includes("UNIQUE constraint failed")) {
       throw createError({
         statusCode: 409,
         statusMessage: "Ein Projekt mit diesem Namen existiert bereits",
@@ -71,7 +71,7 @@ export default defineEventHandler(async (event): Promise<Project> => {
     throw createError({
       statusCode: 500,
       statusMessage: "Ein Fehler ist beim Erstellen des Projekts aufgetreten",
-      data: error.message,
+      data: (error as Error).message,
     });
   }
 });

@@ -3,7 +3,13 @@ import { eq } from "drizzle-orm";
 export default defineOAuthMicrosoftEventHandler({
   config: { scope: ["User.Read", "offline_access"] },
 
-  async onSuccess(event, { user, tokens }) {
+  async onSuccess(event, { user }) {
+    // Check if user email is from @shpower.ch domain
+    if (!user.mail.endsWith("@shpower.ch")) {
+      console.log(`Unauthorized login attempt from: ${user.mail}`);
+      return sendRedirect(event, "/login?error=unauthorized");
+    }
+
     // check if the user is already in database based on microsoftID
     const userData = await useDrizzle().query.users.findFirst({
       where: (users, { eq }) => eq(users.microsoftID, user.id),
@@ -19,13 +25,7 @@ export default defineOAuthMicrosoftEventHandler({
           firstName: user.givenName,
           lastName: user.surname,
           jobtitle: user.jobTitle,
-          rights: {
-            //if user.mail ends with @shpower.ch, add rights to use and add Articles
-            useArticles: user.mail.endsWith("@shpower.ch") ? true : false,
-            editArticles: false,
-            addArticles: user.mail.endsWith("@shpower.ch") ? true : false,
-            removeArticles: false,
-          },
+          rights: ["useArticles", "addArticles"],
         });
     } else {
       // if user is already in database, update it if needed
@@ -71,13 +71,7 @@ export default defineOAuthMicrosoftEventHandler({
             : false,
           loggedInAt: Date.now(),
         },
-        rights: {
-          //check if null and set to false otherwise use dbUser data
-          useArticles: dbUser.rights?.useArticles ?? false,
-          editArticles: dbUser.rights?.editArticles ?? false,
-          addArticles: dbUser.rights?.addArticles ?? false,
-          removeArticles: dbUser.rights?.removeArticles ?? false,
-        },
+        rights: dbUser.rights || [],
         secure: {
           microsoftId: dbUser.microsoftID,
         },

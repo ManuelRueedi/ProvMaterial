@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+export const RightEnum = z.enum([
+  "useArticles",
+  "editArticles",
+  "addArticles",
+  "removeArticles",
+]);
+export type Right = z.infer<typeof RightEnum>;
+export type Rights = Right[]; // Array of rights
 /**
  * Equipment type categorization
  */
@@ -16,8 +24,47 @@ export type Type = z.infer<typeof TypeEnum>;
 /**
  * Current capacity classification
  */
-export const AmpacityEnum = z.enum(["≤13A", "16A", "32A", "63A", "≥125A"]);
+export const AmpacityEnum = z.enum([
+  "10A",
+  "16A",
+  "32A",
+  "40A",
+  "63A",
+  "≥125A",
+]);
 export type Ampacity = z.infer<typeof AmpacityEnum>;
+
+/**
+ * Map ampacity strings to numeric values for database storage and comparisons
+ */
+export const AMPACITY_TO_NUMBER: Record<Ampacity, number> = {
+  "10A": 10,
+  "16A": 16,
+  "32A": 32,
+  "40A": 40,
+  "63A": 63,
+  "≥125A": 125,
+};
+
+/**
+ * Convert ampacity string to number for database operations
+ */
+export function ampacityToNumber(ampacity: Ampacity): number {
+  return AMPACITY_TO_NUMBER[ampacity];
+}
+
+/**
+ * Convert numeric ampacity back to string enum (reverse mapping)
+ */
+export function numberToAmpacity(value: number): Ampacity {
+  const entry = Object.entries(AMPACITY_TO_NUMBER).find(
+    ([_, num]) => num === value,
+  );
+  if (!entry) {
+    throw new Error(`Invalid ampacity value: ${value}`);
+  }
+  return entry[0] as Ampacity;
+}
 
 /**
  * Connector types for electrical equipment
@@ -29,6 +76,7 @@ export const ConnectorEnum = z.enum([
   "CEE32",
   "CEE63",
   "CEE125",
+  "J40",
   "Powerlock 500A",
   "Powerlock 800A",
 ]);
@@ -62,6 +110,7 @@ export interface Location {
   address: string;
   latitude?: number;
   longitude?: number;
+  isStorageLocation?: boolean;
 }
 
 export interface Project {
@@ -78,13 +127,14 @@ export interface Project {
 export interface Article {
   id: string;
   type: Type;
+  ampacity: Ampacity;
   lengthInMeter: number;
-  connector: Connector;
+  connector?: Connector;
   outputs: Partial<Record<Connector, number>>;
   tags: Tag[];
   location?: Location;
   storageLocation: Location;
-  storageLocationSection: string;
+  storageLocationSection?: string;
   project?: Project;
 }
 

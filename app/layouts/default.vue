@@ -4,6 +4,21 @@ import type { NavigationMenuItem } from "@nuxt/ui";
 const { isMobile } = useDevice();
 const toggleQrCodeIcon = useToggleQrCodeIcon();
 
+// Use global scanned articles state
+const { selectedArticles } = useScannedArticles();
+
+// Computed property for QR code button icon
+const qrCodeIcon = computed(() => {
+  return selectedArticles.value.length > 0
+    ? "ic:baseline-qr-code"
+    : "ic:baseline-qr-code-scanner";
+});
+
+// Computed property for button color
+const qrCodeButtonColor = computed(() => {
+  return selectedArticles.value.length > 0 ? "primary" : "neutral";
+});
+
 // Mobile address bar hiding functionality
 onMounted(() => {
   // Only run on mobile devices
@@ -135,17 +150,24 @@ const items = ref<NavigationMenuItem[][]>([
       icon="ic:baseline-manage-accounts"
       class="fixed top-3 left-3 z-10 opacity-90"
     />
-    <UButton
-      v-if="isMobile"
-      variant="subtle"
-      color="neutral"
-      icon="ic:baseline-qr-code-scanner"
-      class="fixed right-10 bottom-23 z-10 opacity-80"
-      :ui="{
-        leadingIcon: 'size-13',
-      }"
-      @click="toggleQrCodeIcon"
-    />
+    <div v-if="isMobile" class="fixed right-5 bottom-23 z-10">
+      <UButton
+        variant="subtle"
+        :color="qrCodeButtonColor"
+        :icon="qrCodeIcon"
+        class="opacity-80"
+        :ui="{
+          leadingIcon: 'size-13',
+        }"
+        @click="toggleQrCodeIcon"
+      />
+      <div
+        v-if="selectedArticles.length > 0"
+        class="bg-neutral bg-elevated border-accented text-md absolute -top-3 -right-3 flex h-7 w-7 items-center justify-center rounded-full border px-1 font-bold"
+      >
+        {{ selectedArticles.length }}
+      </div>
+    </div>
     <QrCodeScanner />
   </UContainer>
 </template>

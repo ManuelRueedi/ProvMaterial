@@ -1,3 +1,5 @@
+import type { Rights } from "@/composables/articles/types";
+
 declare module "#auth-utils" {
   interface User {
     userId: number;
@@ -10,12 +12,7 @@ declare module "#auth-utils" {
   }
 
   interface UserSession {
-    rights: {
-      useArticles: boolean;
-      editArticles: boolean;
-      addArticles: boolean;
-      removeArticles: boolean;
-    };
+    rights: Rights;
   }
 
   interface SecureSessionData {

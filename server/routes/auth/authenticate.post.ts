@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { webauthnCredentials } from "~~/server/database/schema";
 
 export default defineWebAuthnAuthenticateEventHandler({
   async storeChallenge(event, challenge, attemptId) {
@@ -78,13 +77,7 @@ export default defineWebAuthnAuthenticateEventHandler({
         hasWebauthn: true,
         loggedInAt: Date.now(),
       },
-      rights: {
-        //check if null and set to false otherwise use dbUser data
-        useArticles: dbUser.rights?.useArticles ?? false,
-        editArticles: dbUser.rights?.editArticles ?? false,
-        addArticles: dbUser.rights?.addArticles ?? false,
-        removeArticles: dbUser.rights?.removeArticles ?? false,
-      },
+      rights: dbUser.rights || [],
       secure: {
         webauthnId: credential.id,
       },

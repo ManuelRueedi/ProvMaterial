@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="max-w-8xl mx-auto flex w-full flex-wrap justify-center gap-8 pt-5"
-  >
+  <div class="flex w-full flex-wrap justify-center gap-8 pt-5">
     <!-- Individual Items Results -->
     <UCard v-if="items.length" class="h-fit w-full max-w-xl shadow-sm">
       <UTable
@@ -42,11 +40,12 @@
 
 <script lang="ts" setup>
 import type { Article } from "@/composables/articles/types";
+import type { TableColumn } from "#ui/types";
 
 interface Props {
   items: Article[];
   bundles: Article[][];
-  columns: any[];
+  columns: TableColumn<Article>[];
   loading: boolean;
 }
 

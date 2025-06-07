@@ -6,7 +6,6 @@ const testLoginSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   // Only allow test login in development or when explicitly enabled
-  const config = useRuntimeConfig();
   const allowTestLogin =
     process.env.NUXT_TEST_LOGIN_ENABLED === "true" || import.meta.dev;
 
@@ -43,12 +42,7 @@ export default defineEventHandler(async (event) => {
         hasWebauthn: false,
         loggedInAt: Date.now(),
       },
-      rights: {
-        useArticles: true,
-        editArticles: true,
-        addArticles: true,
-        removeArticles: false, // Keep some restrictions for safety
-      },
+      rights: ["useArticles", "editArticles", "addArticles"],
       secure: {
         isTestAccount: true,
       },
@@ -58,11 +52,11 @@ export default defineEventHandler(async (event) => {
       success: true,
       message: "Test-Anmeldung erfolgreich",
     };
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       throw createError({
         statusCode: 400,
-        statusMessage: error.errors[0].message,
+        statusMessage: error.errors[0]?.message || "Validation error",
       });
     }
     throw error;

@@ -1,4 +1,4 @@
-export default defineNuxtRouteMiddleware((to, from) => {
+export default defineNuxtRouteMiddleware((to) => {
   const userSession = useUserSession();
 
   const toast = useToast();
@@ -13,7 +13,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
   }
   if (
     to.path == "/articles/takeOut" &&
-    !userSession.session.value?.rights.useArticles
+    !userSession.session.value?.rights.includes("useArticles")
   ) {
     toast.add({
       title: "Keine Berechtigung!",

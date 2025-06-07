@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   // Check user permissions
   const session = requireUserSession(event);
 
-  if (!(await session).rights.useArticles) {
+  if (!(await session).rights.includes("useArticles")) {
     throw createError({
       statusCode: 403,
       statusMessage:

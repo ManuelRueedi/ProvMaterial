@@ -1,11 +1,5 @@
-import type {
-  Connector,
-  Type,
-  Tag,
-  Article,
-  Location,
-  Project,
-} from "@/composables/articles/types";
+import type { Article } from "@/composables/articles/types";
+import { numberToAmpacity } from "@/composables/articles/types";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 
@@ -21,7 +15,7 @@ const querySchema = z.object({
 export default defineEventHandler(async (event): Promise<Article[]> => {
   const session = requireUserSession(event);
 
-  if (!(await session).rights.useArticles) {
+  if (!(await session).rights.includes("useArticles")) {
     throw createError({
       statusCode: 403,
       statusMessage: "User does not have permission to access articles",
@@ -78,9 +72,10 @@ export default defineEventHandler(async (event): Promise<Article[]> => {
       where: whereClause,
       columns: {
         id: true,
+        type: true,
+        ampacity: true,
         lengthInMeter: true,
         storageLocationSection: true,
-        type: true,
         connector: true,
         outputs: true,
         tags: true,
@@ -111,12 +106,13 @@ export default defineEventHandler(async (event): Promise<Article[]> => {
 
     // Map DB result to Article interface
     return (result ?? []).map(
-      (row: any): Article => ({
+      (row): Article => ({
         id: row.id,
         type: row.type,
+        ampacity: numberToAmpacity(row.ampacity),
         lengthInMeter: row.lengthInMeter,
-        connector: row.connector,
-        outputs: row.outputs,
+        connector: row.connector || undefined,
+        outputs: row.outputs ?? {},
         tags: row.tags,
         ...(inStorage !== true &&
           row.location && {
@@ -129,7 +125,7 @@ export default defineEventHandler(async (event): Promise<Article[]> => {
           name: row.storageLocation.name,
           address: "", // Minimal data - not fetched
         },
-        storageLocationSection: row.storageLocationSection,
+        storageLocationSection: row.storageLocationSection || undefined,
         ...(row.project && {
           project: {
             name: row.project.name,
