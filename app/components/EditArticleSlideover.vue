@@ -465,7 +465,9 @@ async function loadArticleData() {
   loadError.value = "";
 
   try {
-    const article = await $fetch<Article>(`/api/articles/${props.articleId}`);
+    const article = await $fetch<Article>(
+      `/api/articles/${encodeURIComponent(props.articleId)}`,
+    );
 
     // Store original data for change detection
     originalData.value = { ...article };

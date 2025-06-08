@@ -69,6 +69,9 @@ export const useScannedArticles = () => {
     } else {
       selectedArticles.value.push(article);
     }
+
+    // Set showSelectedOnly based on whether there are selected articles
+    showSelectedOnly.value = selectedArticles.value.length > 0;
   };
 
   // Remove article from both scanned and selected lists
@@ -79,12 +82,16 @@ export const useScannedArticles = () => {
     selectedArticles.value = selectedArticles.value.filter(
       (article) => article.id !== articleId,
     );
+
+    // Set showSelectedOnly based on whether there are selected articles
+    showSelectedOnly.value = selectedArticles.value.length > 0;
   };
 
   // Clear all articles
   const clearAll = () => {
     scannedArticles.value = [];
     selectedArticles.value = [];
+    showSelectedOnly.value = false;
   };
 
   // Select all scanned articles
@@ -95,6 +102,7 @@ export const useScannedArticles = () => {
   // Deselect all articles
   const deselectAll = () => {
     selectedArticles.value = [];
+    showSelectedOnly.value = false;
   };
 
   return {

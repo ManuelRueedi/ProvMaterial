@@ -65,7 +65,7 @@
     />
   </UCard>
 
-  <!-- Articles Table -->
+  <!-- Articles Interface -->
   <UCard v-if="selectedProject" class="shadow-sm">
     <template #header>
       <div class="flex items-center justify-between">
@@ -109,152 +109,215 @@
           </p>
         </UCard>
       </div>
+
+      <!-- Tabs -->
+      <div class="mt-6">
+        <UTabs v-model="activeTab" :items="tabItems" />
+      </div>
     </template>
 
-    <!-- Loading State -->
-    <div v-if="loadingArticles" class="p-8 text-center">
-      <UIcon
-        name="i-heroicons-arrow-path"
-        class="mx-auto h-8 w-8 animate-spin"
-      />
-      <p class="mt-2">Artikel werden geladen...</p>
-    </div>
-
-    <!-- No Articles -->
-    <div v-else-if="!deployedArticles.length" class="p-8 text-center">
-      <UIcon name="i-heroicons-inbox" class="mx-auto h-12 w-12" />
-      <h3 class="mt-2 text-lg font-medium">Keine ausgelagerten Artikel</h3>
-      <p class="text-muted">
-        Für das ausgewählte Projekt sind derzeit keine Artikel ausgelagert.
-      </p>
-    </div>
-
-    <!-- Articles by Location and Type -->
-    <div v-else class="mb-10">
-      <div
-        v-for="location in groupedArticles"
-        :key="location.locationName"
-        class="p-6"
-      >
-        <!-- Location Header -->
-        <div class="mb-4 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <UIcon name="i-heroicons-map-pin" class="h-5 w-5" />
-            <h3 class="text-lg font-semibold">{{ location.locationName }}</h3>
-            <UBadge
-              :label="`${location.articles.length} Artikel`"
-              color="neutral"
-            />
-          </div>
-          <UButton
-            variant="outline"
-            size="sm"
-            :disabled="isLocationFullySelected(location.locationName)"
-            @click="selectLocationArticles(location.locationName)"
-          >
-            Alle von hier
-          </UButton>
+    <!-- Tab Content -->
+    <div class="mt-4">
+      <!-- Table View -->
+      <div v-if="activeTab === 'table'">
+        <!-- Loading State -->
+        <div v-if="loadingArticles" class="p-8 text-center">
+          <UIcon
+            name="i-heroicons-arrow-path"
+            class="mx-auto h-8 w-8 animate-spin"
+          />
+          <p class="mt-2">Artikel werden geladen...</p>
         </div>
 
-        <!-- Articles by Type within Location -->
-        <div class="w-full">
+        <!-- No Articles -->
+        <div v-else-if="!deployedArticles.length" class="p-8 text-center">
+          <UIcon name="i-heroicons-inbox" class="mx-auto h-12 w-12" />
+          <h3 class="mt-2 text-lg font-medium">Keine ausgelagerten Artikel</h3>
+          <p class="text-muted">
+            Für das ausgewählte Projekt sind derzeit keine Artikel ausgelagert.
+          </p>
+        </div>
+
+        <!-- Articles by Location and Type -->
+        <div v-else class="mb-10">
           <div
-            v-for="typeGroup in location.typeGroups"
-            :key="typeGroup.type"
-            class="border-default overflow-hidden rounded-md border"
+            v-for="location in groupedArticles"
+            :key="location.locationName"
+            class="p-6"
           >
-            <!-- Type Header -->
-            <div class="px-4 py-3">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <UIcon :name="getTypeIcon(typeGroup.type)" class="h-4 w-4" />
-                  <span class="font-medium">{{ typeGroup.type }}</span>
-                  <UBadge
-                    :label="`${typeGroup.articles.length}`"
-                    color="neutral"
-                    size="sm"
-                  />
-                </div>
-                <UButton
-                  variant="ghost"
-                  size="sm"
-                  :disabled="
-                    isTypeFullySelected(location.locationName, typeGroup.type)
-                  "
-                  @click="
-                    selectTypeArticles(location.locationName, typeGroup.type)
-                  "
-                >
-                  Alle auswählen
-                </UButton>
+            <!-- Location Header -->
+            <div class="mb-4 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <UIcon name="i-heroicons-map-pin" class="h-5 w-5" />
+                <h3 class="text-lg font-semibold">
+                  {{ location.locationName }}
+                </h3>
+                <UBadge
+                  :label="`${location.articles.length} Artikel`"
+                  color="neutral"
+                />
               </div>
+              <UButton
+                variant="outline"
+                size="sm"
+                :disabled="isLocationFullySelected(location.locationName)"
+                @click="selectLocationArticles(location.locationName)"
+              >
+                Alle von hier
+              </UButton>
             </div>
 
-            <!-- Articles Table -->
-            <div class="overflow-x-auto">
-              <table class="w-full">
-                <thead>
-                  <tr>
-                    <th class="w-12 px-4 py-3 text-left">
-                      <UCheckbox
-                        :model-value="
-                          isTypeFullySelected(
-                            location.locationName,
-                            typeGroup.type,
-                          )
-                        "
-                        :indeterminate="
-                          isTypePartiallySelected(
-                            location.locationName,
-                            typeGroup.type,
-                          )
-                        "
-                        @update:model-value="
-                          toggleTypeSelection(
-                            location.locationName,
-                            typeGroup.type,
-                          )
-                        "
+            <!-- Articles by Type within Location -->
+            <div class="w-full">
+              <div
+                v-for="typeGroup in location.typeGroups"
+                :key="typeGroup.type"
+                class="border-default overflow-hidden rounded-md border"
+              >
+                <!-- Type Header -->
+                <div class="px-4 py-3">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <UIcon
+                        :name="getTypeIcon(typeGroup.type)"
+                        class="h-4 w-4"
                       />
-                    </th>
-                    <th class="px-4 py-3 text-left text-sm font-medium">Nr.</th>
-                    <th class="px-4 py-3 text-left text-sm font-medium">Typ</th>
-                    <th class="px-4 py-3 text-left text-sm font-medium">
-                      Länge
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="divide-default divide-y">
-                  <tr
-                    v-for="article in typeGroup.articles"
-                    :key="article.id"
-                    class="cursor-pointer"
-                    :class="{
-                      'bg-elevated': isArticleSelected(article.id),
-                    }"
-                    @click="toggleArticleSelection(article.id)"
-                  >
-                    <td class="px-4 py-3">
-                      <UCheckbox
-                        :model-value="isArticleSelected(article.id)"
-                        @update:model-value="toggleArticleSelection(article.id)"
-                        @click.stop
+                      <span class="font-medium">{{ typeGroup.type }}</span>
+                      <UBadge
+                        :label="`${typeGroup.articles.length}`"
+                        color="neutral"
+                        size="sm"
                       />
-                    </td>
-                    <td class="px-4 py-3 font-mono text-sm">
-                      {{ article.id }}
-                    </td>
-                    <td class="px-4 py-3 text-sm">
-                      {{ article.type }}
-                    </td>
-                    <td class="px-4 py-3 text-sm">
-                      {{ article.lengthInMeter }}m
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                    </div>
+                    <UButton
+                      variant="ghost"
+                      size="sm"
+                      :disabled="
+                        isTypeFullySelected(
+                          location.locationName,
+                          typeGroup.type,
+                        )
+                      "
+                      @click="
+                        selectTypeArticles(
+                          location.locationName,
+                          typeGroup.type,
+                        )
+                      "
+                    >
+                      Alle auswählen
+                    </UButton>
+                  </div>
+                </div>
+
+                <!-- Articles Table -->
+                <div class="overflow-x-auto">
+                  <table class="w-full">
+                    <thead>
+                      <tr>
+                        <th class="w-12 px-4 py-3 text-left">
+                          <UCheckbox
+                            :model-value="
+                              isTypeFullySelected(
+                                location.locationName,
+                                typeGroup.type,
+                              )
+                            "
+                            :indeterminate="
+                              isTypePartiallySelected(
+                                location.locationName,
+                                typeGroup.type,
+                              )
+                            "
+                            @update:model-value="
+                              toggleTypeSelection(
+                                location.locationName,
+                                typeGroup.type,
+                              )
+                            "
+                          />
+                        </th>
+                        <th class="px-4 py-3 text-left text-sm font-medium">
+                          Nr.
+                        </th>
+                        <th class="px-4 py-3 text-left text-sm font-medium">
+                          Typ
+                        </th>
+                        <th class="px-4 py-3 text-left text-sm font-medium">
+                          Länge
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-default divide-y">
+                      <tr
+                        v-for="article in typeGroup.articles"
+                        :key="article.id"
+                        class="cursor-pointer"
+                        :class="{
+                          'bg-elevated': isArticleSelected(article.id),
+                        }"
+                        @click="toggleArticleSelection(article.id)"
+                      >
+                        <td class="px-4 py-3">
+                          <UCheckbox
+                            :model-value="isArticleSelected(article.id)"
+                            @update:model-value="
+                              toggleArticleSelection(article.id)
+                            "
+                            @click.stop
+                          />
+                        </td>
+                        <td class="px-4 py-3 font-mono text-sm">
+                          {{ article.id }}
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                          {{ article.type }}
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                          {{ article.lengthInMeter }}m
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Map View -->
+      <div v-else-if="activeTab === 'map'">
+        <!-- Loading State -->
+        <div v-if="loadingArticles" class="p-8 text-center">
+          <UIcon
+            name="i-heroicons-arrow-path"
+            class="mx-auto h-8 w-8 animate-spin"
+          />
+          <p class="mt-2">Artikel werden geladen...</p>
+        </div>
+
+        <!-- No Articles -->
+        <div v-else-if="!deployedArticles.length" class="p-8 text-center">
+          <UIcon name="i-heroicons-inbox" class="mx-auto h-12 w-12" />
+          <h3 class="mt-2 text-lg font-medium">Keine ausgelagerten Artikel</h3>
+          <p class="text-muted">
+            Für das ausgewählte Projekt sind derzeit keine Artikel ausgelagert.
+          </p>
+        </div>
+
+        <!-- Location Map -->
+        <div v-else>
+          <LocationMap
+            :locations="locationsWithArticleCount"
+            :pending="loadingArticles"
+            height="500px"
+            empty-state-title="Keine Standorte mit Artikeln"
+            empty-state-description="Für das ausgewählte Projekt sind keine Artikel an Standorten ausgelagert."
+            :show-create-button="false"
+            :show-edit-button="false"
+            :show-legend="false"
+          />
         </div>
       </div>
     </div>
@@ -278,6 +341,7 @@
 <script lang="ts" setup>
 import { resolveComponent } from "vue";
 import type { Article, Project, Type } from "@/composables/articles/types";
+import type { TabsItem } from "@nuxt/ui";
 import { useBringBack } from "@/composables/articles/useBringBack";
 import { useScannedArticles } from "@/composables/useScannedArticles";
 
@@ -290,11 +354,26 @@ interface GroupedByLocation {
 // State
 const selectedProject = ref<Project | undefined>(undefined); // Changed type from Project | null to Project | undefined and initialized with undefined
 const selectedArticles = ref<string[]>([]);
+const activeTab = ref("table");
 const projects = ref<Project[]>([]);
 const deployedArticles = ref<Article[]>([]);
 const loadingProjects = ref(false);
 const loadingArticles = ref(false);
 const bringingBack = ref(false);
+
+// Tab configuration
+const tabItems: TabsItem[] = [
+  {
+    value: "table",
+    label: "Liste",
+    icon: "i-heroicons-list-bullet",
+  },
+  {
+    value: "map",
+    label: "Karte",
+    icon: "i-heroicons-map",
+  },
+];
 
 // External state
 const toast = useToast();
@@ -391,6 +470,43 @@ const uniqueLocations = computed(() => [
   ),
 ]);
 
+// Transform locations for map display with article counts
+const locationsWithArticleCount = computed(() => {
+  const locationCounts = new Map<string, number>();
+
+  // Count articles per location
+  deployedArticles.value.forEach((article) => {
+    if (article.location) {
+      const locationId = article.location.id.toString();
+      locationCounts.set(locationId, (locationCounts.get(locationId) || 0) + 1);
+    }
+  });
+
+  // Get unique locations and add article counts
+  const uniqueLocationMap = new Map();
+  deployedArticles.value.forEach((article) => {
+    if (article.location) {
+      const locationId = article.location.id.toString();
+      if (!uniqueLocationMap.has(locationId)) {
+        const location = {
+          id: article.location.id,
+          name: article.location.name,
+          address: article.location.address,
+          latitude: article.location.latitude,
+          longitude: article.location.longitude,
+          isStorageLocation: article.location.isStorageLocation,
+          articleCount: locationCounts.get(locationId) || 0,
+        };
+
+        uniqueLocationMap.set(locationId, location);
+      }
+    }
+  });
+
+  const result = Array.from(uniqueLocationMap.values());
+  return result;
+});
+
 // API Methods
 const fetchProjects = async () => {
   loadingProjects.value = true;
@@ -426,11 +542,12 @@ const fetchDeployedArticles = async () => {
 const getTypeIcon = (type: Type): string => {
   const icons: Record<Type, string> = {
     Kabel: "ic:baseline-cable",
-    Verlängerung: "ic:baseline-extension",
-    Verteiler: "ic:baseline-distribution",
+    Verlängerung: "ic:baseline-cable",
+    Verteiler: "ic:baseline-call-split",
     Box: "ic:baseline-box",
     Kabelrolle: "ic:baseline-cable-reel",
     Steckerleiste: "ic:baseline-power-strip",
+    Adapterkabel: "ic:baseline-cable",
   };
   return icons[type] || "ic:baseline-box";
 };

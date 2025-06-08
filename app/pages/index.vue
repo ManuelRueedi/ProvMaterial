@@ -62,6 +62,8 @@ const showDetails = ref(false);
 const selectedArticle = ref<Article | null>(null);
 const showCreateArticle = ref(false);
 const showEditArticle = ref(false);
+const showProjectManagement = ref(false);
+const showLocationManagement = ref(false);
 
 // Watch for filter changes and expand all grouped rows when filter is applied
 watch(globalFilter, (newFilter) => {
@@ -183,83 +185,87 @@ function handleArticleUpdated(response: {
 <template>
   <h1 class="my-5 text-center text-3xl font-bold">Übersicht</h1>
 
-  <div
-    class="wrap mt-10 mb-3 flex w-full flex-wrap justify-center gap-8 sm:justify-start"
-  >
-    <!--Filter and Refresh button -->
-    <div class="flex gap-4">
-      <UButton
-        icon="ic:baseline-add"
-        variant="solid"
-        color="primary"
-        size="lg"
-        class="sm:size-md"
-        @click="showCreateArticle = true"
-      />
-      <ClientOnly>
-        <UTooltip text="Artikel aktualisieren">
-          <UButton
-            :loading="articlesPending"
-            icon="i-heroicons-arrow-path"
-            variant="solid"
-            color="neutral"
-            size="lg"
-            @click="handleManualRefresh"
-          />
-        </UTooltip>
-        <template #fallback>
-          <UButton
-            icon="i-heroicons-arrow-path"
-            variant="outline"
-            color="neutral"
-            size="lg"
-            disabled
-          />
-        </template>
-      </ClientOnly>
-      <UTooltip v-if="isMobile" text="Gescannte / Alle Artikel anzeigen">
-        <div class="flex min-w-20 flex-row items-center gap-3">
-          <USwitch v-model="showSelectedOnly" size="lg" class="sm:size-md" />
-          <span class="text-sm font-medium sm:text-base">
-            {{ showSelectedOnly ? `Gescannte` : `Alle` }}
-          </span>
-        </div>
-      </UTooltip>
-    </div>
-    <div class="flex flex-row">
-      <!-- Switch between all articles and selected articles -->
+  <!-- Controls section with consistent spacing -->
+  <div class="mb-6 flex w-full flex-row justify-center gap-4 sm:justify-end">
+    <!-- Filter and actions -->
+    <div class="flex flex-row gap-4">
+      <!-- Filter input -->
       <UInput
         v-model="globalFilter"
-        class="w-full sm:max-w-sm"
+        class="sm:size-md w-full sm:w-64"
         placeholder="Filter..."
         size="lg"
       />
+
+      <!-- Actions dropdown with column visibility -->
       <UDropdownMenu
-        :items="
-          table?.tableApi
-            ?.getAllColumns()
-            .filter((column) => column.getCanHide())
-            .map((column) => ({
-              label: upperFirst(column.id),
-              type: 'checkbox' as const,
-              checked: column.getIsVisible(),
-              onUpdateChecked(checked: boolean) {
+        size="xl"
+        :items="[
+          [
+            {
+              label: 'Artikel hinzufügen',
+              icon: 'ic:baseline-add',
+              onSelect: () => (showCreateArticle = true),
+            },
+            {
+              label: 'Artikel aktualisieren',
+              icon: 'i-heroicons-arrow-path',
+              onSelect: handleManualRefresh,
+              disabled: articlesPending,
+            },
+            {
+              label: 'Projekte verwalten',
+              icon: 'i-heroicons-folder',
+              onSelect: () => (showProjectManagement = true),
+            },
+            {
+              label: 'Standorte verwalten',
+              icon: 'i-heroicons-map-pin',
+              onSelect: () => (showLocationManagement = true),
+            },
+            ...(isMobile
+              ? [
+                  {
+                    label: showSelectedOnly
+                      ? 'Alle anzeigen'
+                      : 'Nur gescannte anzeigen',
+                    icon: showSelectedOnly
+                      ? 'i-heroicons-eye'
+                      : 'ic:baseline-qr-code',
+                    onSelect: () => (showSelectedOnly = !showSelectedOnly),
+                  },
+                ]
+              : []),
+            {
+              label: 'Spalten verwalten',
+              icon: 'i-heroicons-view-columns',
+              children:
                 table?.tableApi
-                  ?.getColumn(column.id)
-                  ?.toggleVisibility(!!checked);
-              },
-              onSelect(e?: Event) {
-                e?.preventDefault();
-              },
-            }))
-        "
-        :content="{ align: 'end' }"
+                  ?.getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => ({
+                    label: upperFirst(column.id),
+                    type: 'checkbox' as const,
+                    checked: column.getIsVisible(),
+                    onUpdateChecked(checked: boolean) {
+                      table?.tableApi
+                        ?.getColumn(column.id)
+                        ?.toggleVisibility(!!checked);
+                    },
+                    onSelect(e?: Event) {
+                      e?.preventDefault();
+                    },
+                  })) || [],
+            },
+          ],
+        ]"
+        :popper="{ placement: 'bottom-start' }"
       >
         <UButton
-          label="Spalten"
-          color="neutral"
-          variant="outline"
-          trailing-icon="ic:baseline-arrow-downward"
+          label="Aktionen"
+          color="primary"
+          variant="solid"
+          trailing-icon="i-heroicons-chevron-down"
           size="lg"
           class="sm:size-md"
         />
@@ -370,5 +376,7 @@ function handleArticleUpdated(response: {
       :article-id="selectedArticle?.id || ''"
       @article-updated="handleArticleUpdated"
     />
+    <ProjectManagementSlideover v-model:open="showProjectManagement" />
+    <LocationManagementSlideover v-model:open="showLocationManagement" />
   </ClientOnly>
 </template>

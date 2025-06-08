@@ -7,10 +7,10 @@
     @update:open="localOpen = $event"
   >
     <template #title>
-      <h1>Standort erstellen</h1>
+      <h1>Bearbeiten</h1>
     </template>
     <template #description>
-      <h2>Standortdaten eingeben</h2>
+      <h2>Standortdaten ändern</h2>
     </template>
 
     <template #body>
@@ -44,8 +44,8 @@
             class="w-full"
           />
         </div>
-        <!-- <p>{{ formData.latitude }}, {{ formData.longitude }}</p> -->
       </div>
+
       <ClientOnly>
         <div
           :class="
@@ -119,10 +119,10 @@
         block
         color="primary"
         :loading="isSubmitting"
-        :disabled="!isFormValid"
+        :disabled="!isFormValid || !hasChanges"
         @click="submitForm"
       >
-        Erstellen
+        Speichern
       </UButton>
     </template>
     <slot></slot>
@@ -130,12 +130,14 @@
 </template>
 
 <script setup lang="ts">
-import type { Location } from "~/composables/articles/types";
+import type { Location } from "@/composables/articles/types";
 import { onMounted, onUnmounted } from "vue";
+
 const style =
   "https://api.maptiler.com/maps/0197273f-cf7d-78b4-b2e3-16a360932850/style.json?key=Z3eYEpeHavyVp6P3AygU";
 const center = ref<[number, number]>([8.629319, 47.69331394]);
 const zoom = ref(13);
+
 const coordinates = ref<{ lng: number; lat: number }>({
   lng: 8.629319,
   lat: 47.69331394,
@@ -244,11 +246,12 @@ async function getAddressFromCoordinates(lat: number, lng: number) {
 
 const props = defineProps<{
   open: boolean;
+  location: Location | null;
 }>();
 
 const emit = defineEmits<{
   "update:open": [value: boolean];
-  "location-created": [location: Location];
+  "location-updated": [location: Location];
 }>();
 
 const { isDesktop } = useDevice();
@@ -282,20 +285,60 @@ const formData = reactive({
   isStorageLocation: false,
 });
 
+// Original data for comparison
+const originalData = ref({
+  name: "",
+  address: "",
+  latitude: undefined as number | undefined,
+  longitude: undefined as number | undefined,
+  isStorageLocation: false,
+});
+
 // Form state
 const isSubmitting = ref(false);
 const validationErrors = ref({
   name: "",
 });
 
+// Watch for location changes and populate form
+watch(
+  () => props.location,
+  (location) => {
+    if (location) {
+      formData.name = location.name;
+      formData.address = location.address || "";
+      formData.latitude = location.latitude || undefined;
+      formData.longitude = location.longitude || undefined;
+      formData.isStorageLocation = location.isStorageLocation || false;
+
+      // Update coordinates and center for map
+      if (location.latitude && location.longitude) {
+        coordinates.value = {
+          lat: location.latitude,
+          lng: location.longitude,
+        };
+        center.value = [location.longitude, location.latitude];
+      }
+
+      // Save original data
+      originalData.value = {
+        name: location.name,
+        address: location.address || "",
+        latitude: location.latitude || undefined,
+        longitude: location.longitude || undefined,
+        isStorageLocation: location.isStorageLocation || false,
+      };
+    }
+  },
+  { immediate: true },
+);
+
 // Reset form when opened
 watch(
   () => props.open,
   (isOpen) => {
-    if (isOpen) {
+    if (isOpen && props.location) {
       resetForm();
-      // Try to get current location when opening, but don't show errors on auto-attempt
-      getCurrentLocation(true);
     }
   },
 );
@@ -315,6 +358,17 @@ onMounted(() => {
   });
 });
 
+// Check if form has changes
+const hasChanges = computed(() => {
+  return (
+    formData.name !== originalData.value.name ||
+    formData.address !== originalData.value.address ||
+    formData.latitude !== originalData.value.latitude ||
+    formData.longitude !== originalData.value.longitude ||
+    formData.isStorageLocation !== originalData.value.isStorageLocation
+  );
+});
+
 // Form validation
 const validateName = () => {
   if (!formData.name.trim()) {
@@ -329,51 +383,100 @@ const isFormValid = computed(() => {
   return formData.name.trim() !== "";
 });
 
-// Reset form to initial state
+// Reset form to original values
 function resetForm() {
-  formData.name = "";
-  formData.address = "";
-  formData.latitude = undefined;
-  formData.longitude = undefined;
-  formData.isStorageLocation = false;
+  if (props.location) {
+    formData.name = props.location.name;
+    formData.address = props.location.address || "";
+    formData.latitude = props.location.latitude || undefined;
+    formData.longitude = props.location.longitude || undefined;
+    formData.isStorageLocation = props.location.isStorageLocation || false;
+
+    // Update coordinates and center for map
+    if (props.location.latitude && props.location.longitude) {
+      coordinates.value = {
+        lat: props.location.latitude,
+        lng: props.location.longitude,
+      };
+      center.value = [props.location.longitude, props.location.latitude];
+    }
+
+    // Save original data
+    originalData.value = {
+      name: props.location.name,
+      address: props.location.address || "",
+      latitude: props.location.latitude || undefined,
+      longitude: props.location.longitude || undefined,
+      isStorageLocation: props.location.isStorageLocation || false,
+    };
+  }
   validationErrors.value = { name: "" };
   isSubmitting.value = false;
   isFullscreen.value = false;
-
-  // Reset map to default location
-  center.value = [8.629319, 47.69331394];
-  coordinates.value = { lng: 8.629319, lat: 47.69331394 };
 }
 
-// Submit form to create location
+// Submit form to update location
 async function submitForm() {
-  if (!validateName()) return;
+  if (!validateName() || !props.location) return;
 
   isSubmitting.value = true;
 
   try {
-    const createdLocation = await $fetch("/api/locations/create", {
-      method: "POST",
-      body: formData,
+    // Only send changed fields
+    const updateData: Partial<typeof formData> = {};
+    if (formData.name !== originalData.value.name) {
+      updateData.name = formData.name;
+    }
+    if (formData.address !== originalData.value.address) {
+      updateData.address = formData.address;
+    }
+    if (formData.latitude !== originalData.value.latitude) {
+      updateData.latitude = formData.latitude;
+    }
+    if (formData.longitude !== originalData.value.longitude) {
+      updateData.longitude = formData.longitude;
+    }
+    if (formData.isStorageLocation !== originalData.value.isStorageLocation) {
+      updateData.isStorageLocation = formData.isStorageLocation;
+    }
+
+    const updatedLocation = await $fetch(
+      `/api/locations/${props.location.id}/edit`,
+      {
+        method: "PUT",
+        body: updateData,
+      },
+    );
+
+    toast.add({
+      title: "Erfolg",
+      description: `Standort "${updatedLocation!.name}" wurde aktualisiert`,
+      color: "success",
     });
 
     // Convert API response to match Location interface
     const locationForEmit: Location = {
-      id: createdLocation!.id,
-      name: createdLocation!.name,
-      address: createdLocation!.address || "",
-      latitude: createdLocation!.latitude || 0,
-      longitude: createdLocation!.longitude || 0,
-      isStorageLocation: createdLocation!.isStorageLocation || false,
+      id: updatedLocation!.id,
+      name: updatedLocation!.name,
+      address: updatedLocation!.address || "",
+      latitude: updatedLocation!.latitude || 0,
+      longitude: updatedLocation!.longitude || 0,
+      isStorageLocation: updatedLocation!.isStorageLocation || false,
     };
 
-    emit("location-created", locationForEmit);
+    emit("location-updated", locationForEmit);
     localOpen.value = false;
   } catch (error: unknown) {
     const err = error as { statusCode?: number; statusMessage?: string };
     if (err.statusCode === 409) {
       validationErrors.value.name =
         "Ein Standort mit diesem Namen existiert bereits";
+    } else if (err.statusCode === 404) {
+      toast.add({
+        title: "Fehler",
+        description: "Standort wurde nicht gefunden",
+        color: "error",
+      });
     } else {
       toast.add({
         title: "Fehler",

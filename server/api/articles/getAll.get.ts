@@ -92,12 +92,18 @@ export default defineEventHandler(async (event): Promise<Article[]> => {
         ...(inStorage !== true && {
           location: {
             columns: {
+              id: true,
               name: true,
+              address: true,
+              latitude: true,
+              longitude: true,
+              isStorageLocation: true,
             },
           },
         }),
         project: {
           columns: {
+            id: true,
             name: true,
           },
         },
@@ -117,17 +123,26 @@ export default defineEventHandler(async (event): Promise<Article[]> => {
         ...(inStorage !== true &&
           row.location && {
             location: {
+              id: row.location.id,
               name: row.location.name,
-              address: "", // Minimal data - not fetched
+              address: row.location.address || "",
+              latitude: row.location.latitude || 0,
+              longitude: row.location.longitude || 0,
+              isStorageLocation: row.location.isStorageLocation || false,
             },
           }),
         storageLocation: {
+          id: 0, // Minimal data - not fetched
           name: row.storageLocation.name,
           address: "", // Minimal data - not fetched
+          latitude: 0, // Minimal data - not fetched
+          longitude: 0, // Minimal data - not fetched
+          isStorageLocation: true, // Minimal data - not fetched
         },
         storageLocationSection: row.storageLocationSection || undefined,
         ...(row.project && {
           project: {
+            id: row.project.id,
             name: row.project.name,
           },
         }),

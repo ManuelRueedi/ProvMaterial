@@ -106,16 +106,17 @@ export type Config = z.infer<typeof ConfigSchema>;
  * Location information interface
  */
 export interface Location {
-  id?: number;
+  id: number;
   name: string;
   address: string;
-  latitude?: number;
-  longitude?: number;
-  isStorageLocation?: boolean;
+  latitude: number;
+  longitude: number;
+  isStorageLocation: boolean;
+  articleCount?: number; // Optional for compatibility with existing code
 }
 
 export interface Project {
-  id?: number;
+  id: number;
   name: string;
   description?: string;
 }

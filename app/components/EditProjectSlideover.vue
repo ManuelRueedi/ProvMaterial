@@ -7,10 +7,10 @@
     @update:open="localOpen = $event"
   >
     <template #title>
-      <h1>Projekt erstellen</h1>
+      <h1>Bearbeiten</h1>
     </template>
     <template #description>
-      <h2>Projektdaten eingeben</h2>
+      <h2>Projektdaten ändern</h2>
     </template>
 
     <template #body>
@@ -50,10 +50,10 @@
         block
         color="primary"
         :loading="isSubmitting"
-        :disabled="!isFormValid"
+        :disabled="!isFormValid || !hasChanges"
         @click="submitForm"
       >
-        Erstellen
+        Speichern
       </UButton>
     </template>
     <slot></slot>
@@ -65,11 +65,12 @@ import type { Project } from "@/composables/articles/types";
 
 const props = defineProps<{
   open: boolean;
+  project: Project | null;
 }>();
 
 const emit = defineEmits<{
   "update:open": [value: boolean];
-  "project-created": [project: Project];
+  "project-updated": [project: Project];
 }>();
 
 const { isDesktop } = useDevice();
@@ -100,21 +101,51 @@ const formData = reactive({
   description: "",
 });
 
+// Original data for comparison
+const originalData = ref({
+  name: "",
+  description: "",
+});
+
 // Form state
 const isSubmitting = ref(false);
 const validationErrors = ref({
   name: "",
 });
 
+// Watch for project changes and populate form
+watch(
+  () => props.project,
+  (project) => {
+    if (project) {
+      formData.name = project.name;
+      formData.description = project.description || "";
+      originalData.value = {
+        name: project.name,
+        description: project.description || "",
+      };
+    }
+  },
+  { immediate: true },
+);
+
 // Reset form when opened
 watch(
   () => props.open,
   (isOpen) => {
-    if (isOpen) {
+    if (isOpen && props.project) {
       resetForm();
     }
   },
 );
+
+// Check if form has changes
+const hasChanges = computed(() => {
+  return (
+    formData.name !== originalData.value.name ||
+    formData.description !== originalData.value.description
+  );
+});
 
 // Form validation
 const validateName = () => {
@@ -130,40 +161,63 @@ const isFormValid = computed(() => {
   return formData.name.trim() !== "";
 });
 
-// Reset form to initial state
+// Reset form to original values
 function resetForm() {
-  formData.name = "";
-  formData.description = "";
+  if (props.project) {
+    formData.name = props.project.name;
+    formData.description = props.project.description || "";
+    originalData.value = {
+      name: props.project.name,
+      description: props.project.description || "",
+    };
+  }
   validationErrors.value = { name: "" };
   isSubmitting.value = false;
 }
 
-// Submit form to create project
+// Submit form to update project
 async function submitForm() {
-  if (!validateName()) return;
+  if (!validateName() || !props.project) return;
 
   isSubmitting.value = true;
 
   try {
-    const createdProject = await $fetch<Project>("/api/projects/create", {
-      method: "POST",
-      body: formData,
+    // Only send changed fields
+    const updateData: Partial<typeof formData> = {};
+    if (formData.name !== originalData.value.name) {
+      updateData.name = formData.name;
+    }
+    if (formData.description !== originalData.value.description) {
+      updateData.description = formData.description;
+    }
+
+    const updatedProject = await $fetch(
+      `/api/projects/${props.project.id}/edit`,
+      {
+        method: "PUT",
+        body: updateData,
+      },
+    );
+
+    toast.add({
+      title: "Erfolg",
+      description: `Projekt "${updatedProject!.name}" wurde aktualisiert`,
+      color: "success",
     });
 
-    // Ensure the response matches the Project interface
-    const projectForEmit: Project = {
-      id: createdProject.id,
-      name: createdProject.name,
-      description: createdProject.description,
-    };
-
-    emit("project-created", projectForEmit);
+    emit("project-updated", updatedProject);
     localOpen.value = false;
   } catch (error: unknown) {
     const err = error as { statusCode?: number; statusMessage?: string };
     if (err.statusCode === 409) {
       validationErrors.value.name =
         "Ein Projekt mit diesem Namen existiert bereits";
+    } else if (err.statusCode === 404) {
+      toast.add({
+        title: "Fehler",
+        description: "Projekt wurde nicht gefunden",
+        color: "error",
+      });
     } else {
       toast.add({
         title: "Fehler",

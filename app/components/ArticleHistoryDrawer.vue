@@ -172,7 +172,7 @@ const handleEdit = () => {
       <USeparator label="Verlauf" />
 
       <!-- Verlauf -->
-      <div class="mt-12">
+      <div class="my-12">
         <div v-if="pending" class="flex justify-center">
           <UButton loading label="Lade Verlauf..." :disabled="true" />
         </div>

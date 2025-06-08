@@ -109,8 +109,8 @@ export default defineEventHandler(async (event) => {
       articleId: id,
       locationName: location.name,
       locationaddress: location.address ?? "", // ggf. null-able machen
-      locationLatitude: location.latitude ?? null,
-      locationLongitude: location.longitude ?? null,
+      locationLatitude: location.latitude ?? 0,
+      locationLongitude: location.longitude ?? 0,
       locationID: location.id,
       projectName: project?.name ?? "",
       projectDescription: project?.description ?? "",

@@ -109,10 +109,18 @@
 
                 <div class="flex items-center gap-1">
                   <UCheckbox
+                    :key="article.id"
                     :model-value="
                       selectedArticles.some(
                         (selected) => selected.id === article.id,
                       )
+                    "
+                    @update:model-value="
+                      toggleArticleSelection({
+                        ...article,
+                        tags: [...article.tags],
+                        outputs: { ...article.outputs },
+                      })
                     "
                     @click.stop
                   />

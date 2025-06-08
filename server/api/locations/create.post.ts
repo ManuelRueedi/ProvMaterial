@@ -4,9 +4,9 @@ import { z } from "zod";
 const LocationSchema = z.object({
   name: z.string().min(1, "Name is required"),
   address: z.string().optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
-  isStorageLocation: z.boolean().optional().default(false),
+  latitude: z.number({ required_error: "Latitude is required" }),
+  longitude: z.number({ required_error: "Longitude is required" }),
+  isStorageLocation: z.boolean().default(false),
 });
 
 export type CreateLocationRequest = z.infer<typeof LocationSchema>;

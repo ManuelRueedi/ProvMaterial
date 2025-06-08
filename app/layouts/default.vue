@@ -148,14 +148,14 @@ const items = ref<NavigationMenuItem[][]>([
       to="/login"
       color="neutral"
       icon="ic:baseline-manage-accounts"
-      class="fixed top-3 left-3 z-10 opacity-90"
+      class="fixed top-3 left-3 z-10 opacity-70"
     />
     <div v-if="isMobile" class="fixed right-5 bottom-23 z-10">
       <UButton
         variant="subtle"
         :color="qrCodeButtonColor"
         :icon="qrCodeIcon"
-        class="opacity-80"
+        class="opacity-70"
         :ui="{
           leadingIcon: 'size-13',
         }"

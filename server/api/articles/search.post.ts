@@ -33,8 +33,12 @@ function transformToArticle(row: {
     outputs: row.outputs ?? {},
     tags: row.tags,
     storageLocation: {
+      id: 0, // Minimal data - not fetched
       name: row.storageLocation.name,
       address: "", // Minimal data - not fetched
+      latitude: 0, // Minimal data - not fetched
+      longitude: 0, // Minimal data - not fetched
+      isStorageLocation: true, // Minimal data - not fetched
     },
     storageLocationSection: row.storageLocationSection || undefined,
   };

@@ -53,6 +53,7 @@ export default defineEventHandler(async (event): Promise<Article> => {
             address: true,
             latitude: true,
             longitude: true,
+            isStorageLocation: true,
           },
         },
         storageLocation: {
@@ -62,6 +63,7 @@ export default defineEventHandler(async (event): Promise<Article> => {
             address: true,
             latitude: true,
             longitude: true,
+            isStorageLocation: true,
           },
         },
         project: {
@@ -96,16 +98,18 @@ export default defineEventHandler(async (event): Promise<Article> => {
             id: result.location.id,
             name: result.location.name,
             address: result.location.address || "",
-            latitude: result.location.latitude || undefined,
-            longitude: result.location.longitude || undefined,
+            latitude: result.location.latitude || 0,
+            longitude: result.location.longitude || 0,
+            isStorageLocation: result.location.isStorageLocation || false,
           }
         : undefined,
       storageLocation: {
         id: result.storageLocation.id,
         name: result.storageLocation.name,
         address: result.storageLocation.address || "",
-        latitude: result.storageLocation.latitude || undefined,
-        longitude: result.storageLocation.longitude || undefined,
+        latitude: result.storageLocation.latitude || 0,
+        longitude: result.storageLocation.longitude || 0,
+        isStorageLocation: result.storageLocation.isStorageLocation || false,
       },
       project: result.project
         ? {
