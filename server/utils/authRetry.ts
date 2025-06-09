@@ -1,11 +1,12 @@
 /**
  * Authentication retry mechanism and utility functions
  */
+import type { H3Event } from "h3";
 
 // Track failed authentication attempts per IP
 const authAttempts = new Map<string, { count: number; lastAttempt: number }>();
 
-export const getClientIP = (event: any): string => {
+export const getClientIP = (event: H3Event): string => {
   return (
     getHeader(event, "x-forwarded-for") ||
     getHeader(event, "x-real-ip") ||
@@ -36,6 +37,9 @@ export const recordFailedAttempt = (ip: string): void => {
   attempts.count += 1;
   attempts.lastAttempt = Date.now();
   authAttempts.set(ip, attempts);
+
+  // Start cleanup process lazily when first attempt is recorded
+  startCleanupIfNeeded();
 };
 
 export const clearFailedAttempts = (ip: string): void => {
@@ -47,17 +51,27 @@ export const getRetryDelay = (attemptCount: number): number => {
   return Math.min(1000 * Math.pow(2, attemptCount - 1), 16000);
 };
 
-// Clean up old attempts periodically
-setInterval(
-  () => {
-    const now = Date.now();
-    const cleanupThreshold = 60 * 60 * 1000; // 1 hour
+// Track cleanup interval to avoid multiple instances
+let cleanupIntervalId: NodeJS.Timeout | null = null;
 
-    for (const [ip, attempts] of authAttempts.entries()) {
-      if (now - attempts.lastAttempt > cleanupThreshold) {
-        authAttempts.delete(ip);
+// Start cleanup process lazily (only when first authentication attempt happens)
+const startCleanupIfNeeded = () => {
+  if (cleanupIntervalId !== null) return; // Already started
+
+  cleanupIntervalId = setInterval(
+    () => {
+      const now = Date.now();
+      const cleanupThreshold = 60 * 60 * 1000; // 1 hour
+
+      for (const [ip, attempts] of authAttempts.entries()) {
+        if (now - attempts.lastAttempt > cleanupThreshold) {
+          authAttempts.delete(ip);
+        }
       }
-    }
-  },
-  10 * 60 * 1000,
-); // Clean up every 10 minutes
+    },
+    10 * 60 * 1000,
+  ); // Clean up every 10 minutes
+};
+
+// Export cleanup starter for use in middleware or when needed
+export const ensureCleanupStarted = startCleanupIfNeeded;

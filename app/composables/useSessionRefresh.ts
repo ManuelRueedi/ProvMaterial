@@ -34,6 +34,9 @@ export const useSessionRefresh = () => {
   };
 
   const startAutoRefresh = () => {
+    // Only start timers on client side
+    if (!import.meta.client) return;
+
     if (refreshTimer) {
       clearInterval(refreshTimer);
     }
@@ -52,18 +55,20 @@ export const useSessionRefresh = () => {
     }
   };
 
-  // Start auto-refresh when user is logged in
-  watch(
-    loggedIn,
-    (isLoggedIn) => {
-      if (isLoggedIn) {
-        startAutoRefresh();
-      } else {
-        stopAutoRefresh();
-      }
-    },
-    { immediate: true },
-  );
+  // Only start auto-refresh on client side and when mounted
+  if (import.meta.client) {
+    watch(
+      loggedIn,
+      (isLoggedIn) => {
+        if (isLoggedIn) {
+          startAutoRefresh();
+        } else {
+          stopAutoRefresh();
+        }
+      },
+      { immediate: true },
+    );
+  }
 
   // Cleanup on unmount
   onUnmounted(() => {

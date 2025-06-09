@@ -21,8 +21,8 @@ const qrCodeButtonColor = computed(() => {
 
 // Mobile address bar hiding functionality
 onMounted(() => {
-  // Only run on mobile devices
-  if (!isMobile || typeof window === "undefined") return;
+  // Only run on mobile devices and client side
+  if (!isMobile || !import.meta.client) return;
 
   let scrollTimer: NodeJS.Timeout;
 

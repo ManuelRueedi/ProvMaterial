@@ -11,36 +11,36 @@ export const usePwaStatus = () => {
 
   // Check if app is installed
   const checkIfInstalled = () => {
-    if (import.meta.client) {
-      const nav = window.navigator as ExtendedNavigator;
-      isInstalled.value =
-        window.matchMedia("(display-mode: standalone)").matches ||
-        nav.standalone === true ||
-        document.referrer.includes("android-app://");
-    }
+    if (!import.meta.client) return;
+
+    const nav = window.navigator as ExtendedNavigator;
+    isInstalled.value =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      nav.standalone === true ||
+      document.referrer.includes("android-app://");
   };
 
   // Handle online/offline status
   const updateOnlineStatus = () => {
-    if (import.meta.client) {
-      isOnline.value = navigator.onLine;
-    }
+    if (!import.meta.client) return;
+
+    isOnline.value = navigator.onLine;
   };
 
   // PWA update handling
   const updateServiceWorker = async () => {
-    if (import.meta.client && "serviceWorker" in navigator) {
-      try {
-        const registration = await navigator.serviceWorker.getRegistration();
-        if (registration && registration.waiting) {
-          registration.waiting.postMessage({ type: "SKIP_WAITING" });
-          needRefresh.value = false;
-          // Reload the page to apply updates
-          window.location.reload();
-        }
-      } catch (error) {
-        console.error("Error updating service worker:", error);
+    if (!import.meta.client || !("serviceWorker" in navigator)) return;
+
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration && registration.waiting) {
+        registration.waiting.postMessage({ type: "SKIP_WAITING" });
+        needRefresh.value = false;
+        // Reload the page to apply updates
+        window.location.reload();
       }
+    } catch (error) {
+      console.error("Error updating service worker:", error);
     }
   };
 
