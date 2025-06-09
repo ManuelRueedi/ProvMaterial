@@ -39,6 +39,7 @@
     "zod": "^3.25.49"
   },
   "devDependencies": {
+    "@iconify-json/heroicons": "^1.2.2",
     "@iconify-json/ic": "^1.2.2",
     "@iconify-json/vscode-icons": "^1.2.22",
     "@nuxt/eslint-config": "^1.4.1",

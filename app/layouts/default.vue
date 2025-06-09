@@ -134,7 +134,6 @@ const items = ref<NavigationMenuItem[][]>([
 <template>
   <UContainer class="full-width min-h-screen overflow-x-hidden pb-20">
     <slot />
-
     <UNavigationMenu
       :highlight="true"
       :items="items"
@@ -169,8 +168,5 @@ const items = ref<NavigationMenuItem[][]>([
       </div>
     </div>
     <QrCodeScanner />
-    <PwaInstallPrompt />
-    <PwaUpdateNotification />
-    <OfflineIndicator />
   </UContainer>
 </template>
