@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const toast = useToast();
-const config = useRuntimeConfig();
+const { public: publicConfig } = useRuntimeConfig();
 
 const {
   loggedIn,
@@ -15,6 +15,30 @@ const { register, authenticate } = useWebAuthn({
   authenticateEndpoint: "/auth/authenticate",
 });
 
+// Auto-login loading state (only for UI feedback)
+const isAutoLoggingIn = ref(false);
+
+// Watch for login status changes to hide loading state
+watch(loggedIn, (newValue) => {
+  if (newValue) {
+    isAutoLoggingIn.value = false;
+  }
+});
+
+// Check if auto-login might be in progress
+onMounted(() => {
+  const route = useRoute();
+  // Show loading if coming from Microsoft OAuth
+  if (route.query.code) {
+    isAutoLoggingIn.value = true;
+
+    // Stop loading after a reasonable timeout
+    setTimeout(() => {
+      isAutoLoggingIn.value = false;
+    }, 5000);
+  }
+});
+
 /** Microsoft login – popup on desktop, redirect on mobile */
 const loginWithMicrosoft = () => {
   window.location.href = "/auth/microsoft";
@@ -26,6 +50,14 @@ const signUp = async () => {
     if (user.value) {
       await register({ userName: user.value.mail });
       await fetchUserSession();
+
+      // Show success message for WebAuthn registration
+      toast.add({
+        title: "Passkey erstellt",
+        description: "WebAuthn-Passkey wurde erfolgreich registriert",
+        color: "success",
+        icon: "i-heroicons-check-circle",
+      });
     }
   } catch (err: unknown) {
     console.error("❌ Registration failed:", (err as Error).message);
@@ -38,20 +70,74 @@ const signIn = async () => {
   try {
     await authenticate();
     await fetchUserSession();
+
+    // Show success message for WebAuthn login
+    toast.add({
+      title: "Erfolgreich angemeldet",
+      description: "WebAuthn-Anmeldung erfolgreich",
+      color: "success",
+      icon: "i-heroicons-check-circle",
+    });
   } catch (err: unknown) {
     console.error("❌ Authenticate failed:", (err as Error).message);
     toast.add(errorMap(err));
   }
 };
 
-/** Remove the user’s passkey */
+/** Enhanced logout with proper cleanup */
+const enhancedLogout = async () => {
+  try {
+    // Call the logout endpoint to properly clear cookies
+    await $fetch("/auth/logout", {
+      method: "POST",
+    });
+
+    // Clear the session locally
+    await logout();
+
+    toast.add({
+      title: "Erfolgreich abgemeldet",
+      description: "Sie wurden sicher abgemeldet",
+      color: "success",
+      icon: "i-heroicons-check-circle",
+    });
+  } catch (err: unknown) {
+    console.error("❌ Logout failed:", (err as Error).message);
+    // Still try to clear session locally
+    await logout();
+    toast.add({
+      title: "Abgemeldet",
+      description: "Sie wurden abgemeldet",
+      color: "warning",
+      icon: "i-heroicons-exclamation-triangle",
+    });
+  }
+};
+
+/** Remove the user's passkey with confirmation */
 const deleteKey = async () => {
+  // Show confirmation dialog in German
+  const confirmed = confirm(
+    "Möchten Sie Ihren Passkey wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
   try {
     const { message } = await $fetch<{ message: string }>("/auth/removeKey", {
       method: "DELETE",
     });
     await fetchUserSession();
-    console.log(message);
+
+    // Show success message
+    toast.add({
+      title: "Passkey entfernt",
+      description: message,
+      color: "success",
+      icon: "i-heroicons-check-circle",
+    });
   } catch (err: unknown) {
     console.error("❌ Delete key failed:", (err as Error).message);
     toast.add(errorMap(err));
@@ -89,11 +175,7 @@ const testLogin = async () => {
     });
   } catch (err: unknown) {
     console.error("❌ Test login failed:", (err as Error).message);
-    toast.add({
-      title: "Fehler",
-      description: "Test-Anmeldung fehlgeschlagen",
-      color: "error",
-    });
+    toast.add(errorMap(err));
   } finally {
     isTestLoggingIn.value = false;
   }
@@ -108,12 +190,25 @@ const isDark = computed({
     colorMode.preference = _isDark ? "dark" : "light";
   },
 });
+
+// Check if current user has admin rights
+const hasAdminRights = computed(() => {
+  const { session } = useUserSession();
+  const userRights = session.value?.rights || [];
+  return userRights.includes("admin");
+});
 </script>
 
 <template>
   <UCard class="flex max-h-fit max-w-fit rounded-2xl">
+    <!-- Auto-login loading state -->
+    <UContainer v-if="isAutoLoggingIn" class="flex flex-col items-center py-8">
+      <UIcon name="i-heroicons-arrow-path" class="mb-4 animate-spin text-2xl" />
+      <p class="text-sm text-gray-600">Automatische Anmeldung...</p>
+    </UContainer>
+
     <!-- Signed‑in state -->
-    <UContainer v-if="loggedIn && user">
+    <UContainer v-else-if="loggedIn && user">
       <UContainer class="my-5 flex justify-between">
         <UButton
           to="/"
@@ -158,17 +253,30 @@ const isDark = computed({
       <div
         class="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center"
       >
-        <UButton color="error" label="Logout" @click="logout" />
+        <UButton color="error" label="Logout" @click="enhancedLogout" />
+
+        <!-- Show "Passkey einrichten" button only if user doesn't have WebAuthn and is not test account -->
         <UButton
-          :disabled="user?.hasWebauthn || user?.mail === 'test@example.com'"
+          v-if="!user?.hasWebauthn && user?.mail !== 'test@example.com'"
           label="Passkey einrichten"
           @click="signUp"
         />
+
+        <!-- Show "Passkey löschen" button only if user has WebAuthn and is not test account -->
         <UButton
+          v-if="user?.hasWebauthn && user?.mail !== 'test@example.com'"
           color="warning"
-          :disabled="!user?.hasWebauthn || user?.mail === 'test@example.com'"
           label="Passkey löschen"
           @click="deleteKey"
+        />
+
+        <!-- Admin button - only visible for users with admin rights -->
+        <UButton
+          v-if="hasAdminRights"
+          to="/admin"
+          color="primary"
+          label="Admin"
+          icon="i-heroicons-cog-6-tooth"
         />
       </div>
 
@@ -185,16 +293,20 @@ const isDark = computed({
         <UButton
           class="w-full sm:w-auto"
           label="Login mit Microsoft"
+          icon="i-simple-icons-microsoft"
           @click="loginWithMicrosoft()"
         />
         <UButton
           class="w-full sm:w-auto"
           label="Login mit WebAuthn"
+          icon="i-heroicons-finger-print"
           @click="signIn"
         />
-
         <!-- Test Login Section -->
-        <div v-if="config.public.testLoginEnabled" class="mt-4 w-full pt-4">
+        <div
+          v-if="publicConfig.testLoginEnabled"
+          class="mt-4 w-full border-t border-gray-200 pt-4 dark:border-gray-700"
+        >
           <div v-if="!isTestLoginVisible" class="text-center">
             <UButton
               variant="outline"

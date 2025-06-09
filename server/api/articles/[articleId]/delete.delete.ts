@@ -28,15 +28,9 @@ export default defineEventHandler(async (event) => {
   const db = useDrizzle();
 
   try {
-    // Check if article exists
+    // Check if article exists and get full data for changelog
     const existingArticle = await db.query.articles.findFirst({
       where: eq(tables.articles.id, articleId),
-      columns: {
-        id: true,
-        type: true,
-        locationId: true,
-        storageLocationId: true,
-      },
     });
 
     if (!existingArticle) {
@@ -55,6 +49,15 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+    // Create change log entry before deletion
+    await db.insert(tables.changeLog).values({
+      articleId: articleId,
+      userId: session.user.userId,
+      action: "delete",
+      old: existingArticle,
+      new: null,
+    } as typeof tables.changeLog.$inferInsert);
+
     // Delete related records first (due to foreign key constraints)
 
     // 1. Delete from article location history
@@ -67,12 +70,9 @@ export default defineEventHandler(async (event) => {
       .delete(tables.inspections)
       .where(eq(tables.inspections.articleId, articleId));
 
-    // 3. Delete from change log
-    await db
-      .delete(tables.changeLog)
-      .where(eq(tables.changeLog.articleId, articleId));
+    // Note: We keep changelog entries for audit trail purposes
 
-    // 4. Finally delete the article itself
+    // 3. Finally delete the article itself
     await db.delete(tables.articles).where(eq(tables.articles.id, articleId));
 
     return {

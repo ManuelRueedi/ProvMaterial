@@ -67,20 +67,39 @@ export default defineWebAuthnAuthenticateEventHandler({
       })
       .where(eq(tables.webauthnCredentials.id, credential.id));
 
-    await setUserSession(event, {
-      user: {
-        userId: dbUser.id,
-        firstName: dbUser.firstName,
-        lastName: dbUser.lastName,
-        mail: dbUser.mail,
-        jobtitle: dbUser.jobtitle,
-        hasWebauthn: true,
-        loggedInAt: Date.now(),
+    await setUserSession(
+      event,
+      {
+        user: {
+          userId: dbUser.id,
+          firstName: dbUser.firstName,
+          lastName: dbUser.lastName,
+          mail: dbUser.mail,
+          jobtitle: dbUser.jobtitle,
+          hasWebauthn: true,
+          loggedInAt: Date.now(),
+        },
+        rights: dbUser.rights || [],
+        secure: {
+          webauthnId: credential.id,
+        },
       },
-      rights: dbUser.rights || [],
-      secure: {
-        webauthnId: credential.id,
+      {
+        // Set session to expire in 30 days for auto-login
+        maxAge: 60 * 60 * 24 * 30, // 30 days
       },
+    );
+
+    // Set a remember me cookie for auto-login
+    setCookie(event, "remember-login", "true", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
     });
+
+    console.log(
+      `WebAuthn: Session created for user ${dbUser.mail} (ID: ${dbUser.id})`,
+    );
   },
 });

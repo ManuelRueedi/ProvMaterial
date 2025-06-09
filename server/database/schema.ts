@@ -6,6 +6,7 @@ import type {
   Connector,
   Tag,
   Rights,
+  Action,
 } from "@/composables/articles/types";
 
 // auth
@@ -88,7 +89,7 @@ export const articles = sqliteTable("articles", {
 export const articleLocationHistory = sqliteTable("article_location_history", {
   id: integer().primaryKey({ autoIncrement: true }),
   articleId: text()
-    .references(() => articles.id)
+    .references(() => articles.id, { onDelete: "cascade" })
     .notNull(),
   locationName: text().notNull(),
   locationaddress: text(),
@@ -113,7 +114,7 @@ export const articleLocationHistory = sqliteTable("article_location_history", {
 // ──────────────────────── inspections ───────────────────────
 export const inspections = sqliteTable("inspections", {
   id: integer().primaryKey({ autoIncrement: true }),
-  articleId: text().references(() => articles.id),
+  articleId: text().references(() => articles.id, { onDelete: "set null" }),
   inspectionDate: integer({ mode: "timestamp" }).notNull(),
   inspectedBy: text(),
   fiType: text(),
@@ -129,10 +130,11 @@ export const inspections = sqliteTable("inspections", {
 export const changeLog = sqliteTable("change_log", {
   id: integer().primaryKey({ autoIncrement: true }),
   userId: integer({ mode: "number" }).references(() => users.id),
-  articleId: text().references(() => articles.id),
+  articleId: text().references(() => articles.id, { onDelete: "set null" }),
+  action: text().notNull().$type<Action>().default("update"), //, "update", "delete"
   changeTs: integer({ mode: "timestamp" }).default(sql`(unixepoch())`),
-  old: text({ mode: "json" }).$type<Partial<typeof articles>>(),
-  new: text({ mode: "json" }).$type<Partial<typeof articles>>(),
+  old: text({ mode: "json" }).$type<Partial<typeof articles.$inferSelect>>(),
+  new: text({ mode: "json" }).$type<Partial<typeof articles.$inferSelect>>(),
 });
 
 // Relations
@@ -207,3 +209,14 @@ export const articleLocationHistoryRelations = relations(
     }),
   }),
 );
+
+export const changeLogRelations = relations(changeLog, ({ one }) => ({
+  user: one(users, {
+    fields: [changeLog.userId],
+    references: [users.id],
+  }),
+  article: one(articles, {
+    fields: [changeLog.articleId],
+    references: [articles.id],
+  }),
+}));

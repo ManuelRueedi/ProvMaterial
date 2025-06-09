@@ -5,6 +5,7 @@ export const RightEnum = z.enum([
   "editArticles",
   "addArticles",
   "removeArticles",
+  "admin",
 ]);
 export type Right = z.infer<typeof RightEnum>;
 export type Rights = Right[]; // Array of rights
@@ -148,3 +149,22 @@ export interface Article {
 export type ArticleSearchResponse =
   | { items: Article[] }
   | { items: Article[]; bundles: Article[][] };
+
+/**
+ * Enum for change log action types
+ */
+export const ActionEnum = z.enum(["create", "update", "delete"]);
+export type Action = z.infer<typeof ActionEnum>;
+
+/**
+ * Interface for article change log entries
+ */
+export interface ChangeLog {
+  id: number;
+  userId: number;
+  articleId: string;
+  action: Action;
+  changeTs: Date;
+  old?: Partial<Article>;
+  new?: Partial<Article>;
+}

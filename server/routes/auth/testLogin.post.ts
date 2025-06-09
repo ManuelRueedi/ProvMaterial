@@ -32,21 +32,38 @@ export default defineEventHandler(async (event) => {
     }
 
     // Create a test user session
-    await setUserSession(event, {
-      user: {
-        userId: "test-user-id",
-        firstName: "Test",
-        lastName: "Benutzer",
-        mail: "test@example.com",
-        jobtitle: "Test-Konto",
-        hasWebauthn: false,
-        loggedInAt: Date.now(),
+    await setUserSession(
+      event,
+      {
+        user: {
+          userId: "test-user-id",
+          firstName: "Test",
+          lastName: "Benutzer",
+          mail: "test@example.com",
+          jobtitle: "Test-Konto",
+          hasWebauthn: false,
+          loggedInAt: Date.now(),
+        },
+        rights: ["useArticles", "editArticles", "addArticles", "admin"],
+        secure: {
+          isTestAccount: true,
+        },
       },
-      rights: ["useArticles", "editArticles", "addArticles"],
-      secure: {
-        isTestAccount: true,
+      {
+        // Set session to expire in 30 days for auto-login
+        maxAge: 60 * 60 * 24 * 30, // 30 days
       },
+    );
+
+    // Set a remember me cookie for auto-login
+    setCookie(event, "remember-login", "true", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
     });
+
+    console.log("Test login: Session created for test user");
 
     return {
       success: true,

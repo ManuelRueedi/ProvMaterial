@@ -213,8 +213,8 @@ export default defineEventHandler(async (event) => {
     await db.insert(tables.changeLog).values({
       articleId: articleId,
       userId: session.user.userId,
-      old: JSON.stringify(_originalData),
-      new: JSON.stringify(newData),
+      old: _originalData,
+      new: newData,
     } as typeof tables.changeLog.$inferInsert);
 
     // Handle location history if location changed

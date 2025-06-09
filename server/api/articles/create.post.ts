@@ -123,7 +123,7 @@ export default defineEventHandler(async (event) => {
 
     // Insert the article
     const now = new Date();
-    await db.insert(tables.articles).values({
+    const newArticleData = {
       id: articleData.id,
       type: articleData.type,
       ampacity: ampacityToNumber(articleData.ampacity),
@@ -137,7 +137,18 @@ export default defineEventHandler(async (event) => {
       currentProjectId: articleData.currentProjectId || null,
       createdAt: now,
       updatedAt: now,
-    });
+    };
+
+    await db.insert(tables.articles).values(newArticleData);
+
+    // Create changelog entry for article creation
+    await db.insert(tables.changeLog).values({
+      articleId: articleData.id,
+      userId: session.user.userId,
+      action: "create",
+      old: null,
+      new: newArticleData,
+    } as typeof tables.changeLog.$inferInsert);
 
     // If the article is not in storage (locationId !== storageLocationId), create history record
     if (articleData.locationId !== articleData.storageLocationId) {
