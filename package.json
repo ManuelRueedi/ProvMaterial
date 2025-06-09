@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
     "db:generate": "drizzle-kit generate",
-    "nuxt upgrade": "pnpm dlx nuxi upgrade"
+    "nuxt upgrade": "pnpm dlx nuxi upgrade",
+    "generate:pwa-assets": "pwa-assets-generator"
   },
   "dependencies": {
     "@compodium/nuxt": "0.1.0-beta.9",
@@ -43,12 +44,15 @@
     "@nuxt/eslint-config": "^1.4.1",
     "@simplewebauthn/browser": "^11.0.0",
     "@simplewebauthn/server": "^11.0.0",
+    "@vite-pwa/assets-generator": "^1.0.0",
+    "@vite-pwa/nuxt": "^1.0.4",
     "drizzle-kit": "^0.31.1",
     "eslint": "^9.28.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.4.1",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.12",
+    "sharp": "^0.34.2",
     "vue-tsc": "^2.2.10",
     "wrangler": "4.12.0"
   },

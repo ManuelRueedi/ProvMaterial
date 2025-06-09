@@ -169,5 +169,8 @@ const items = ref<NavigationMenuItem[][]>([
       </div>
     </div>
     <QrCodeScanner />
+    <PwaInstallPrompt />
+    <PwaUpdateNotification />
+    <OfflineIndicator />
   </UContainer>
 </template>
