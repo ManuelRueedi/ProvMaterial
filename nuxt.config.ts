@@ -15,7 +15,6 @@ export default defineNuxtConfig({
     "nuxt-auth-utils",
     "@nuxt/ui",
     "@compodium/nuxt",
-    "shadcn-nuxt",
     "@nuxtjs/device",
     "nuxt-maplibre",
     "@vite-pwa/nuxt",
@@ -27,6 +26,11 @@ export default defineNuxtConfig({
       description: "Provmaterial - Material Management",
       theme_color: "#10b981",
       background_color: "#222",
+      id: "/",
+      start_url: "/login",
+      display: "fullscreen",
+      orientation: "portrait",
+      lang: "de",
       icons: [
         {
           src: "pwa-192x192.png",
@@ -40,9 +44,6 @@ export default defineNuxtConfig({
         },
       ],
     },
-    workbox: {
-      navigateFallback: "/",
-    },
     devOptions: {
       enabled: true,
     },
@@ -52,17 +53,6 @@ export default defineNuxtConfig({
     families: [
       { name: "Roboto", provider: "google", weights: [300, 400, 500, 700] },
     ],
-  },
-  shadcn: {
-    /**
-     * Prefix for all the imported component
-     */
-    prefix: "",
-    /**
-     * Directory that the component lives in.
-     * @default "./app/components/ui"
-     */
-    componentDir: "./app/components/ui",
   },
   hub: {
     database: true,
