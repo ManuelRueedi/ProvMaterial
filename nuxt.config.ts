@@ -26,6 +26,7 @@ export default defineNuxtConfig({
       short_name: "Provmaterial",
       description: "Provmaterial - Material Management",
       theme_color: "#10b981",
+      background_color: "#222",
       icons: [
         {
           src: "pwa-192x192.png",
@@ -44,7 +45,6 @@ export default defineNuxtConfig({
     },
     devOptions: {
       enabled: true,
-      type: "module",
     },
   },
   css: ["~/assets/css/main.css"],

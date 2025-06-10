@@ -107,7 +107,7 @@
     </div>
 
     <!-- Detailed Article Statistics -->
-    <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
       <UCard class="p-4 sm:p-6">
         <div class="space-y-3 sm:space-y-4">
           <div class="flex items-center justify-between">
@@ -126,7 +126,7 @@
                 <span class="font-semibold">{{
                   stats?.articles?.inStorage || 0
                 }}</span>
-                <UBadge color="info" variant="soft" size="xs">
+                <UBadge color="info" variant="soft" size="lg">
                   {{
                     Math.round(
                       ((stats?.articles?.inStorage || 0) /
@@ -145,7 +145,7 @@
                 <span class="font-semibold">{{
                   stats?.articles?.deployed || 0
                 }}</span>
-                <UBadge color="success" variant="soft" size="xs">
+                <UBadge color="success" variant="soft" size="lg">
                   {{
                     Math.round(
                       ((stats?.articles?.deployed || 0) /
@@ -189,46 +189,6 @@
               class="text-lg text-gray-500 italic"
             >
               Keine Daten verfügbar
-            </div>
-          </div>
-        </div>
-      </UCard>
-
-      <UCard class="p-4 sm:p-6">
-        <div class="space-y-3 sm:space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold sm:text-lg">System Info</h3>
-            <UIcon
-              name="i-heroicons-server"
-              class="h-5 w-5 text-gray-500 sm:h-6 sm:w-6"
-            />
-          </div>
-          <div class="text-lx space-y-2">
-            <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">Umgebung</span>
-              <UBadge
-                :color="
-                  stats?.system?.environment === 'production'
-                    ? 'success'
-                    : 'warning'
-                "
-                variant="soft"
-                size="md"
-              >
-                {{ stats?.system?.environment || "unknown" }}
-              </UBadge>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">Node.js</span>
-              <span class="font-mono text-xs">{{
-                stats?.system?.nodeVersion || "N/A"
-              }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">Uptime</span>
-              <span class="text-xs">{{
-                formatUptime(stats?.system?.uptime || 0)
-              }}</span>
             </div>
           </div>
         </div>
@@ -412,7 +372,7 @@
           </template>
 
           <template #rights-cell="{ row }">
-            <div class="flex flex-wrap gap-1">
+            <div class="flex flex-wrap gap-3">
               <UBadge
                 v-for="right in row.original.rights"
                 :key="right"
@@ -1061,6 +1021,7 @@
 <script setup lang="ts">
 import type { Rights, Right } from "@/composables/articles/types";
 import type { TableColumn } from "#ui/types";
+const { public: publicConfig } = useRuntimeConfig();
 
 // Types
 interface User {
@@ -1356,21 +1317,6 @@ function getFieldChanges(
   return changes;
 }
 
-// Utility functions for stats display
-function formatUptime(seconds: number): string {
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-
-  if (days > 0) {
-    return `${days}d ${hours}h ${minutes}m`;
-  } else if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  } else {
-    return `${minutes}m`;
-  }
-}
-
 function formatDate(timestamp: number): string {
   const date = new Date(timestamp);
   return new Intl.DateTimeFormat("de-DE", {
@@ -1510,5 +1456,11 @@ async function confirmDeleteUser() {
 onMounted(() => {
   fetchUsers();
   fetchStats();
+  console.log("Public Config:", publicConfig);
+  if (publicConfig.testLoginEnabled) {
+    console.log("Test login is enabled");
+  } else {
+    console.log("Test login is disabled");
+  }
 });
 </script>

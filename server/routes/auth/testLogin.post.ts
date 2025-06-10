@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
   try {
     const { password } = testLoginSchema.parse(body);
 
-    // Simple password check - you can change this password
+    // Simple password check
     const testPassword = process.env.NUXT_TEST_LOGIN_PASSWORD || "test123";
 
     if (password !== testPassword) {

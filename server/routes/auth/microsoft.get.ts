@@ -1,7 +1,12 @@
 import { eq } from "drizzle-orm";
 
 export default defineOAuthMicrosoftEventHandler({
-  config: { scope: ["User.Read", "offline_access"] },
+  config: {
+    scope: ["User.Read", "offline_access"],
+    authorizationParams: {
+      prompt: "select_account",
+    },
+  },
 
   async onSuccess(event, { user }) {
     try {
