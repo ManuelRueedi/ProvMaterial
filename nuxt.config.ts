@@ -59,7 +59,7 @@ export default defineNuxtConfig({
     kv: true,
     blob: true,
     cache: true,
-    remote: process.env.CI ? false : true,
+    remote: process.env.CI ? false : false,
   },
   vite: {
     optimizeDeps: {
