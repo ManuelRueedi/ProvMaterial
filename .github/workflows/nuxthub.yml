@@ -19,12 +19,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: "pnpm"
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install
 
-      - name: Deploy to NuxtHub
+      - name: Build & Deploy to NuxtHub
         uses: nuxt-hub/action@v2
         with:
-          project-key: prov-material-w34c
+          project-key: provmaterial-e54o
