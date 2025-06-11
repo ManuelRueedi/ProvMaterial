@@ -20,15 +20,20 @@ export default defineNuxtConfig({
     "@vite-pwa/nuxt",
   ],
   pwa: {
+    client: {
+      registerPlugin: false,
+    },
+    workbox: {
+      navigateFallbackAllowlist: [],
+      navigateFallbackDenylist: [/^\/auth\/microsoft/],
+    },
     manifest: {
       name: "Provmaterial",
       short_name: "Provmaterial",
       description: "Provmaterial - Material Management",
       theme_color: "#10b981",
       background_color: "#222",
-      id: "/",
-      start_url: "/login",
-      display: "fullscreen",
+      display: "minimal-ui",
       orientation: "portrait",
       lang: "de",
       icons: [
@@ -44,6 +49,7 @@ export default defineNuxtConfig({
         },
       ],
     },
+    registerType: "autoUpdate",
     devOptions: {
       enabled: true,
     },
