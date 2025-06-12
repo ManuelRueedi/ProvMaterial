@@ -34,121 +34,61 @@ export default defineOAuthMicrosoftEventHandler({
       );
 
       let dbUser;
+
+      // D1 database operations - avoid transactions due to D1 limitations
       try {
-        // Use database transaction for atomic operations
-        dbUser = await useDrizzle().transaction(async (tx) => {
-          // Check if the user is already in database based on microsoftID
-          const userData = await tx.query.users.findFirst({
-            where: (users, { eq }) => eq(users.microsoftID, user.id),
-          });
+        console.log("Microsoft OAuth: Processing user database operations");
 
-          if (!userData) {
-            console.log("User not found in database, creating it");
-            // Create new user
-            const insertResult = await tx
-              .insert(tables.users)
-              .values({
-                microsoftID: user.id,
-                mail: user.mail,
-                firstName: user.givenName,
-                lastName: user.surname || "",
-                jobtitle: user.jobTitle || "",
-                rights: ["useArticles", "addArticles"],
-              })
-              .returning();
-
-            return insertResult[0];
-          } else {
-            // Check if the user has changed his name or job title
-            const needsUpdate =
-              userData.firstName !== user.givenName ||
-              userData.lastName !== (user.surname || "") ||
-              userData.jobtitle !== (user.jobTitle || "");
-
-            if (needsUpdate) {
-              console.log(
-                "User found in database, updating profile information",
-              );
-              // Update the user in the database
-              const updateResult = await tx
-                .update(tables.users)
-                .set({
-                  firstName: user.givenName,
-                  lastName: user.surname || "",
-                  jobtitle: user.jobTitle || "",
-                })
-                .where(eq(tables.users.microsoftID, user.id))
-                .returning();
-
-              return updateResult[0];
-            }
-
-            return userData;
-          }
+        // Check if the user is already in database based on microsoftID
+        const userData = await useDrizzle().query.users.findFirst({
+          where: (users, { eq }) => eq(users.microsoftID, user.id),
         });
-      } catch (dbError) {
-        console.error("Database transaction failed:", dbError);
 
-        // Try a fallback approach without transaction
-        try {
-          console.log(
-            "Attempting fallback database operation without transaction",
-          );
+        if (!userData) {
+          console.log("User not found in database, creating it");
+          const insertResult = await useDrizzle()
+            .insert(tables.users)
+            .values({
+              microsoftID: user.id,
+              mail: user.mail,
+              firstName: user.givenName,
+              lastName: user.surname || "",
+              jobtitle: user.jobTitle || "",
+              rights: ["useArticles", "addArticles"],
+            })
+            .returning();
 
-          // Check if the user is already in database based on microsoftID
-          const userData = await useDrizzle().query.users.findFirst({
-            where: (users, { eq }) => eq(users.microsoftID, user.id),
-          });
+          dbUser = insertResult[0];
+        } else {
+          // Check if the user needs updating
+          const needsUpdate =
+            userData.firstName !== user.givenName ||
+            userData.lastName !== (user.surname || "") ||
+            userData.jobtitle !== (user.jobTitle || "");
 
-          if (!userData) {
-            console.log("Creating user without transaction");
-            const insertResult = await useDrizzle()
-              .insert(tables.users)
-              .values({
-                microsoftID: user.id,
-                mail: user.mail,
+          if (needsUpdate) {
+            console.log("Updating user profile information");
+            const updateResult = await useDrizzle()
+              .update(tables.users)
+              .set({
                 firstName: user.givenName,
                 lastName: user.surname || "",
                 jobtitle: user.jobTitle || "",
-                rights: ["useArticles", "addArticles"],
               })
+              .where(eq(tables.users.microsoftID, user.id))
               .returning();
 
-            dbUser = insertResult[0];
+            dbUser = updateResult[0];
           } else {
-            // Check if the user needs updating
-            const needsUpdate =
-              userData.firstName !== user.givenName ||
-              userData.lastName !== (user.surname || "") ||
-              userData.jobtitle !== (user.jobTitle || "");
-
-            if (needsUpdate) {
-              console.log("Updating user without transaction");
-              const updateResult = await useDrizzle()
-                .update(tables.users)
-                .set({
-                  firstName: user.givenName,
-                  lastName: user.surname || "",
-                  jobtitle: user.jobTitle || "",
-                })
-                .where(eq(tables.users.microsoftID, user.id))
-                .returning();
-
-              dbUser = updateResult[0];
-            } else {
-              dbUser = userData;
-            }
+            dbUser = userData;
           }
-        } catch (fallbackError) {
-          console.error(
-            "Fallback database operation also failed:",
-            fallbackError,
-          );
-          throw createError({
-            statusCode: 500,
-            statusMessage: "Database operation failed",
-          });
         }
+      } catch (dbError) {
+        console.error("Database operation failed:", dbError);
+        throw createError({
+          statusCode: 500,
+          statusMessage: "Database operation failed",
+        });
       }
 
       if (!dbUser) {

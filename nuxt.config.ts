@@ -65,7 +65,7 @@ export default defineNuxtConfig({
     database: true,
     kv: true,
     blob: true,
-    cache: true,
+    cache: false,
     remote: process.env.CI ? false : true,
   },
   vite: {
