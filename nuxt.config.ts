@@ -17,43 +17,44 @@ export default defineNuxtConfig({
     "@compodium/nuxt",
     "@nuxtjs/device",
     "nuxt-maplibre",
-    "@vite-pwa/nuxt",
+    // "@vite-pwa/nuxt",
   ],
-  pwa: {
-    client: {
-      registerPlugin: false,
-    },
-    workbox: {
-      navigateFallbackAllowlist: [],
-      navigateFallbackDenylist: [/^\/auth\/microsoft/],
-    },
-    manifest: {
-      name: "Provmaterial",
-      short_name: "Provmaterial",
-      description: "Provmaterial - Material Management",
-      theme_color: "#10b981",
-      background_color: "#222",
-      display: "minimal-ui",
-      orientation: "portrait",
-      lang: "de",
-      icons: [
-        {
-          src: "pwa-192x192.png",
-          sizes: "192x192",
-          type: "image/png",
-        },
-        {
-          src: "pwa-512x512.png",
-          sizes: "512x512",
-          type: "image/png",
-        },
-      ],
-    },
-    registerType: "autoUpdate",
-    devOptions: {
-      enabled: true,
-    },
-  },
+  // pwa: {
+  //   client: {
+  //     registerPlugin: false,
+  //   },
+  //   workbox: {
+
+  //     navigateFallbackAllowlist: [],
+  //     navigateFallbackDenylist: [/^\/auth\/microsoft/],
+  //   },
+  //   manifest: {
+  //     name: "Provmaterial",
+  //     short_name: "Provmaterial",
+  //     description: "Provmaterial - Material Management",
+  //     theme_color: "#10b981",
+  //     background_color: "#222",
+  //     display: "minimal-ui",
+  //     orientation: "portrait",
+  //     lang: "de",
+  //     icons: [
+  //       {
+  //         src: "pwa-192x192.png",
+  //         sizes: "192x192",
+  //         type: "image/png",
+  //       },
+  //       {
+  //         src: "pwa-512x512.png",
+  //         sizes: "512x512",
+  //         type: "image/png",
+  //       },
+  //     ],
+  //   },
+  //   registerType: "autoUpdate",
+  //   devOptions: {
+  //     enabled: true,
+  //   },
+  // },
   css: ["~/assets/css/main.css"],
   fonts: {
     families: [
@@ -65,7 +66,7 @@ export default defineNuxtConfig({
     kv: true,
     blob: true,
     cache: true,
-    remote: process.env.CI ? false : false,
+    remote: process.env.CI ? false : true,
   },
   vite: {
     optimizeDeps: {

@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { eq } from "drizzle-orm";
+import type { Right } from "@/composables/articles/types";
 
 const testLoginSchema = z.object({
   password: z.string().min(1, "Password is required"),
@@ -31,20 +33,89 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+    // Get or create test user in database
+    const db = useDrizzle();
+    const testEmail = "test@example.com";
+
+    let dbUser = await db.query.users.findFirst({
+      where: eq(tables.users.mail, testEmail),
+    });
+
+    if (!dbUser) {
+      console.log("Test user not found in database, creating it");
+      // Create new test user
+      const expectedRights: Right[] = [
+        "useArticles",
+        "editArticles",
+        "addArticles",
+        "admin",
+      ];
+      const insertResult = await db
+        .insert(tables.users)
+        .values({
+          microsoftID: "test-microsoft-id",
+          mail: testEmail,
+          firstName: "Test",
+          lastName: "Benutzer",
+          jobtitle: "Test-Konto",
+          rights: expectedRights,
+        })
+        .returning();
+
+      dbUser = insertResult[0];
+      console.log(`Test user created with ID: ${dbUser!.id}`);
+    } else {
+      console.log(`Test user found with ID: ${dbUser.id}`);
+
+      // Check if test user needs updating (ensure it has all required rights)
+      const expectedRights: Right[] = [
+        "useArticles",
+        "editArticles",
+        "addArticles",
+        "admin",
+      ];
+      const currentRights = dbUser.rights || [];
+      const needsRightsUpdate = !expectedRights.every((right) =>
+        currentRights.includes(right),
+      );
+
+      if (needsRightsUpdate) {
+        console.log("Updating test user rights");
+        const updateResult = await db
+          .update(tables.users)
+          .set({
+            rights: expectedRights,
+          })
+          .where(eq(tables.users.id, dbUser.id))
+          .returning();
+
+        dbUser = updateResult[0] || dbUser;
+      }
+    }
+
+    if (!dbUser) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: "Failed to create or retrieve test user",
+      });
+    }
+
     // Create a test user session
     await setUserSession(
       event,
       {
         user: {
-          userId: "test-user-id",
-          firstName: "Test",
-          lastName: "Benutzer",
-          mail: "test@example.com",
-          jobtitle: "Test-Konto",
+          userId: dbUser.id,
+          firstName: dbUser.firstName,
+          lastName: dbUser.lastName || "",
+          mail: dbUser.mail,
+          jobtitle: dbUser.jobtitle || "",
           hasWebauthn: false,
           loggedInAt: Date.now(),
         },
-        rights: ["useArticles", "editArticles", "addArticles", "admin"],
+        rights:
+          dbUser.rights ||
+          (["useArticles", "editArticles", "addArticles", "admin"] as Right[]),
         secure: {
           isTestAccount: true,
         },
@@ -63,7 +134,7 @@ export default defineEventHandler(async (event) => {
       maxAge: 60 * 60 * 24 * 30, // 30 days
     });
 
-    console.log("Test login: Session created for test user");
+    console.log(`Test login: Session created for test user (ID: ${dbUser.id})`);
 
     return {
       success: true,

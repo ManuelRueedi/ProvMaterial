@@ -33,7 +33,6 @@ useSeoMeta({
 
 <template>
   <UApp>
-    <NuxtPwaManifest />
     <NuxtLoadingIndicator />
     <NuxtLayout>
       <NuxtPage />
