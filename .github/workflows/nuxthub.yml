@@ -31,6 +31,10 @@ jobs:
 
       - name: Set up icons for branch
         run: |
+          echo "Current branch: ${{ github.ref }}"
+          echo "Branch name: ${{ github.ref_name }}"
+          echo "Event: ${{ github.event_name }}"
+
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "Setting up production icons..."
             cp -r public/icons-production/* public/ || echo "No production icons found"
