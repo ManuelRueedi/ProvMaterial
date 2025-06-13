@@ -281,7 +281,31 @@ function handleArticleUpdated(response: {
     </div>
 
     <!-- Mobile-friendly table container -->
-    <div v-else class="w-full overflow-x-auto pb-4">
+    <div v-else class="relative min-h-96 w-full overflow-x-auto pb-4">
+      <!-- Empty state overlay for viewport centering -->
+      <div
+        v-if="articles.length === 0"
+        class="absolute inset-0 z-10 flex items-center justify-center"
+      >
+        <div class="flex w-screen items-center justify-center px-4">
+          <UCard class="max-w-md shadow-lg">
+            <div class="flex flex-col items-center space-y-6 p-8">
+              <UIcon name="i-heroicons-inbox" class="h-16 w-16" />
+              <div class="space-y-3 text-center">
+                <h3 class="text-xl font-semibold">Keine Daten</h3>
+                <p class="text-base">
+                  {{
+                    showSelectedOnly
+                      ? "Es wurden keine Artikel gescannt."
+                      : "Es sind keine Artikel verfügbar."
+                  }}
+                </p>
+              </div>
+            </div>
+          </UCard>
+        </div>
+      </div>
+
       <ClientOnly>
         <UTable
           ref="table"
@@ -330,26 +354,7 @@ function handleArticleUpdated(response: {
             </div>
           </template>
           <template #empty>
-            <div class="w-[calc(100vw-30px)]">
-              <UCard class="mx-auto max-w-sm">
-                <div class="flex flex-col items-center space-y-4">
-                  <UIcon
-                    name="i-heroicons-inbox"
-                    class="h-12 w-12 text-gray-400"
-                  />
-                  <div class="space-y-2">
-                    <h3 class="text-lg font-semibold">Keine Daten</h3>
-                    <p class="text-sm text-gray-500">
-                      {{
-                        showSelectedOnly
-                          ? "Es wurden keine Artikel gescannt."
-                          : "Es sind keine Artikel verfügbar."
-                      }}
-                    </p>
-                  </div>
-                </div>
-              </UCard>
-            </div>
+            <!-- Empty state is handled by overlay above -->
           </template>
         </UTable>
         <template #fallback>

@@ -31,15 +31,15 @@
       <div v-else class="space-y-10">
         <!-- Article ID Field (Read-only for editing) -->
         <div>
-          <labeledInput
+          <LabeledField
             :model-value="articleId"
+            type="text"
             icon="i-lucide-id-card"
-            badge-color="neutral"
             :disabled="true"
             placeholder=""
           >
             Artikel-ID
-          </labeledInput>
+          </LabeledField>
           <p class="mt-2 px-4 text-xs text-gray-500">
             Die Artikel-ID kann nicht geändert werden
           </p>
@@ -47,17 +47,17 @@
 
         <!-- Article Type Field -->
         <div>
-          <labeledSelection
+          <LabeledField
             v-model="config.type"
+            type="select"
             :items="typeOptions"
             icon="i-lucide-package"
-            :badge-color="validationErrors.type ? 'error' : 'primary'"
             placeholder="Typ auswählen"
             searchable
             @update:model-value="validateType"
           >
             Typ <span class="text-red-500">*</span>
-          </labeledSelection>
+          </LabeledField>
           <p
             v-if="validationErrors.type"
             class="mt-2 px-4 text-xs text-red-500"
@@ -68,16 +68,16 @@
 
         <!-- Ampacity Field -->
         <div>
-          <labeledSelection
+          <LabeledField
             v-model="ampacityModel"
+            type="select"
             :items="ampacityOptions"
             icon="i-lucide-zap"
-            :badge-color="validationErrors.ampacity ? 'error' : 'warning'"
             placeholder="Stromstärke auswählen"
             @update:model-value="validateAmpacity"
           >
             Stromstärke <span class="text-red-500">*</span>
-          </labeledSelection>
+          </LabeledField>
           <p
             v-if="validationErrors.ampacity"
             class="mt-2 px-4 text-xs text-red-500"
@@ -88,17 +88,17 @@
 
         <!-- Length Field -->
         <div>
-          <labeledNumberInput
+          <LabeledField
             v-model="config.length"
+            type="number"
             icon="i-lucide-ruler"
             placeholder="z.B. 10"
             :status="validationErrors.lengthInMeter ? 'error' : undefined"
-            :badge-color="validationErrors.lengthInMeter ? 'error' : 'info'"
             :min="0"
             :step="0.5"
           >
             Länge in Metern
-          </labeledNumberInput>
+          </LabeledField>
           <p
             v-if="validationErrors.lengthInMeter"
             class="mt-2 px-4 text-xs text-red-500"
@@ -109,15 +109,15 @@
 
         <!-- Connector Field (Optional) -->
         <div>
-          <labeledSelection
+          <LabeledField
             v-model="connectorModel"
+            type="select"
             :items="connectorOptions"
             icon="i-lucide-plug"
-            badge-color="secondary"
             placeholder="Stecker auswählen"
           >
             Stecker
-          </labeledSelection>
+          </LabeledField>
         </div>
 
         <!-- Outputs/Sockets Configuration -->
@@ -136,29 +136,30 @@
 
         <!-- Tags Field (Optional) -->
         <div v-if="tagsEnabled">
-          <labeledMultiSelect
+          <LabeledField
             v-model="config.tags"
+            type="multi-select"
             :items="tagsOptions"
             icon="i-lucide-tags"
-            badge-color="info"
             placeholder="Tags auswählen"
           >
             Tags
-          </labeledMultiSelect>
+          </LabeledField>
         </div>
 
         <!-- Location Field -->
         <div>
-          <labeledObjectSelection
+          <LabeledField
             v-model="selectedLocation"
+            type="object-select"
             :items="locationOptions"
             icon="i-lucide-map-pin"
-            :badge-color="validationErrors.locationId ? 'error' : 'success'"
+            :status="validationErrors.locationId ? 'error' : 'success'"
             placeholder="Standort auswählen"
             @update:model-value="validateLocation"
           >
             Standort <span class="text-red-500">*</span>
-          </labeledObjectSelection>
+          </LabeledField>
           <p
             v-if="validationErrors.locationId"
             class="mt-2 px-4 text-xs text-red-500"
@@ -169,18 +170,17 @@
 
         <!-- Storage Location Field -->
         <div>
-          <labeledObjectSelection
+          <LabeledField
             v-model="selectedStorageLocation"
+            type="object-select"
             :items="storageLocationOptions"
             icon="i-lucide-warehouse"
-            :badge-color="
-              validationErrors.storageLocationId ? 'error' : 'success'
-            "
+            :status="validationErrors.storageLocationId ? 'error' : 'success'"
             placeholder="Lagerstandort auswählen"
             @update:model-value="validateStorageLocation"
           >
             Lagerstandort <span class="text-red-500">*</span>
-          </labeledObjectSelection>
+          </LabeledField>
           <p
             v-if="validationErrors.storageLocationId"
             class="mt-2 px-4 text-xs text-red-500"
@@ -191,28 +191,28 @@
 
         <!-- Storage Location Section Field (Optional) -->
         <div>
-          <labeledInput
+          <LabeledField
             v-model="formData.storageLocationSection"
+            type="text"
             icon="i-lucide-archive"
-            badge-color="neutral"
             placeholder="z.B. Regal A, Fach 3"
           >
             Lagerbereich
-          </labeledInput>
+          </LabeledField>
         </div>
 
         <!-- Current Project Field (Optional) -->
         <div>
-          <labeledObjectSelection
+          <LabeledField
             v-model="selectedProject"
+            type="object-select"
             :items="projectOptions"
             icon="i-lucide-folder"
-            badge-color="neutral"
             placeholder="Projekt auswählen"
             clearable
           >
             Aktuelles Projekt
-          </labeledObjectSelection>
+          </LabeledField>
         </div>
       </div>
 

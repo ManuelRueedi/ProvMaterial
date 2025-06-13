@@ -6,28 +6,38 @@
     </div>
 
     <!-- Socket Type Selection -->
-    <div class="space-y-3">
-      <div class="flex items-center gap-2">
-        <UIcon name="i-lucide-plug" class="h-4 w-4" />
-        <label class="text-sm font-medium"> Steckertyp </label>
+    <div class="flex w-full items-center gap-2 sm:gap-3">
+      <div class="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
+        <UIcon name="i-lucide-plug" class="text-primary-500 h-4 w-4" />
+        <label
+          class="text-xs leading-tight font-medium whitespace-nowrap sm:text-sm"
+        >
+          Steckertyp
+        </label>
       </div>
-      <USelect
-        :model-value="selected"
-        :items="options"
-        size="lg"
-        placeholder="Steckertyp auswählen"
-        class="w-full"
-        @update:model-value="$emit('update:selected', $event)"
-      />
+      <div class="min-w-0 flex-1">
+        <USelect
+          :model-value="selected"
+          :items="options"
+          size="lg"
+          placeholder="Steckertyp auswählen"
+          class="w-full"
+          @update:model-value="$emit('update:selected', $event)"
+        />
+      </div>
     </div>
 
     <!-- Quantity Input -->
-    <div class="space-y-3">
-      <div class="flex items-center gap-2">
-        <UIcon name="i-lucide-hash" class="h-4 w-4" />
-        <label class="text-sm font-medium"> Anzahl </label>
+    <div class="flex w-full items-center gap-2 sm:gap-3">
+      <div class="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
+        <UIcon name="i-lucide-hash" class="text-primary-500 h-4 w-4" />
+        <label
+          class="text-xs leading-tight font-medium whitespace-nowrap sm:text-sm"
+        >
+          Anzahl
+        </label>
       </div>
-      <div class="flex gap-2">
+      <div class="flex min-w-0 flex-1 gap-2">
         <UInputNumber
           :model-value="number"
           class="flex-1"
@@ -66,3 +76,42 @@ defineEmits<{
   add: [];
 }>();
 </script>
+
+<style scoped>
+/* Label width control for horizontal layout */
+.flex-shrink-0 {
+  min-width: 80px; /* Smaller minimum label width for mobile */
+  max-width: 120px; /* Smaller maximum label width for mobile */
+}
+
+@media (min-width: 640px) {
+  .flex-shrink-0 {
+    min-width: 120px;
+    max-width: 200px;
+  }
+}
+
+@media (min-width: 768px) {
+  .flex-shrink-0 {
+    min-width: 140px;
+    max-width: 240px;
+  }
+}
+
+/* Mobile responsive behavior - keep horizontal layout */
+@media (max-width: 640px) {
+  /* Ensure inputs have proper minimum height for touch */
+  :deep(.ui-input input),
+  :deep(.ui-select button) {
+    min-height: 2.5rem;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+/* Enhanced focus states for better accessibility */
+:deep(.ui-input:focus-within),
+:deep(.ui-select:focus-within) {
+  transform: translateY(-1px);
+  transition: transform 0.1s ease-in-out;
+}
+</style>

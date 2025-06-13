@@ -37,58 +37,61 @@
       class="mx-auto flex w-full max-w-7xl flex-wrap items-start justify-center gap-7 pt-5"
     >
       <!-- Type Selection -->
-      <labeledSelection
+      <LabeledField
         v-model="config.type"
+        type="select"
         icon="ic:baseline-view-in-ar"
         :items="TypeEnum.options"
         searchable
       >
         Typ
-      </labeledSelection>
+      </LabeledField>
 
       <!-- Ampacity Selection -->
-      <labeledSelection
+      <LabeledField
         v-model="config.ampacity"
+        type="select"
         icon="ic:baseline-electric-bolt"
         :items="ampacityOptions"
       >
         Nennstrom
-      </labeledSelection>
+      </LabeledField>
 
       <!-- Connector Selection -->
-      <labeledSelection
+      <LabeledField
         v-if="connectorOptions.length"
         v-model="config.connector"
+        type="select"
         icon="ic:baseline-power"
         :items="connectorOptions"
       >
         Anschluss
-      </labeledSelection>
+      </LabeledField>
 
       <!-- Length Input -->
-      <labeledNumberInput
+      <LabeledField
         v-model="config.length"
+        type="number"
         icon="i-lucide-ruler"
-        badge-color="info"
         placeholder="Länge in Metern"
         :step="5"
         :min="0"
         :max="250"
       >
         Länge
-      </labeledNumberInput>
+      </LabeledField>
 
       <!-- Tags Selection -->
-      <labeledMultiSelect
+      <LabeledField
         v-if="tagsEnabled"
         v-model="config.tags"
+        type="multi-select"
         :items="tagsOptions"
         icon="i-lucide-tags"
-        badge-color="info"
         placeholder="Tags auswählen"
       >
         Tags
-      </labeledMultiSelect>
+      </LabeledField>
 
       <!-- Sockets Configuration -->
       <div class="flex w-full max-w-xl flex-col gap-2">
