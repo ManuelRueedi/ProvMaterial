@@ -1,10 +1,10 @@
 name: Deploy to NuxtHub
 
 on:
-  workflow_run:
-    workflows: ["Sync Test Branch"]
-    types:
-      - completed
+  push:
+    branches:
+      - main
+      - test
 
 jobs:
   deploy:
@@ -15,6 +15,11 @@ jobs:
       id-token: write
 
     steps:
+      - name: Wait for potential branch sync
+        run: |
+          echo "Waiting 15 seconds to ensure branch sync is complete..."
+          sleep 15
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
