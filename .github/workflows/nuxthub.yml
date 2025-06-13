@@ -25,15 +25,8 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Fast-forward or create test branch
-        run: |
-          MAIN_SHA=$(git rev-parse HEAD)
-          if git ls-remote --exit-code --heads origin test; then
-            git switch --force-create --track test origin/test
-            git reset --hard "$MAIN_SHA"
-          else
-            git switch --create test
-          fi
+      - name: Fast-forward remote test to main
+        run: git push origin HEAD:test --force-with-lease
 
       - name: Push test
         run: git push origin test --force-with-lease
