@@ -2,56 +2,51 @@ name: Deploy to NuxtHub
 
 on:
   push:
-    branches:
-      - main
-      - test
+    branches: [main, test] # one workflow run for each push
+  workflow_dispatch: # manual button (optional)
+
+concurrency: # cancel parallel runs per branch
+  group: deploy-${{ github.ref }} # e.g. deploy-refs/heads/main
+  cancel-in-progress: true
 
 jobs:
-  # First job: Sync test branch when main is pushed
+  # ──────────────────────────────────────────────────────────────
   sync-test-branch:
-    name: "Sync main to test branch"
+    if: github.ref == 'refs/heads/main' # <─ only on main
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    permissions:
-      contents: write
+    permissions: { contents: write }
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
 
       - name: Configure Git
         run: |
-          git config user.name "github-actions[bot]"
+          git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Create or update test branch
+      - name: Fast-forward or create test branch
         run: |
-          # Store the current main commit hash
-          MAIN_COMMIT=$(git rev-parse HEAD)
-          echo "Main commit: $MAIN_COMMIT"
-
-          if git ls-remote --heads origin test | grep test; then
-            echo "Test branch exists, updating it..."
-            git checkout -b test origin/test
-            # Reset test branch to exactly match the current main commit
-            git reset --hard $MAIN_COMMIT
-            echo "Test branch reset to match main branch"
+          MAIN_SHA=$(git rev-parse HEAD)
+          if git ls-remote --exit-code --heads origin test; then
+            git switch --force-create --track test origin/test
+            git reset --hard "$MAIN_SHA"
           else
-            echo "Test branch doesn't exist, creating it..."
-            git checkout -b test
-            echo "Test branch created from main"
+            git switch --create test
           fi
 
-      - name: Push test branch
+      - name: Push test
         run: git push origin test --force-with-lease
-  # Second job: Deploy to NuxtHub
+  # ──────────────────────────────────────────────────────────────
   deploy:
-    name: "Deploy to NuxtHub"
+    needs: [sync-test-branch] # still exists → 'skipped' or 'success'
     runs-on: ubuntu-latest
-    needs: sync-test-branch
-    if: always() && (needs.sync-test-branch.result == 'success' || (needs.sync-test-branch.result == 'skipped' && github.ref == 'refs/heads/test'))
+    # Run when:
+    #   * this is a main run AND the sync job succeeded,  OR
+    #   * this is a test run (sync job is skipped here)
+    if: |
+      (github.ref == 'refs/heads/main' && needs.sync-test-branch.result == 'success') ||
+      (github.ref == 'refs/heads/test')
     permissions:
       contents: read
       id-token: write
@@ -62,31 +57,27 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: "pnpm"
+          cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install
+      - run: pnpm install
 
-      - name: Set up icons for branch
-        run: |
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "Setting up production icons..."
-            cp -r public/icons-production/* public/ || echo "No production icons found"
-            echo "NODE_ENV=production" >> $GITHUB_ENV
-            echo "NUXT_PUBLIC_APP_ENV=production" >> $GITHUB_ENV
-          elif [ "${{ github.ref }}" = "refs/heads/test" ]; then
-            echo "Setting up preview icons..."
-            cp -r public/icons-preview/* public/ || echo "No preview icons found"
-            echo "NODE_ENV=development" >> $GITHUB_ENV
-            echo "NUXT_PUBLIC_APP_ENV=preview" >> $GITHUB_ENV
-          fi
+      - name: Set branch-specific env & icons
         shell: bash
+        run: |
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+            cp -r public/icons-production/* public/ 2>/dev/null || true
+            echo "NODE_ENV=production"        >> "$GITHUB_ENV"
+            echo "NUXT_PUBLIC_APP_ENV=production" >> "$GITHUB_ENV"
+          else
+            cp -r public/icons-preview/* public/ 2>/dev/null || true
+            echo "NODE_ENV=development"       >> "$GITHUB_ENV"
+            echo "NUXT_PUBLIC_APP_ENV=preview"    >> "$GITHUB_ENV"
+          fi
 
-      - name: Build & Deploy to NuxtHub
+      - name: Build & deploy
         uses: nuxt-hub/action@v2
         with:
           project-key: provmaterial-e54o
