@@ -2,44 +2,14 @@ name: Deploy to NuxtHub
 
 on:
   push:
-    branches: [main, test] # one workflow run for each push
-  workflow_dispatch: # manual button (optional)
-
-concurrency: # cancel parallel runs per branch
-  group: deploy-${{ github.ref }} # e.g. deploy-refs/heads/main
-  cancel-in-progress: true
+    branches:
+      - main
+      - test
 
 jobs:
-  # ──────────────────────────────────────────────────────────────
-  sync-test-branch:
-    if: github.ref == 'refs/heads/main' # <─ only on main
-    runs-on: ubuntu-latest
-    permissions: { contents: write }
-
-    steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-
-      - name: Configure Git
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Fast-forward remote test to main
-        run: git push origin HEAD:test --force-with-lease
-
-      - name: Push test
-        run: git push origin test --force-with-lease
-  # ──────────────────────────────────────────────────────────────
   deploy:
-    needs: [sync-test-branch] # still exists → 'skipped' or 'success'
+    name: "Deploy to NuxtHub"
     runs-on: ubuntu-latest
-    # Run when:
-    #   * this is a main run AND the sync job succeeded,  OR
-    #   * this is a test run (sync job is skipped here)
-    if: |
-      (github.ref == 'refs/heads/main' && needs.sync-test-branch.result == 'success') ||
-      (github.ref == 'refs/heads/test')
     permissions:
       contents: read
       id-token: write
@@ -50,27 +20,31 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
 
-      - uses: actions/setup-node@v4
+      - name: Install Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
+          cache: "pnpm"
 
-      - run: pnpm install
+      - name: Install dependencies
+        run: pnpm install
 
-      - name: Set branch-specific env & icons
-        shell: bash
+      - name: Set up icons for branch
         run: |
-          if [ "$GITHUB_REF" = "refs/heads/main" ]; then
-            cp -r public/icons-production/* public/ 2>/dev/null || true
-            echo "NODE_ENV=production"        >> "$GITHUB_ENV"
-            echo "NUXT_PUBLIC_APP_ENV=production" >> "$GITHUB_ENV"
-          else
-            cp -r public/icons-preview/* public/ 2>/dev/null || true
-            echo "NODE_ENV=development"       >> "$GITHUB_ENV"
-            echo "NUXT_PUBLIC_APP_ENV=preview"    >> "$GITHUB_ENV"
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "Setting up production icons..."
+            cp -r public/icons-production/* public/ || echo "No production icons found"
+            echo "NODE_ENV=production" >> $GITHUB_ENV
+            echo "NUXT_PUBLIC_APP_ENV=production" >> $GITHUB_ENV
+          elif [ "${{ github.ref }}" = "refs/heads/test" ]; then
+            echo "Setting up preview icons..."
+            cp -r public/icons-preview/* public/ || echo "No preview icons found"
+            echo "NODE_ENV=development" >> $GITHUB_ENV
+            echo "NUXT_PUBLIC_APP_ENV=preview" >> $GITHUB_ENV
           fi
+        shell: bash
 
-      - name: Build & deploy
+      - name: Build & Deploy to NuxtHub
         uses: nuxt-hub/action@v2
         with:
           project-key: provmaterial-e54o
