@@ -1,7 +1,7 @@
 <template>
   <div class="flex w-full max-w-xl flex-col gap-4">
     <div class="mx-auto flex items-center gap-2">
-      <UIcon name="ic:baseline-outlet" class="h-4 w-4" />
+      <UIcon name="ic:baseline-outlet" class="text-primary-500 h-5 w-5" />
       <label class="text-md font-medium"> Abgänge hinzufügen </label>
     </div>
 

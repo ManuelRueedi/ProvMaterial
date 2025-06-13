@@ -136,6 +136,7 @@ const handleEdit = () => {
     :close="false"
     :ui="{
       header: 'min-h-0 p-0 border-0',
+      content: 'max-w-2xl',
     }"
     @update:open="emit('update:showDetails', $event)"
   >

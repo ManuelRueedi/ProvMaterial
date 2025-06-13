@@ -25,8 +25,8 @@ type HistoryView = {
 
 const timelineCardUi = reactive({
   root: "rounded-xl overflow-hidden",
-  header: "px-6 py-4",
-  body: "px-6 pb-6",
+  header: "px-6 lg:px-8 py-4 lg:py-6",
+  body: "px-6 lg:px-8 pb-6 lg:pb-8",
 });
 
 const props = defineProps<{
@@ -68,7 +68,7 @@ function getItemKey(item: HistoryView, index: number): string | number {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-2xl">
+  <div class="mx-auto w-full max-w-4xl lg:max-w-5xl">
     <TransitionGroup
       v-if="sortedHistory.length > 0"
       name="list"
@@ -78,20 +78,20 @@ function getItemKey(item: HistoryView, index: number): string | number {
       <div
         v-for="(item, index) in sortedHistory"
         :key="getItemKey(item, index)"
-        class="timeline-item relative flex pb-8 sm:pb-10"
+        class="timeline-item relative flex pb-8 sm:pb-10 lg:pb-12"
         :style="{ transitionDelay: `${index * 100}ms` }"
       >
         <div
           v-if="index !== sortedHistory.length - 1"
-          class="absolute top-6 left-6 -ml-px h-full w-0.5 transition-colors duration-500"
+          class="absolute top-6 left-6 -ml-px h-full w-0.5 transition-colors duration-500 lg:top-8 lg:left-8 lg:w-1"
           :class="[item.to === 0 ? 'bg-primary-400' : 'bg-neutral-300']"
           aria-hidden="true"
         ></div>
 
-        <div class="relative flex items-start space-x-4">
+        <div class="relative flex items-start space-x-4 lg:space-x-6">
           <div class="relative">
             <div
-              class="flex h-12 w-12 items-center justify-center rounded-full transition-all duration-300 hover:scale-110"
+              class="flex h-12 w-12 items-center justify-center rounded-full transition-all duration-300 hover:scale-110 lg:h-16 lg:w-16"
               :class="[
                 item.to === 0
                   ? 'bg-primary-500 shadow-primary-500/30 shadow-lg'
@@ -104,7 +104,7 @@ function getItemKey(item: HistoryView, index: number): string | number {
                     ? 'i-heroicons-map-pin-20-solid'
                     : 'i-heroicons-archive-box-20-solid'
                 "
-                class="h-6 w-6 text-white transition-transform duration-300"
+                class="h-6 w-6 text-white transition-transform duration-300 lg:h-8 lg:w-8"
                 :class="item.to === 0 ? 'animate-bounce' : ''"
               />
             </div>
@@ -123,43 +123,48 @@ function getItemKey(item: HistoryView, index: number): string | number {
               <div class="flex items-start justify-between">
                 <div class="flex-grow">
                   <h3
-                    class="text-xl font-bold transition-colors duration-300"
+                    class="text-xl font-bold transition-colors duration-300 lg:text-2xl"
                     :class="[
                       item.to === 0 ? 'text-primary-700' : 'text-highlighted',
                     ]"
                   >
                     {{ item.projectName }}
                   </h3>
-                  <p class="text-muted mt-1 text-sm">
+                  <p class="text-muted mt-1 text-sm lg:mt-2 lg:text-base">
                     {{ item.locationName }}
                   </p>
                 </div>
               </div>
             </template>
 
-            <p class="text-default mb-4 text-base leading-relaxed">
+            <p
+              class="text-default mb-4 text-base leading-relaxed lg:mb-6 lg:text-lg"
+            >
               {{ item.projectDescription }}
             </p>
 
-            <div class="text-muted space-y-3 text-sm">
-              <div class="flex items-center space-x-2">
+            <div class="text-muted space-y-3 text-sm lg:space-y-4 lg:text-base">
+              <div class="flex items-center space-x-2 lg:space-x-3">
                 <UIcon
                   name="i-heroicons-clock"
-                  class="text-primary-500 size-5"
+                  class="text-primary-500 size-5 lg:size-6"
                 />
                 <span>{{ formatDatePeriod(item.from, item.to) }}</span>
               </div>
-              <div class="flex items-center space-x-2">
+              <div class="flex items-center space-x-2 lg:space-x-3">
                 <UIcon
                   name="ic:baseline-location-on"
-                  class="text-primary-500 size-5"
+                  class="text-primary-500 size-5 lg:size-6"
                 />
                 <span>{{ item.locationAddress }}</span>
               </div>
-              <div v-if="item.takeOutUser" class="flex items-center space-x-2">
+              <div
+                v-if="item.takeOutUser"
+                class="flex items-center space-x-2 lg:space-x-3"
+              >
                 <UIcon
                   name="ic:baseline-arrow-upward"
-                  class="text-secondary size-5"
+                  class="text-secondary size-5 lg:size-6"
                 />
                 <span
                   >Ausgetragen von: {{ item.takeOutUser.firstName }}
@@ -168,11 +173,11 @@ function getItemKey(item: HistoryView, index: number): string | number {
               </div>
               <div
                 v-if="item.bringBackUser"
-                class="flex items-center space-x-2"
+                class="flex items-center space-x-2 lg:space-x-3"
               >
                 <UIcon
                   name="ic:baseline-arrow-downward"
-                  class="text-primary size-5"
+                  class="text-primary size-5 lg:size-6"
                 />
                 <span
                   >Zurückgebracht von: {{ item.bringBackUser.firstName }}
@@ -185,14 +190,16 @@ function getItemKey(item: HistoryView, index: number): string | number {
       </div>
     </TransitionGroup>
 
-    <div v-else class="py-16 text-center">
+    <div v-else class="py-16 text-center lg:py-24">
       <div class="animate-pulse">
         <UIcon
           name="i-heroicons-no-symbol"
-          class="text-dimmed mx-auto mb-4 h-16 w-16"
+          class="text-dimmed mx-auto mb-4 h-16 w-16 lg:mb-6 lg:h-20 lg:w-20"
         />
       </div>
-      <p class="text-muted text-lg">Keine Verlaufsdaten vorhanden.</p>
+      <p class="text-muted text-lg lg:text-xl">
+        Keine Verlaufsdaten vorhanden.
+      </p>
     </div>
   </div>
 </template>

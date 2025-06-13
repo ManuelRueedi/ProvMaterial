@@ -31,8 +31,8 @@ jobs:
           if git ls-remote --heads origin test | grep test; then
             echo "Test branch exists, updating it..."
             git checkout -b test origin/test
-            # Reset test branch to exactly match main
-            git reset --hard origin/main
+            # Reset test branch to exactly match the current main commit
+            git reset --hard HEAD
             echo "Test branch reset to match main branch"
           else
             echo "Test branch doesn't exist, creating it..."

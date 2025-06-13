@@ -223,6 +223,7 @@ const slideoverUi = reactive({
   description: "text-center text-xl",
   header: "justify-center py-7",
   body: "flex flex-col gap-5 px-4 sm:px-6",
+  content: "max-w-2xl",
 } as const);
 
 const slideoverClose = reactive({

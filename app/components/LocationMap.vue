@@ -101,11 +101,16 @@
                   class="cluster-marker"
                   :class="{
                     'cluster-clicked': animatingCluster === cluster.id,
+                    'cluster-highlighted':
+                      clusterContainsHighlightedLocation(cluster),
                   }"
                   @click="expandCluster(cluster)"
                 >
                   <div
                     class="cluster-circle"
+                    :class="{
+                      highlighted: clusterContainsHighlightedLocation(cluster),
+                    }"
                     :data-point-count="cluster.properties.point_count"
                   >
                     <div class="cluster-inner">
@@ -119,6 +124,9 @@
                   class="location-marker"
                   :class="{
                     'marker-clicked': animatingMarker === cluster.id,
+                    highlighted:
+                      cluster.properties.location.id ===
+                      props.highlightedLocationId,
                   }"
                   @click="showLocationPopup(cluster)"
                 >
@@ -129,6 +137,9 @@
                         cluster.properties.location.isStorageLocation,
                       'regular-location':
                         !cluster.properties.location.isStorageLocation,
+                      highlighted:
+                        cluster.properties.location.id ===
+                        props.highlightedLocationId,
                     }"
                   >
                     <UIcon
@@ -140,7 +151,14 @@
                       class="h-5 w-5 text-white"
                     />
                   </div>
-                  <div class="marker-shadow"></div>
+                  <div
+                    class="marker-shadow"
+                    :class="{
+                      'highlighted-shadow':
+                        cluster.properties.location.id ===
+                        props.highlightedLocationId,
+                    }"
+                  ></div>
                 </div>
               </template>
             </MglMarker>
@@ -156,43 +174,54 @@
               :close-on-click="false"
               @close="selectedMapLocation = null"
             >
-              <div class="popup-content">
-                <div class="popup-header">
-                  <h3 class="popup-title">
-                    {{ selectedMapLocation.name }}
-                  </h3>
-                  <span
-                    v-if="selectedMapLocation.isStorageLocation"
-                    class="storage-badge"
-                  >
-                    Lager
-                  </span>
+              <Transition name="popup" appear>
+                <div v-if="selectedMapLocation" class="popup-content">
+                  <div class="popup-header">
+                    <h3 class="popup-title">
+                      {{ selectedMapLocation.name }}
+                    </h3>
+                    <span
+                      v-if="selectedMapLocation.isStorageLocation"
+                      class="storage-badge"
+                    >
+                      Lager
+                    </span>
+                  </div>
+                  <div class="popup-detail">
+                    📍
+                    <a
+                      :href="`https://www.google.com/maps/search/?api=1&query=${selectedMapLocation.latitude},${selectedMapLocation.longitude}`"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="popup-address-link"
+                    >
+                      {{
+                        selectedMapLocation.address ||
+                        `${selectedMapLocation.latitude.toFixed(6)}, ${selectedMapLocation.longitude.toFixed(6)}`
+                      }}
+                    </a>
+                  </div>
+                  <div class="popup-detail">
+                    📦 {{ selectedMapLocation.articleCount || 0 }} Artikel
+                  </div>
+                  <div class="mt-3 flex gap-2">
+                    <button
+                      v-if="showSelectButton && mode === 'select'"
+                      class="popup-button popup-button-primary"
+                      @click="$emit('selectLocation', selectedMapLocation)"
+                    >
+                      Auswählen
+                    </button>
+                    <button
+                      v-if="showEditButton"
+                      class="popup-button popup-button-secondary"
+                      @click="$emit('editLocation', selectedMapLocation)"
+                    >
+                      Bearbeiten
+                    </button>
+                  </div>
                 </div>
-                <div class="popup-detail">
-                  📍
-                  <a
-                    :href="`https://www.google.com/maps/search/?api=1&query=${selectedMapLocation.latitude},${selectedMapLocation.longitude}`"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="popup-address-link"
-                  >
-                    {{
-                      selectedMapLocation.address ||
-                      `${selectedMapLocation.latitude.toFixed(6)}, ${selectedMapLocation.longitude.toFixed(6)}`
-                    }}
-                  </a>
-                </div>
-                <div class="popup-detail">
-                  📦 {{ selectedMapLocation.articleCount || 0 }} Artikel
-                </div>
-                <button
-                  v-if="showEditButton"
-                  class="popup-button"
-                  @click="$emit('editLocation', selectedMapLocation)"
-                >
-                  Bearbeiten
-                </button>
-              </div>
+              </Transition>
             </MglPopup>
           </MglMap>
         </div>
@@ -232,7 +261,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Location } from "@/composables/articles/types";
+import type { Location, Project } from "@/composables/articles/types";
 import Supercluster from "supercluster";
 import { onMounted, onUnmounted } from "vue";
 
@@ -240,6 +269,7 @@ import { onMounted, onUnmounted } from "vue";
 
 interface Props {
   locations: Location[];
+  projects?: Project[];
   pending?: boolean;
   height?: string;
   emptyStateTitle?: string;
@@ -247,6 +277,9 @@ interface Props {
   showCreateButton?: boolean;
   showEditButton?: boolean;
   showLegend?: boolean;
+  showSelectButton?: boolean;
+  mode?: "view" | "select";
+  highlightedLocationId?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -258,11 +291,17 @@ const props = withDefaults(defineProps<Props>(), {
   showCreateButton: false,
   showEditButton: false,
   showLegend: true,
+  showSelectButton: false,
+  mode: "view",
+  projects: () => [],
+  highlightedLocationId: undefined,
 });
 
 const _emit = defineEmits<{
   createLocation: [];
   editLocation: [location: Location];
+  selectLocation: [location: Location];
+  selectProject: [project: Project];
 }>();
 
 // Component state
@@ -551,6 +590,62 @@ watch(
   },
   { deep: true },
 );
+
+// Watch for highlighted location changes and center map on it
+watch(
+  () => props.highlightedLocationId,
+  (newHighlightedId, oldHighlightedId) => {
+    if (
+      newHighlightedId &&
+      newHighlightedId !== oldHighlightedId &&
+      map.value
+    ) {
+      const highlightedLocation = locationsWithCoordinates.value.find(
+        (location) => location.id === newHighlightedId,
+      );
+
+      if (highlightedLocation) {
+        const mapInstance = (map.value as { map?: unknown })?.map as any;
+        if (mapInstance) {
+          // Smooth pan to the highlighted location
+          mapInstance.easeTo({
+            center: [
+              highlightedLocation.longitude,
+              highlightedLocation.latitude,
+            ],
+            zoom: Math.max(mapInstance.getZoom(), 14), // Ensure minimum zoom for visibility
+            duration: 1000,
+          });
+        }
+      }
+    }
+  },
+);
+
+// Check if cluster contains highlighted location
+function clusterContainsHighlightedLocation(
+  cluster: Record<string, unknown>,
+): boolean {
+  if (!props.highlightedLocationId || !supercluster.value) return false;
+
+  const properties = cluster.properties as any;
+  if (!properties?.cluster) return false;
+
+  try {
+    const clusterLeaves = supercluster.value.getLeaves(
+      properties.cluster_id,
+      Infinity,
+    );
+
+    return clusterLeaves.some(
+      (leaf: any) =>
+        leaf.properties?.location?.id === props.highlightedLocationId,
+    );
+  } catch (error) {
+    console.warn("Error checking cluster contents:", error);
+    return false;
+  }
+}
 </script>
 
 <style scoped>
@@ -627,6 +722,66 @@ watch(
   transform: translate(-50%, -50%) skew(-10deg, -10deg);
   z-index: -1;
   filter: blur(3px);
+}
+
+/* Highlight styles */
+.location-marker.highlighted {
+  animation: highlightPulse 2s infinite;
+  z-index: 1000;
+  transform-origin: 50% 50%;
+}
+
+.marker-pin.highlighted {
+  border: 4px solid rgb(var(--color-primary-500));
+  box-shadow:
+    0 0 40px rgba(var(--color-primary-500), 0.9),
+    0 0 80px rgba(var(--color-primary-500), 0.7),
+    0 0 120px rgba(var(--color-primary-500), 0.5),
+    0 0 160px rgba(var(--color-primary-500), 0.3),
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 15px 30px rgba(0, 0, 0, 0.3),
+    0 10px 20px rgba(0, 0, 0, 0.2);
+  transform: rotate(-45deg) scale(1.2);
+  transform-origin: 100% 100%;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+}
+
+.marker-pin.highlighted:hover {
+  box-shadow:
+    0 0 50px rgba(var(--color-primary-500), 1),
+    0 0 100px rgba(var(--color-primary-500), 0.8),
+    0 0 150px rgba(var(--color-primary-500), 0.6),
+    0 0 200px rgba(var(--color-primary-500), 0.4),
+    0 25px 50px rgba(0, 0, 0, 0.4),
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 15px 30px rgba(0, 0, 0, 0.2);
+  transform: rotate(-45deg) scale(1.25) translateY(-3px);
+  transform-origin: 100% 100%;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.4));
+}
+
+.highlighted-shadow {
+  background: rgba(var(--color-primary-500), 0.7) !important;
+  width: 80px !important;
+  height: 80px !important;
+  filter: blur(20px) !important;
+  box-shadow:
+    0 0 40px rgba(var(--color-primary-500), 0.6),
+    0 0 80px rgba(var(--color-primary-500), 0.4);
+}
+
+@keyframes highlightPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 20px rgba(var(--color-primary-500), 0.8))
+      drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+  }
+  50% {
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 40px rgba(var(--color-primary-300), 1))
+      drop-shadow(0 12px 24px rgba(0, 0, 0, 0.3));
+  }
 }
 
 /* Cluster marker styles */
@@ -719,11 +874,95 @@ watch(
   background: linear-gradient(135deg, #1e40af, #065f46);
 }
 
+/* Cluster highlight styles */
+.cluster-marker.cluster-highlighted {
+  animation: clusterHighlightPulse 2s infinite;
+  z-index: 999;
+}
+
+.cluster-circle.highlighted {
+  border: 5px solid rgb(var(--color-primary-500)) !important;
+  box-shadow:
+    0 0 50px rgba(var(--color-primary-500), 0.9),
+    0 0 100px rgba(var(--color-primary-500), 0.7),
+    0 0 150px rgba(var(--color-primary-500), 0.5),
+    0 0 200px rgba(var(--color-primary-500), 0.3),
+    0 15px 30px rgba(0, 0, 0, 0.4),
+    0 10px 20px rgba(0, 0, 0, 0.3),
+    0 5px 10px rgba(0, 0, 0, 0.2) !important;
+  transform: scale(1.15);
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+}
+
+.cluster-circle.highlighted:hover {
+  box-shadow:
+    0 0 60px rgba(var(--color-primary-500), 1),
+    0 0 120px rgba(var(--color-primary-500), 0.8),
+    0 0 180px rgba(var(--color-primary-500), 0.6),
+    0 0 240px rgba(var(--color-primary-500), 0.4),
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 15px 30px rgba(0, 0, 0, 0.3),
+    0 10px 20px rgba(0, 0, 0, 0.2) !important;
+  transform: scale(1.2);
+  filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.4));
+}
+
+@keyframes clusterHighlightPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 30px rgba(var(--color-primary-500), 0.8))
+      drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
+  }
+  50% {
+    transform: scale(1.25);
+    filter: drop-shadow(0 0 60px rgba(var(--color-primary-300), 1))
+      drop-shadow(0 15px 30px rgba(0, 0, 0, 0.3));
+  }
+}
+
+/* Popup transition animations */
+.popup-enter-active {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.popup-leave-active {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.popup-enter-from {
+  opacity: 0;
+  transform: scale(0.8) translateY(10px);
+}
+
+.popup-leave-to {
+  opacity: 0;
+  transform: scale(0.9) translateY(-5px);
+}
+
+.popup-enter-to,
+.popup-leave-from {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
 /* Map popup styles */
 .popup-content {
   padding: 0;
   min-width: 200px;
   max-width: 280px;
+  animation: popupSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popupSlideIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(15px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .popup-header {
@@ -731,6 +970,9 @@ watch(
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  animation: popupElementSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation-delay: 0.1s;
+  animation-fill-mode: both;
 }
 
 .popup-title {
@@ -748,6 +990,9 @@ watch(
   border-radius: 12px;
   font-size: 11px;
   font-weight: 500;
+  animation: popupElementSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation-delay: 0.2s;
+  animation-fill-mode: both;
 }
 
 .popup-detail {
@@ -755,6 +1000,42 @@ watch(
   font-size: 13px;
   color: #6b7280;
   line-height: 1.4;
+  animation: popupElementSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation-fill-mode: both;
+}
+
+.popup-detail:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.popup-detail:nth-child(3) {
+  animation-delay: 0.25s;
+}
+
+.popup-button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  animation: popupElementSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation-delay: 0.3s;
+  animation-fill-mode: both;
+  transform: translateY(10px);
+}
+
+@keyframes popupElementSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .popup-address-link {
@@ -769,30 +1050,51 @@ watch(
   text-decoration: none;
 }
 
-.popup-button {
-  margin-top: 12px;
-  padding: 6px 12px;
+.popup-button-primary {
   background: #3b82f6;
   color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  width: 100%;
 }
 
-.popup-button:hover {
+.popup-button-primary:hover {
   background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.popup-button-secondary {
+  background: #6b7280;
+  color: white;
+}
+
+.popup-button-secondary:hover {
+  background: #374151;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
 }
 
 /* Override default maplibre popup styles */
 :global(.maplibregl-popup-content) {
   padding: 16px !important;
   border-radius: 12px !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2) !important;
   border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  animation: popupBounceIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+@keyframes popupBounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(20px);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05) translateY(-5px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 :global(.maplibregl-popup-tip) {
@@ -800,10 +1102,15 @@ watch(
 }
 
 :global(.maplibregl-popup-close-button) {
-  font-size: 18px !important;
+  font-size: 24px !important;
   color: #6b7280 !important;
   right: 8px !important;
   top: 8px !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 :global(.maplibregl-popup-close-button:hover) {

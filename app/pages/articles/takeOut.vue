@@ -15,6 +15,7 @@
       :close="false"
       :ui="{
         header: 'min-h-0 p-0 border-0',
+        content: 'max-w-2xl',
       }"
     >
       <!-- Hidden title for accessibility -->
@@ -92,6 +93,7 @@ const bundleUi = reactive({
   description: "text-center text-2xl ",
   header: "justify-center py-7",
   body: "flex flex-col gap-5",
+  content: "max-w-2xl",
 });
 
 // Template ref for the search form component
