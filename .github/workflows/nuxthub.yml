@@ -28,11 +28,15 @@ jobs:
 
       - name: Create or update test branch
         run: |
+          # Store the current main commit hash
+          MAIN_COMMIT=$(git rev-parse HEAD)
+          echo "Main commit: $MAIN_COMMIT"
+
           if git ls-remote --heads origin test | grep test; then
             echo "Test branch exists, updating it..."
             git checkout -b test origin/test
             # Reset test branch to exactly match the current main commit
-            git reset --hard HEAD
+            git reset --hard $MAIN_COMMIT
             echo "Test branch reset to match main branch"
           else
             echo "Test branch doesn't exist, creating it..."
