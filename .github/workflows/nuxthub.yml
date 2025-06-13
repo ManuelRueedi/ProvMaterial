@@ -34,13 +34,14 @@ jobs:
 
       - name: Set up icons for branch
         run: |
+          echo "Current branch: ${GITHUB_REF##*/}"
           echo "GitHub ref: ${{ github.ref }}"
           echo "GitHub branch name: ${{ github.ref_name }}"
           echo "Event: ${{ github.event_name }}"
 
-          # Use GitHub context variable instead of git command
-          BRANCH_NAME="${{ github.ref_name }}"
-          echo "Branch name from GitHub context: $BRANCH_NAME"
+          # Use GITHUB_REF parameter expansion to extract branch name
+          BRANCH_NAME="${GITHUB_REF##*/}"
+          echo "Branch name from GITHUB_REF: $BRANCH_NAME"
 
           if [ "$BRANCH_NAME" = "main" ]; then
             echo "Setting up production icons..."
