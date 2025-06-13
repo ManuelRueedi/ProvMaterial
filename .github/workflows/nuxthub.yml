@@ -1,54 +1,10 @@
 name: Deploy to NuxtHub
-
-on:
-  push:
-    branches:
-      - main
-      - test
+on: push
 
 jobs:
-  # First job: Sync test branch when main is pushed
-  sync-test-branch:
-    name: "Sync main to test branch"
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Create or update test branch
-        run: |
-          if git ls-remote --heads origin test | grep test; then
-            echo "Test branch exists, updating it..."
-            git checkout -b test origin/test
-            # Reset test branch to exactly match the current main commit
-            git reset --hard HEAD
-            echo "Test branch reset to match main branch"
-          else
-            echo "Test branch doesn't exist, creating it..."
-            git checkout -b test
-            echo "Test branch created from main"
-          fi
-
-      - name: Push test branch
-        run: git push origin test --force-with-lease
-
-  # Second job: Deploy to NuxtHub
   deploy:
     name: "Deploy to NuxtHub"
     runs-on: ubuntu-latest
-    needs: sync-test-branch
-    if: always() && (needs.sync-test-branch.result == 'success' || needs.sync-test-branch.result == 'skipped')
     permissions:
       contents: read
       id-token: write
@@ -65,23 +21,34 @@ jobs:
           node-version: 22
           cache: "pnpm"
 
-      - name: Install dependencies
-        run: pnpm install
-
       - name: Set up icons for branch
         run: |
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          echo "Current branch: ${GITHUB_REF##*/}"
+
+          # Use GITHUB_REF parameter expansion to extract branch name
+          BRANCH_NAME="${GITHUB_REF##*/}"
+          echo "Branch name from GITHUB_REF: $BRANCH_NAME"
+
+          if [ "$BRANCH_NAME" = "main" ]; then
             echo "Setting up production icons..."
             cp -r public/icons-production/* public/ || echo "No production icons found"
             echo "NODE_ENV=production" >> $GITHUB_ENV
             echo "NUXT_PUBLIC_APP_ENV=production" >> $GITHUB_ENV
-          elif [ "${{ github.ref }}" = "refs/heads/test" ]; then
+          elif [ "$BRANCH_NAME" = "test" ]; then
             echo "Setting up preview icons..."
+            cp -r public/icons-preview/* public/ || echo "No preview icons found"
+            echo "NODE_ENV=development" >> $GITHUB_ENV
+            echo "NUXT_PUBLIC_APP_ENV=preview" >> $GITHUB_ENV
+          else
+            echo "Unknown branch: $BRANCH_NAME, defaulting to preview"
             cp -r public/icons-preview/* public/ || echo "No preview icons found"
             echo "NODE_ENV=development" >> $GITHUB_ENV
             echo "NUXT_PUBLIC_APP_ENV=preview" >> $GITHUB_ENV
           fi
         shell: bash
+
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Build & Deploy to NuxtHub
         uses: nuxt-hub/action@v2
