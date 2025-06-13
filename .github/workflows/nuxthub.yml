@@ -1,10 +1,10 @@
 name: Deploy to NuxtHub
 
 on:
-  push:
-    branches:
-      - main
-      - test
+  workflow_run:
+    workflows: ["Sync Test Branch"]
+    types:
+      - completed
 
 jobs:
   deploy:
