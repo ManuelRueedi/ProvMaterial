@@ -31,14 +31,17 @@ jobs:
           if git ls-remote --heads origin test | grep test; then
             echo "Test branch exists, updating it..."
             git checkout -b test origin/test
-            git merge origin/main --no-edit
+            # Reset test branch to exactly match main
+            git reset --hard origin/main
+            echo "Test branch reset to match main branch"
           else
             echo "Test branch doesn't exist, creating it..."
             git checkout -b test
+            echo "Test branch created from main"
           fi
 
       - name: Push test branch
-        run: git push origin test
+        run: git push origin test --force-with-lease
 
   # Second job: Deploy to NuxtHub
   deploy:
