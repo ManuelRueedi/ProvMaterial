@@ -46,13 +46,12 @@ jobs:
 
       - name: Push test branch
         run: git push origin test --force-with-lease
-
   # Second job: Deploy to NuxtHub
   deploy:
     name: "Deploy to NuxtHub"
     runs-on: ubuntu-latest
     needs: sync-test-branch
-    if: always() && (needs.sync-test-branch.result == 'success' || needs.sync-test-branch.result == 'skipped')
+    if: always() && (needs.sync-test-branch.result == 'success' || (needs.sync-test-branch.result == 'skipped' && github.ref == 'refs/heads/test'))
     permissions:
       contents: read
       id-token: write
