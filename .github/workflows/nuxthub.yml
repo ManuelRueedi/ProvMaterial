@@ -15,7 +15,10 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }} # Explicitly checkout the triggering branch
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -35,22 +38,22 @@ jobs:
           echo "GitHub branch name: ${{ github.ref_name }}"
           echo "Event: ${{ github.event_name }}"
 
-          # Get the actual current branch from git
-          ACTUAL_BRANCH=$(git branch --show-current)
-          echo "Actual branch from git: $ACTUAL_BRANCH"
+          # Use GitHub context variable instead of git command
+          BRANCH_NAME="${{ github.ref_name }}"
+          echo "Branch name from GitHub context: $BRANCH_NAME"
 
-          if [ "$ACTUAL_BRANCH" = "main" ]; then
+          if [ "$BRANCH_NAME" = "main" ]; then
             echo "Setting up production icons..."
             cp -r public/icons-production/* public/ || echo "No production icons found"
             echo "NODE_ENV=production" >> $GITHUB_ENV
             echo "NUXT_PUBLIC_APP_ENV=production" >> $GITHUB_ENV
-          elif [ "$ACTUAL_BRANCH" = "test" ]; then
+          elif [ "$BRANCH_NAME" = "test" ]; then
             echo "Setting up preview icons..."
             cp -r public/icons-preview/* public/ || echo "No preview icons found"
             echo "NODE_ENV=development" >> $GITHUB_ENV
             echo "NUXT_PUBLIC_APP_ENV=preview" >> $GITHUB_ENV
           else
-            echo "Unknown branch: $ACTUAL_BRANCH, defaulting to preview"
+            echo "Unknown branch: $BRANCH_NAME, defaulting to preview"
             cp -r public/icons-preview/* public/ || echo "No preview icons found"
             echo "NODE_ENV=development" >> $GITHUB_ENV
             echo "NUXT_PUBLIC_APP_ENV=preview" >> $GITHUB_ENV
