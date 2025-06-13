@@ -48,6 +48,7 @@ export default defineEventHandler(async (event) => {
         "useArticles",
         "editArticles",
         "addArticles",
+        "removeArticles",
         "admin",
       ];
       const insertResult = await db
@@ -72,6 +73,7 @@ export default defineEventHandler(async (event) => {
         "useArticles",
         "editArticles",
         "addArticles",
+        "removeArticles",
         "admin",
       ];
       const currentRights = dbUser.rights || [];
@@ -115,7 +117,13 @@ export default defineEventHandler(async (event) => {
         },
         rights:
           dbUser.rights ||
-          (["useArticles", "editArticles", "addArticles", "admin"] as Right[]),
+          ([
+            "useArticles",
+            "editArticles",
+            "addArticles",
+            "removeArticles",
+            "admin",
+          ] as Right[]),
         secure: {
           isTestAccount: true,
         },
