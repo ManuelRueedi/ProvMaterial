@@ -597,7 +597,7 @@ async function submitForm() {
       currentProjectId: formData.currentProjectId,
     };
     const updatedArticle = await $fetch<EditedArticleResponse>(
-      `/api/articles/${props.articleId}/edit`,
+      `/api/articles/${encodeURIComponent(props.articleId)}/edit`,
       {
         method: "PUT",
         body: updateData,
