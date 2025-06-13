@@ -35,9 +35,6 @@ jobs:
       - name: Set up icons for branch
         run: |
           echo "Current branch: ${GITHUB_REF##*/}"
-          echo "GitHub ref: ${{ github.ref }}"
-          echo "GitHub branch name: ${{ github.ref_name }}"
-          echo "Event: ${{ github.event_name }}"
 
           # Use GITHUB_REF parameter expansion to extract branch name
           BRANCH_NAME="${GITHUB_REF##*/}"

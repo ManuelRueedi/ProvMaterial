@@ -23,23 +23,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Create or update test branch
+      - name: Push changes to test when main is updated
+        if: github.ref == 'refs/heads/main'
         run: |
-          # Store the current main commit hash
-          MAIN_COMMIT=$(git rev-parse HEAD)
-          echo "Main commit: $MAIN_COMMIT"
-
-          if git ls-remote --heads origin test | grep test; then
-            echo "Test branch exists, updating it..."
-            git checkout -b test origin/test
-            # Reset test branch to exactly match the current main commit
-            git reset --hard $MAIN_COMMIT
-            echo "Test branch reset to match main branch"
-          else
-            echo "Test branch doesn't exist, creating it..."
-            git checkout -b test
-            echo "Test branch created from main"
-          fi
-
-      - name: Push test branch
-        run: git push origin test --force-with-lease
+          git fetch origin
+          git checkout test
+          git merge -X theirs main
+          git push origin test
