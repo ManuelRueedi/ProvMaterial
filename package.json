@@ -12,7 +12,9 @@
     "typecheck": "nuxt typecheck",
     "db:generate": "drizzle-kit generate",
     "nuxt upgrade": "pnpm dlx nuxi upgrade",
-    "generate:pwa-assets": "pwa-assets-generator"
+    "generate:pwa-assets": "pwa-assets-generator",
+    "switch": "node scripts/switch-environment.js",
+    "status": "echo 'Environment:' && node -e \"console.log(require('fs').existsSync('.env') ? require('fs').readFileSync('.env', 'utf8').split('\\n').find(l => l.startsWith('NUXT_PUBLIC_APP_ENV=')) || 'NUXT_PUBLIC_APP_ENV=production (default)' : 'NUXT_PUBLIC_APP_ENV=production (default)')\" && echo 'Icons:' && node -e \"console.log('Current icons in public/:', require('fs').readdirSync('public').filter(f => f.includes('icon') || f.includes('favicon') || f.includes('pwa')).join(', '))\" && echo 'Branch:' && git branch --show-current"
   },
   "dependencies": {
     "@compodium/nuxt": "0.1.0-beta.9",

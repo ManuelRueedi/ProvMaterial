@@ -2,6 +2,9 @@
 const toast = useToast();
 const { public: publicConfig } = useRuntimeConfig();
 
+// Environment detection
+const isPreview = computed(() => publicConfig.appEnv === "preview");
+
 const {
   loggedIn,
   user,
@@ -201,6 +204,17 @@ const hasAdminRights = computed(() => {
 
 <template>
   <UCard class="flex max-h-fit max-w-fit rounded-2xl">
+    <!-- Preview Environment Badge -->
+    <UAlert
+      v-if="isPreview"
+      color="warning"
+      variant="soft"
+      title="Testumgebung"
+      description="Sie verwenden die Testversion von Provmaterial"
+      class="mb-4"
+      icon="i-heroicons-exclamation-triangle"
+    />
+
     <!-- Auto-login loading state -->
     <UContainer v-if="isAutoLoggingIn" class="flex flex-col items-center py-8">
       <UIcon name="i-heroicons-arrow-path" class="mb-4 animate-spin text-2xl" />

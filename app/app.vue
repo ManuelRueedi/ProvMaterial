@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { NuxtPwaManifest } from "#components";
 import { errorMap } from "@/composables/useFriendlyError";
 
 const toast = useToast();
@@ -33,6 +34,7 @@ useSeoMeta({
 
 <template>
   <UApp>
+    <NuxtPwaManifest />
     <NuxtLoadingIndicator />
     <NuxtLayout>
       <NuxtPage />

@@ -28,8 +28,14 @@ export default defineNuxtConfig({
       navigateFallbackDenylist: [/^\/auth\/microsoft/],
     },
     manifest: {
-      name: "Provmaterial",
-      short_name: "Provmaterial",
+      name:
+        process.env.NUXT_PUBLIC_APP_ENV === "preview"
+          ? "Provmaterial (Preview)"
+          : "Provmaterial",
+      short_name:
+        process.env.NUXT_PUBLIC_APP_ENV === "preview"
+          ? "Provmaterial Preview"
+          : "Provmaterial",
       description: "Provmaterial - Material Management",
       theme_color: "#10b981",
       background_color: "#222",
@@ -91,6 +97,7 @@ export default defineNuxtConfig({
     },
     public: {
       testLoginEnabled: process.env.NUXT_TEST_LOGIN_ENABLED === "true",
+      appEnv: process.env.NUXT_PUBLIC_APP_ENV || "production",
     },
   },
 });

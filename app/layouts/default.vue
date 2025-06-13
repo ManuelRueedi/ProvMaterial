@@ -4,6 +4,12 @@ import type { NavigationMenuItem } from "@nuxt/ui";
 const { isMobile } = useDevice();
 const toggleQrCodeIcon = useToggleQrCodeIcon();
 
+// Environment detection
+const {
+  public: { appEnv },
+} = useRuntimeConfig();
+const isPreview = computed(() => appEnv === "preview");
+
 // Use global scanned articles state
 const { selectedArticles } = useScannedArticles();
 
@@ -133,7 +139,19 @@ const items = ref<NavigationMenuItem[][]>([
 
 <template>
   <UContainer class="full-width min-h-screen overflow-x-hidden pb-20">
-    <slot />
+    <!-- Preview Environment Badge -->
+    <div
+      v-if="isPreview"
+      class="text-ms fixed top-0 right-0 left-0 z-50 bg-orange-500 py-1 text-center font-medium text-white"
+    >
+      🚧 Testumgebung
+    </div>
+
+    <!-- Main content with conditional top padding for preview badge -->
+    <div :class="{ 'pt-8': isPreview }">
+      <slot />
+    </div>
+
     <UNavigationMenu
       :highlight="true"
       :items="items"
@@ -148,6 +166,7 @@ const items = ref<NavigationMenuItem[][]>([
       color="neutral"
       icon="ic:baseline-manage-accounts"
       class="fixed top-3 left-3 z-10 opacity-70"
+      :class="{ 'top-11': isPreview }"
     />
     <div v-if="isMobile" class="fixed right-5 bottom-23 z-10">
       <UButton
