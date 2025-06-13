@@ -1,10 +1,5 @@
 name: Deploy to NuxtHub
-
-on:
-  push:
-    branches:
-      - main
-      - test
+on: push
 
 jobs:
   deploy:
@@ -15,15 +10,7 @@ jobs:
       id-token: write
 
     steps:
-      - name: Wait for potential branch sync
-        run: |
-          echo "Waiting 15 seconds to ensure branch sync is complete..."
-          sleep 15
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }} # Explicitly checkout the triggering branch
+      - uses: actions/checkout@v4
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -33,9 +20,6 @@ jobs:
         with:
           node-version: 22
           cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install
 
       - name: Set up icons for branch
         run: |
@@ -62,6 +46,9 @@ jobs:
             echo "NUXT_PUBLIC_APP_ENV=preview" >> $GITHUB_ENV
           fi
         shell: bash
+
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Build & Deploy to NuxtHub
         uses: nuxt-hub/action@v2
