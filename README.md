@@ -1,5 +1,13 @@
 # ProvMaterial
 
+<div align="center">
+
+**🌐 Language / Sprache**
+
+[![English](https://img.shields.io/badge/🇬🇧-English-blue?style=for-the-badge)](README.md) [![Deutsch](https://img.shields.io/badge/🇩🇪-Deutsch-red?style=for-the-badge)](README.de.md)
+
+</div>
+
 A comprehensive material management system for tracking electrical equipment, cables, and components across projects and locations. Built with modern web technologies for seamless mobile and desktop use.
 
 ## 🎯 Overview
