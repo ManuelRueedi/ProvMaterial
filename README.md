@@ -1,6 +1,13 @@
 # ProvMaterial
 
-<div align="center">
+<d### 📦 **Article Management**
+
+- **Temporary Electrical Equipment** - Manage extension cables, distributors, cable reels, power strips, and adapter cables
+- **QR Code Integration** - Scan QR codes for instant article lookup and management
+- **Detailed Specifications** - Store ampacity, length, connector types, and custom outputs
+- **User-Friendly Interface** - Quick and easy material management
+- **Bundle Operations** - Handle multiple articles simultaneously
+- **Storage Organization** - Manage storage locations with sections and address mappingn="center">
 
 **🌐 Language / Sprache**
 
@@ -8,11 +15,23 @@
 
 </div>
 
-A comprehensive material management system for tracking electrical equipment, cables, and components across projects and locations. Built with modern web technologies for seamless mobile and desktop use.
+A user-friendly management system for temporarily used electrical equipment. Specifically designed for quick and easy management of extension cables, distributors, cable reels, power strips, and adapter cables. Built with modern web technologies for seamless mobile and desktop use.
 
 ## 🎯 Overview
 
-ProvMaterial is a professional-grade inventory management system designed specifically for electrical contractors and project managers. It provides complete lifecycle tracking of materials from procurement to deployment, with integrated QR code scanning, location mapping, and project-based organization.
+ProvMaterial is designed to manage inventory of temporarily used electrical equipment. The main goal is to provide a user-friendly interface for quick and easy material management. With integrated QR code scanning, location mapping, and project-based organization, it simplifies the management of temporarily deployed electrical components.
+
+**Project Background:** This project was created for Shpower company as a graduation thesis for the Technical College (Techniker HF).
+
+**🌐 Live Instances:**
+
+- **Main Website:** https://provmaterial.com/
+- **Test Website:** https://test.provmaterial.com/ (please contact for test login)
+
+**ℹ️ Notes:**
+
+- Microsoft login only works with shpower.ch domains
+- Website access only available within the EU
 
 ## ✨ Core Features
 
@@ -26,10 +45,11 @@ ProvMaterial is a professional-grade inventory management system designed specif
 
 ### 🚀 **Material Operations**
 
-- **Take Out (Auslagern)** - Deploy materials to project locations with full audit trail
+- **Take Out (Auslagern)** - Deploy temporary materials to project locations with full audit trail
 - **Bring Back (Einlagern)** - Return materials to storage with batch operations
 - **History Tracking** - Complete location and project history for each article
 - **Multi-Selection** - Bulk operations for efficient material handling
+- **Quick Navigation** - User-friendly interface for fast material management
 
 ### � **Location & Project Management**
 
@@ -179,12 +199,15 @@ pnpm db:generate  # Generate database migrations
 
 ## 🔐 Authentication & Permissions
 
-### User Roles
+### User Rights
 
-- **Admin** - Full system access and user management
-- **Manager** - Article and project management
-- **User** - Basic article operations
-- **Viewer** - Read-only access
+The system uses a granular rights-based permission system with the following rights:
+
+- **useArticles** - View and search articles
+- **editArticles** - Modify existing articles
+- **addArticles** - Create new articles
+- **removeArticles** - Delete articles from the system
+- **admin** - Full administrative access and user management
 
 ### Authentication Methods
 
@@ -250,13 +273,6 @@ The system uses a relational database with the following main entities:
 - **Users** - System users and authentication
 - **Article History** - Location and project tracking
 
-### PWA Configuration
-
-- **Offline Support** - Cache critical resources
-- **Install Prompts** - Mobile app installation
-- **Background Sync** - Sync when connection restored
-- **Push Notifications** - System alerts (future)
-
 ## 📈 System Monitoring
 
 ### Admin Dashboard
@@ -273,16 +289,6 @@ The system uses a relational database with the following main entities:
 - **Timeline Tracking** - Complete history view
 - **Export Capabilities** - Data reporting and analysis
 
-## 🤝 Contributing
-
-### Development Workflow
-
-1. **Fork Repository** - Create your own copy
-2. **Feature Branch** - Work on feature branches
-3. **Code Quality** - Follow ESLint and TypeScript rules
-4. **Testing** - Test all functionality
-5. **Pull Request** - Submit for review
-
 ### Code Standards
 
 - **TypeScript** - Strict type checking enabled
@@ -293,12 +299,3 @@ The system uses a relational database with the following main entities:
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-For support and questions:
-
-- **Documentation** - Check the inline documentation
-- **Issues** - Create GitHub issues for bugs
-- **Discussions** - Use GitHub discussions for questions
-- **Admin Panel** - Check system status and logs

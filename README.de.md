@@ -8,28 +8,42 @@
 
 </div>
 
-Ein umfassendes Materialverwaltungssystem zur Verfolgung von Elektrogeräten, Kabeln und Komponenten über Projekte und Standorte hinweg. Entwickelt mit modernen Webtechnologien für nahtlose mobile und Desktop-Nutzung.
+Ein benutzerfreundliches Verwaltungssystem für provisorisch genutztes Elektromaterial. Speziell entwickelt für die schnelle und einfache Verwaltung von Verlängerungskabeln, Verteilern, Kabelrollen, Steckerleisten und Adapterkabeln. Entwickelt mit modernen Webtechnologien für nahtlose mobile und Desktop-Nutzung.
 
 ## 🎯 Überblick
 
-ProvMaterial ist ein professionelles Lagerverwaltungssystem, das speziell für Elektroinstallateure und Projektmanager entwickelt wurde. Es bietet eine vollständige Lebenszyklusverfolgung von Materialien von der Beschaffung bis zum Einsatz, mit integrierter QR-Code-Scannung, Standortkartierung und projektbasierter Organisation.
+ProvMaterial ist darauf ausgerichtet, den Inventar an provisorisch genutztem Elektromaterial zu verwalten. Das Hauptziel ist es, eine benutzerfreundliche Oberfläche zu bieten, um Material schnell und einfach zu managen. Mit integrierter QR-Code-Scannung, Standortkartierung und projektbasierter Organisation vereinfacht es die Verwaltung von temporär eingesetzten Elektrokomponenten.
+
+**Projekt-Hintergrund:** Dieses Projekt wurde für die Firma Shpower als Abschlussarbeit der Schule zum Techniker HF erstellt.
+
+**🌐 Live-Instanzen:**
+
+- **Hauptwebseite:** https://provmaterial.com/
+- **Test-Webseite:** https://test.provmaterial.com/ (für Test-Login bitte Kontakt aufnehmen)
+
+**ℹ️ Hinweise:**
+
+- Microsoft Login funktioniert nur mit shpower.ch Domänen
+- Zugriff auf die Webseite nur innerhalb der EU möglich
 
 ## ✨ Kernfunktionen
 
 ### 📦 **Artikelverwaltung**
 
-- **Vollständige Bestandsverfolgung** - Verfolgen Sie Kabel, Verlängerungen, Verteiler, Boxen und Kabeltrommeln
+- **Provisorisches Elektromaterial** - Verwalten Sie Verlängerungskabel, Verteiler, Kabelrollen, Steckerleisten und Adapterkabel
 - **QR-Code-Integration** - Scannen Sie QR-Codes für sofortige Artikelsuche und -verwaltung
 - **Detaillierte Spezifikationen** - Speichern Sie Stromstärke, Länge, Steckertypen und benutzerdefinierte Ausgänge
+- **Benutzerfreundliche Oberfläche** - Schnelle und einfache Materialverwaltung
 - **Bundle-Operationen** - Bearbeiten Sie mehrere Artikel gleichzeitig
 - **Lagerorganisation** - Verwalten Sie Lagerstandorte mit Bereichen und Adresszuordnung
 
 ### 🚀 **Materialoperationen**
 
-- **Auslagern** - Verteilen Sie Materialien an Projektstandorte mit vollständiger Prüfspur
+- **Auslagern** - Verteilen Sie provisorisches Material an Projektstandorte mit vollständiger Prüfspur
 - **Einlagern** - Bringen Sie Materialien in Batch-Operationen zurück ins Lager
 - **Verlaufsverfolgung** - Vollständige Standort- und Projekthistorie für jeden Artikel
 - **Mehrfachauswahl** - Bulk-Operationen für effiziente Materialbearbeitung
+- **Schnelle Navigation** - Benutzerfreundliche Oberfläche für schnelles Material-Management
 
 ### 🗺️ **Standort- und Projektverwaltung**
 
@@ -179,12 +193,15 @@ pnpm db:generate  # Datenbankmigrationen generieren
 
 ## 🔐 Authentifizierung und Berechtigungen
 
-### Benutzerrollen
+### Benutzerrechte
 
-- **Admin** - Vollständiger Systemzugriff und Benutzerverwaltung
-- **Manager** - Artikel- und Projektverwaltung
-- **Benutzer** - Grundlegende Artikeloperationen
-- **Betrachter** - Nur-Lese-Zugriff
+Das System verwendet ein granulares rechtebasiertes Berechtigungssystem mit folgenden Rechten:
+
+- **useArticles** - Artikel anzeigen und suchen
+- **editArticles** - Bestehende Artikel bearbeiten
+- **addArticles** - Neue Artikel erstellen
+- **removeArticles** - Artikel aus dem System löschen
+- **admin** - Vollständiger administrativer Zugriff und Benutzerverwaltung
 
 ### Authentifizierungsmethoden
 
@@ -250,13 +267,6 @@ Das System verwendet eine relationale Datenbank mit folgenden Hauptentitäten:
 - **Benutzer** - Systembenutzer und Authentifizierung
 - **Artikelhistorie** - Standort- und Projektverfolgung
 
-### PWA-Konfiguration
-
-- **Offline-Unterstützung** - Kritische Ressourcen zwischenspeichern
-- **Installationsaufforderungen** - Mobile App-Installation
-- **Hintergrundsynchronisation** - Synchronisation bei wiederhergestellter Verbindung
-- **Push-Benachrichtigungen** - Systembenachrichtigungen (zukünftig)
-
 ## 📈 Systemüberwachung
 
 ### Admin-Dashboard
@@ -273,32 +283,6 @@ Das System verwendet eine relationale Datenbank mit folgenden Hauptentitäten:
 - **Zeitlinien-Verfolgung** - Vollständige Historienansicht
 - **Exportfunktionen** - Datenberichterstattung und -analyse
 
-## 🤝 Mitwirken
-
-### Entwicklungsworkflow
-
-1. **Repository forken** - Eigene Kopie erstellen
-2. **Feature-Branch** - An Feature-Branches arbeiten
-3. **Code-Qualität** - ESLint- und TypeScript-Regeln befolgen
-4. **Testen** - Alle Funktionen testen
-5. **Pull Request** - Zur Überprüfung einreichen
-
-### Code-Standards
-
-- **TypeScript** - Strikte Typprüfung aktiviert
-- **Vue 3 Composition API** - Moderne Vue.js-Patterns
-- **ESLint + Prettier** - Automatisierte Code-Formatierung
-- **Conventional Commits** - Strukturierte Commit-Nachrichten
-
 ## 📄 Lizenz
 
 Dieses Projekt ist unter der MIT-Lizenz lizenziert - siehe die [LICENSE](LICENSE) Datei für Details.
-
-## 🆘 Support
-
-Für Support und Fragen:
-
-- **Dokumentation** - Prüfen Sie die Inline-Dokumentation
-- **Issues** - Erstellen Sie GitHub Issues für Bugs
-- **Diskussionen** - Nutzen Sie GitHub Diskussionen für Fragen
-- **Admin-Panel** - Prüfen Sie Systemstatus und Logs
