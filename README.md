@@ -1,6 +1,6 @@
 # ProvMaterial
 
-<d### 📦 **Article Management**
+### 📦 **Article Management**
 
 - **Temporary Electrical Equipment** - Manage extension cables, distributors, cable reels, power strips, and adapter cables
 - **QR Code Integration** - Scan QR codes for instant article lookup and management

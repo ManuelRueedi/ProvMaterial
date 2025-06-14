@@ -142,7 +142,7 @@ const items = ref<NavigationMenuItem[][]>([
     <!-- Preview Environment Badge -->
     <div
       v-if="isPreview"
-      class="text-ms fixed top-0 right-0 left-0 z-50 bg-orange-500 py-1 text-center font-medium text-white"
+      class="text-ms fixed top-0 right-0 left-0 z-50 bg-orange-500/30 py-1 text-center font-medium text-white"
     >
       🚧 Testumgebung
     </div>
