@@ -1,7 +1,43 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+
+// Environment detection function that follows Nuxt Hub patterns
+function getEnvironment() {
+  // Nuxt Hub environments: 'production', 'preview', 'development'
+  const hubEnv = process.env.NUXT_HUB_ENV;
+  const customEnv = process.env.NUXT_PUBLIC_APP_ENV;
+  const nodeEnv = process.env.NODE_ENV;
+
+  // Priority: NUXT_HUB_ENV > NUXT_PUBLIC_APP_ENV > NODE_ENV
+  if (hubEnv) return hubEnv;
+  if (customEnv) return customEnv;
+  if (nodeEnv === "development") return "development";
+
+  return "production";
+}
+
+// Determine icon folder based on environment
+function getIconFolder() {
+  const env = getEnvironment();
+  return env === "preview" ? "preview" : "production";
+}
+
 export default defineNuxtConfig({
   app: {
     keepalive: true,
+    head: {
+      link: [
+        {
+          rel: "icon",
+          type: "image/x-icon",
+          href: `/icons-${getIconFolder()}/favicon.ico`,
+        },
+        {
+          rel: "apple-touch-icon",
+          sizes: "180x180",
+          href: `/icons-${getIconFolder()}/apple-touch-icon-180x180.png`,
+        },
+      ],
+    },
   },
   compatibilityDate: "2025-04-15",
   // Nuxt 4 directory structure and features
@@ -29,11 +65,11 @@ export default defineNuxtConfig({
     },
     manifest: {
       name:
-        process.env.NUXT_PUBLIC_APP_ENV === "preview"
+        getEnvironment() === "preview"
           ? "Provmaterial (Preview)"
           : "Provmaterial",
       short_name:
-        process.env.NUXT_PUBLIC_APP_ENV === "preview"
+        getEnvironment() === "preview"
           ? "Provmaterial Preview"
           : "Provmaterial",
       description: "Provmaterial - Material Management",
@@ -44,12 +80,12 @@ export default defineNuxtConfig({
       lang: "de",
       icons: [
         {
-          src: "pwa-192x192.png",
+          src: `icons-${getIconFolder()}/pwa-192x192.png`,
           sizes: "192x192",
           type: "image/png",
         },
         {
-          src: "pwa-512x512.png",
+          src: `icons-${getIconFolder()}/pwa-512x512.png`,
           sizes: "512x512",
           type: "image/png",
         },
@@ -97,7 +133,7 @@ export default defineNuxtConfig({
     },
     public: {
       testLoginEnabled: process.env.NUXT_TEST_LOGIN_ENABLED === "true",
-      appEnv: process.env.NUXT_PUBLIC_APP_ENV || "production",
+      appEnv: getEnvironment(),
     },
   },
 });
