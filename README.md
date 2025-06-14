@@ -1,66 +1,119 @@
 # ProvMaterial
 
-### Material Management System 👍
+A comprehensive material management system for tracking electrical equipment, cables, and components across projects and locations. Built with modern web technologies for seamless mobile and desktop use.
 
-A modern, web-based material management system built with Nuxt 3 and NuxtHub, featuring automatic deployment to production and preview environments.
+## 🎯 Overview
 
-## Features
+ProvMaterial is a professional-grade inventory management system designed specifically for electrical contractors and project managers. It provides complete lifecycle tracking of materials from procurement to deployment, with integrated QR code scanning, location mapping, and project-based organization.
 
-- 📱 **Mobile-First Design** - Optimized for mobile devices with address bar hiding
-- 🔐 **Multi-Authentication** - Microsoft OAuth, WebAuthn (Passkey), and test login
-- 📊 **Material Management** - Track, check in/out, and manage materials
-- 🗺️ **Location Mapping** - Visual location management with maps
-- 📱 **PWA Support** - Progressive Web App with offline capabilities
-- 🌓 **Dark/Light Mode** - User preference theme switching
-- 📋 **QR Code Scanning** - Mobile QR code scanning for quick material lookup
-- 👥 **Admin Panel** - Administrative interface for user management
-- 🚀 **Auto-Deployment** - Automatic deployment to production and preview environments
-- 🏷️ **Environment Badges** - Visual indicators for preview vs production environments
+## ✨ Core Features
 
-## Environments
+### � **Article Management**
 
-### Production
+- **Complete Inventory Tracking** - Track cables, extensions, distributors, boxes, and cable reels
+- **QR Code Integration** - Scan QR codes for instant article lookup and management
+- **Detailed Specifications** - Store ampacity, length, connector types, and custom outputs
+- **Bundle Operations** - Handle multiple articles simultaneously
+- **Storage Organization** - Manage storage locations with sections and address mapping
 
-- **Branch**: `main`
-- **Icons**: Production branding
-- **App Name**: "Provmaterial"
-- **Deployment**: Automatic on push to main
+### 🚀 **Material Operations**
 
-### Preview
+- **Take Out (Auslagern)** - Deploy materials to project locations with full audit trail
+- **Bring Back (Einlagern)** - Return materials to storage with batch operations
+- **History Tracking** - Complete location and project history for each article
+- **Multi-Selection** - Bulk operations for efficient material handling
 
-- **Branch**: `test` (auto-synced from main)
-- **Icons**: Preview branding
-- **App Name**: "Provmaterial (Preview)"
-- **Badges**: Orange warning badges on layout and auth card
-- **Deployment**: Automatic after main sync
+### � **Location & Project Management**
 
-## UI Differences
+- **Interactive Maps** - Visual location management with MapLibre integration
+- **Project Organization** - Group materials by projects with deployment tracking
+- **Geocoding Support** - Automatic address resolution and coordinate mapping
+- **Storage vs. Deployment Locations** - Separate tracking for storage and active deployment sites
 
-### Preview Environment Indicators
+### 👨‍💼 **Administration & Security**
 
-When `NUXT_PUBLIC_APP_ENV=preview`:
+- **Multi-Level Authentication** - Microsoft OAuth, WebAuthn (Passkey), and test login
+- **Role-Based Access** - Granular permissions for different user types
+- **Admin Dashboard** - System statistics, user management, and activity monitoring
+- **Audit Logging** - Complete change tracking with user attribution
 
-- **Top Banner**: Orange "🚧 Preview Environment - Testversion" banner
-- **Auth Card**: Warning alert "Sie verwenden die Testversion von Provmaterial"
-- **PWA Manifest**: App name includes "(Preview)"
-- **Layout Adjustments**: Account button positioned lower to accommodate banner
+### 📱 **Mobile-First Experience**
 
-### Production Environment
+- **Progressive Web App** - Install on mobile devices with offline capabilities
+- **QR Code Scanner** - Built-in camera integration for material scanning
+- **Responsive Design** - Optimized for tablets and smartphones
+- **Touch-Friendly Interface** - Large buttons and swipe gestures
 
-When `NUXT_PUBLIC_APP_ENV=production` (or not set):
+## 🛠️ Technology Stack
 
-- **Clean Layout**: No preview banners or badges
-- **Standard Branding**: Production app name and icons
-- **Normal Positioning**: Standard layout without preview accommodations
+### **Frontend**
 
-## Development
+- **Nuxt 3** - Full-stack Vue.js framework with SSR/SPA capabilities
+- **Nuxt UI** - Beautiful, accessible UI components
+- **Tailwind CSS** - Utility-first CSS framework
+- **Vue QR Code Reader** - QR code scanning functionality
+- **MapLibre GL** - Interactive mapping and geocoding
+
+### **Backend & Database**
+
+- **NuxtHub** - Cloudflare-powered backend infrastructure
+- **SQLite + Drizzle ORM** - Type-safe database operations
+- **Server-side API** - RESTful endpoints with automatic validation
+- **Real-time Updates** - Live data synchronization
+
+### **Authentication & Security**
+
+- **Microsoft OAuth** - Enterprise SSO integration
+- **WebAuthn/Passkey** - Modern passwordless authentication
+- **Session Management** - Secure user sessions with auto-refresh
+- **Rate Limiting** - API protection and abuse prevention
+
+### **DevOps & Deployment**
+
+- **Cloudflare Workers** - Serverless deployment platform
+- **Automatic Deployments** - CI/CD with environment-specific builds
+- **Environment Management** - Production and preview environments
+- **PWA Assets** - Automatic icon and manifest generation
+
+## 📂 Project Structure
+
+```
+├── app/
+│   ├── components/          # Reusable Vue components
+│   │   ├── Article*.vue     # Article-related components
+│   │   ├── Location*.vue    # Location management
+│   │   ├── Project*.vue     # Project management
+│   │   └── *.vue           # Other UI components
+│   ├── composables/         # Vue composition functions
+│   │   ├── articles/        # Article-specific logic
+│   │   └── *.ts            # Utility composables
+│   ├── pages/              # Application routes
+│   │   ├── articles/        # Article operations (takeOut, bringBack)
+│   │   ├── admin/          # Administration panel
+│   │   └── *.vue           # Main pages
+│   ├── middleware/         # Route protection and auth
+│   └── layouts/            # Page layouts
+├── server/
+│   ├── api/                # Backend API endpoints
+│   │   ├── articles/       # Article CRUD operations
+│   │   ├── projects/       # Project management
+│   │   ├── locations/      # Location management
+│   │   └── admin/          # Admin functions
+│   ├── database/           # Database schema and migrations
+│   ├── routes/auth/        # Authentication handlers
+│   └── utils/              # Server utilities
+└── public/                 # Static assets and PWA icons
+```
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 22+
-- pnpm package manager
+- **Node.js 18+** - JavaScript runtime
+- **pnpm** - Package manager (recommended)
+- **Modern Browser** - Chrome, Firefox, Safari, or Edge
 
-### Setup
+### Installation
 
 ```bash
 # Clone the repository
@@ -70,174 +123,174 @@ cd ProvMaterial
 # Install dependencies
 pnpm install
 
-# Set up icon directories (if needed)
-pnpm icons:setup
+# Set up environment variables (copy from .env.example)
+cp .env.example .env
+
+# Generate database schema
+pnpm db:generate
 
 # Start development server
 pnpm dev
 ```
 
-### Environment Management
-
-#### Icon Management
+### Development Environment
 
 ```bash
-# Switch to production icons locally
-pnpm icons:production
-
-# Switch to preview icons locally
-pnpm icons:preview
-
-# Check current icon status
-pnpm icons:status
-
-# Check branch status
-pnpm branches:status
+# Available scripts
+pnpm dev          # Start development server
+pnpm build        # Build for production
+pnpm preview      # Preview production build
+pnpm lint         # Run ESLint
+pnpm typecheck    # TypeScript validation
+pnpm db:generate  # Generate database migrations
 ```
 
-#### Local Environment Testing
+## 🎯 Core Workflows
 
-```bash
-# Switch to preview environment (icons + environment variables)
-pnpm switch preview
+### Article Lifecycle
 
-# Switch to production environment (icons + environment variables)
-pnpm switch production
+1. **Creation** - Add new articles with specifications
+2. **Storage** - Assign to storage locations with sections
+3. **Deployment** - Take out to project locations
+4. **Tracking** - Monitor location and project history
+5. **Return** - Bring back to storage when project complete
 
-# Check current status (environment, icons, branch)
-pnpm status
+### Project Management
 
-# Start development server with current environment
-pnpm dev
-```
+1. **Create Projects** - Set up new projects with descriptions
+2. **Deploy Materials** - Assign articles to projects at locations
+3. **Track Progress** - Monitor deployed vs. available materials
+4. **Project Completion** - Bulk return materials to storage
 
-#### Quick Development Workflow
+### Location Operations
 
-```bash
-# Test preview environment locally
-pnpm switch preview
-pnpm dev
+1. **Location Setup** - Create locations with GPS coordinates
+2. **Storage vs. Deployment** - Separate storage and active locations
+3. **Map Integration** - Visual location management
+4. **Address Geocoding** - Automatic coordinate resolution
 
-# Test production environment locally
-pnpm switch production
-pnpm dev
-```
+## 🔐 Authentication & Permissions
 
-#### Deployment Workflow
+### User Roles
 
-```bash
-# Work on main branch only
-git checkout main
-git add .
-git commit -m "Your changes"
-git push origin main
+- **Admin** - Full system access and user management
+- **Manager** - Article and project management
+- **User** - Basic article operations
+- **Viewer** - Read-only access
 
-# ✨ This automatically:
-# 1. Syncs changes to test branch
-# 2. Deploys main → production (with production icons)
-# 3. Deploys test → preview (with preview icons)
-```
+### Authentication Methods
 
-## Technology Stack
+- **Microsoft OAuth** - Primary SSO for organizations
+- **WebAuthn/Passkey** - Passwordless authentication
+- **Test Login** - Development and demo access
 
-- **Framework**: Nuxt 3 with Nuxt 4 compatibility
-- **UI**: Nuxt UI + Tailwind CSS
-- **Database**: NuxtHub Database (SQLite with Drizzle ORM)
-- **Authentication**:
-  - Microsoft OAuth (nuxt-auth-utils)
-  - WebAuthn/Passkey support
-  - Test login for development
-- **Storage**: NuxtHub Blob storage
-- **Maps**: MapLibre GL with nuxt-maplibre
-- **PWA**: @vite-pwa/nuxt for Progressive Web App features
-- **Deployment**: NuxtHub with Cloudflare Workers
-- **Device Detection**: @nuxtjs/device
+## 📊 API Endpoints
 
-## Project Structure
+### Articles
 
-```
-app/
-├── components/          # Vue components
-├── composables/         # Vue composables and utilities
-├── layouts/            # Layout components
-├── pages/              # Route pages
-├── middleware/         # Route middleware
-└── assets/             # Static assets
+- `GET /api/articles/getAll` - List all articles with filters
+- `POST /api/articles/create` - Create new article
+- `PUT /api/articles/takeOutMultiple` - Deploy articles
+- `PUT /api/articles/bringBackMultiple` - Return articles
+- `GET /api/articles/search` - Search articles
 
-server/
-├── api/                # API endpoints
-├── database/           # Database schema and migrations
-├── routes/             # Server routes (auth, etc.)
-└── utils/              # Server utilities
+### Projects & Locations
 
-public/
-├── icons-production/   # Production icons
-├── icons-preview/      # Preview icons
-└── [generated icons]   # Auto-generated during deployment
+- `GET /api/projects/getAll` - List projects
+- `POST /api/projects/create` - Create project
+- `GET /api/locations/getAll` - List locations
+- `POST /api/locations/create` - Create location
 
-scripts/
-├── switch-icons.js     # Local icon switching utility
-└── setup-icons.js      # Icon directory setup utility
-```
+### Admin
 
-## Configuration
+- `GET /api/admin/stats` - System statistics
+- `GET /api/admin/users` - User management
+
+## 🌍 Deployment
+
+### Production Environment
+
+- **Domain** - Production URL
+- **Database** - NuxtHub SQLite
+- **Storage** - Cloudflare R2
+- **CDN** - Cloudflare global network
 
 ### Environment Variables
 
-- `NUXT_TEST_LOGIN_ENABLED` - Enable test login functionality
-- `NUXT_PUBLIC_APP_ENV` - App environment (production/preview)
+```bash
+# Authentication
+NUXT_OAUTH_MICROSOFT_CLIENT_ID=your_client_id
+NUXT_OAUTH_MICROSOFT_CLIENT_SECRET=your_secret
 
-### Authentication
+# Application
+NUXT_PUBLIC_APP_ENV=production
+NUXT_TEST_LOGIN_ENABLED=false
 
-The app supports multiple authentication methods:
+# Database (automatically configured by NuxtHub)
+NUXT_HUB_DATABASE_URL=auto
+```
 
-- **Microsoft OAuth** - Primary authentication method
-- **WebAuthn/Passkey** - Secure passwordless authentication
-- **Test Login** - Development/testing authentication
+## 🔧 Configuration
 
-## Documentation
+### Database Schema
 
-- [`ICONS-WORKFLOW.md`](./ICONS-WORKFLOW.md) - Complete icon management workflow
-- [`BRANCH-SYNC.md`](./BRANCH-SYNC.md) - Automatic branch synchronization guide
-- [`ENVIRONMENT-EXAMPLE.vue`](./ENVIRONMENT-EXAMPLE.vue) - Environment-specific component example
+The system uses a relational database with the following main entities:
 
-## Scripts
+- **Articles** - Material items with specifications
+- **Projects** - Project organization
+- **Locations** - Storage and deployment locations
+- **Users** - System users and authentication
+- **Article History** - Location and project tracking
 
-| Command                    | Description                                    |
-| -------------------------- | ---------------------------------------------- |
-| `pnpm dev`                 | Start development server                       |
-| `pnpm build`               | Build for production                           |
-| `pnpm preview`             | Preview production build                       |
-| `pnpm deploy`              | Deploy to NuxtHub                              |
-| `pnpm lint`                | Run ESLint                                     |
-| `pnpm typecheck`           | Run TypeScript checks                          |
-| **Environment Management** |
-| `pnpm switch <env>`        | Switch between production/preview environments |
-| `pnpm switch`              | Interactive environment selector               |
-| `pnpm status`              | Check current environment, icons, and branch   |
+### PWA Configuration
 
-## Deployment
+- **Offline Support** - Cache critical resources
+- **Install Prompts** - Mobile app installation
+- **Background Sync** - Sync when connection restored
+- **Push Notifications** - System alerts (future)
 
-The project uses GitHub Actions for automatic deployment:
+## 📈 System Monitoring
 
-1. **Push to `main`** triggers:
+### Admin Dashboard
 
-   - Sync to `test` branch
-   - Production deployment (main branch)
-   - Preview deployment (test branch)
+- **Article Statistics** - Total, in storage, deployed
+- **Project Metrics** - Active projects and deployment rates
+- **User Activity** - Login tracking and permissions
+- **System Health** - Performance and error monitoring
 
-2. **Different environments automatically get**:
-   - Different icons (production vs preview)
-   - Different app names
-   - Same codebase with environment-specific branding
+### Audit Trail
 
-## Contributing
+- **Change Logging** - All article modifications
+- **User Attribution** - Who made what changes
+- **Timeline Tracking** - Complete history view
+- **Export Capabilities** - Data reporting and analysis
 
-1. Work on the `main` branch
-2. Use the icon switching commands for local testing
-3. Push to `main` - both environments deploy automatically
-4. Check both deployments before merging large changes
+## 🤝 Contributing
 
-## License
+### Development Workflow
 
-[Add your license here]
+1. **Fork Repository** - Create your own copy
+2. **Feature Branch** - Work on feature branches
+3. **Code Quality** - Follow ESLint and TypeScript rules
+4. **Testing** - Test all functionality
+5. **Pull Request** - Submit for review
+
+### Code Standards
+
+- **TypeScript** - Strict type checking enabled
+- **Vue 3 Composition API** - Modern Vue.js patterns
+- **ESLint + Prettier** - Automated code formatting
+- **Conventional Commits** - Structured commit messages
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+For support and questions:
+
+- **Documentation** - Check the inline documentation
+- **Issues** - Create GitHub issues for bugs
+- **Discussions** - Use GitHub discussions for questions
+- **Admin Panel** - Check system status and logs

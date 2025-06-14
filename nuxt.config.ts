@@ -1,7 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
 // Environment detection function that follows Nuxt Hub patterns
-function getEnvironment() {
+export function getEnvironment() {
   // Nuxt Hub environments: 'production', 'preview', 'development'
   const hubEnv = process.env.NUXT_HUB_ENV;
   const customEnv = process.env.NUXT_PUBLIC_APP_ENV;

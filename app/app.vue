@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { NuxtPwaManifest } from "#components";
 import { errorMap } from "@/composables/useFriendlyError";
+
+const { public: publicConfig } = useRuntimeConfig();
 const isPreview = computed(() => publicConfig.appEnv === "preview");
 
 const toast = useToast();
