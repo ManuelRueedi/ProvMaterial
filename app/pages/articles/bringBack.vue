@@ -55,18 +55,19 @@
 
     <USelectMenu
       v-else
-      v-model="selectedProject"
-      :items="projects"
+      :model-value="displaySelectedProject"
+      :items="projectSelectItems"
       label-key="name"
       placeholder="Wählen Sie ein Projekt..."
       searchable
       class="w-full max-w-md"
       :loading="loadingProjects"
+      @update:model-value="handleProjectSelection"
     />
   </UCard>
 
   <!-- Articles Interface -->
-  <UCard v-if="selectedProject" class="shadow-sm">
+  <UCard v-if="selectedProject !== undefined" class="shadow-sm">
     <template #header>
       <div class="flex items-center justify-between">
         <h2 class="text-xl font-semibold">Ausgelagerte Artikel</h2>
@@ -352,7 +353,7 @@ interface GroupedByLocation {
 }
 
 // State
-const selectedProject = ref<Project | undefined>(undefined); // Changed type from Project | null to Project | undefined and initialized with undefined
+const selectedProject = ref<Project | null | undefined>(undefined); // Allow null for "No Project" option
 const selectedArticles = ref<string[]>([]);
 const activeTab = ref("table");
 const projects = ref<Project[]>([]);
@@ -427,6 +428,28 @@ const transformedScannedArticles = computed(() => {
 });
 
 // Computed
+const projectSelectItems = computed(() => {
+  const items = [...projects.value];
+  // Add "No Project" option at the beginning
+  items.unshift({
+    id: -1,
+    name: "Kein Projekt (Artikel ohne Projektzuordnung)",
+    description: "Zeigt alle ausgelagerten Artikel ohne Projektzuordnung an",
+  } as Project);
+  return items;
+});
+
+const displaySelectedProject = computed(() => {
+  if (selectedProject.value === null) {
+    return {
+      id: -1,
+      name: "Kein Projekt (Artikel ohne Projektzuordnung)",
+      description: "Zeigt alle ausgelagerten Artikel ohne Projektzuordnung an",
+    } as Project;
+  }
+  return selectedProject.value;
+});
+
 const groupedArticles = computed<GroupedByLocation[]>(() => {
   const grouped = new Map<string, Article[]>();
 
@@ -507,11 +530,23 @@ const locationsWithArticleCount = computed(() => {
   return result;
 });
 
+// Project Selection Handler
+const handleProjectSelection = (project: Project) => {
+  if (project.id === -1) {
+    selectedProject.value = null; // No project selected
+  } else {
+    selectedProject.value = project;
+  }
+};
+
 // API Methods
 const fetchProjects = async () => {
   loadingProjects.value = true;
   try {
-    const response = await $fetch<Project[]>("/api/projects/getAll");
+    // Fetch only projects that have articles not in storage
+    const response = await $fetch<Project[]>("/api/projects/getAll", {
+      query: { hasDeployedArticles: true },
+    });
     projects.value = response;
   } catch (error) {
     console.error("Error fetching projects:", error);
@@ -521,12 +556,28 @@ const fetchProjects = async () => {
 };
 
 const fetchDeployedArticles = async () => {
-  if (!selectedProject.value) return;
+  if (selectedProject.value === undefined) return;
 
   loadingArticles.value = true;
   try {
+    const queryParams: {
+      inStorage: boolean;
+      projectId?: number;
+      noProject?: string;
+    } = {
+      inStorage: false,
+    };
+
+    // If selectedProject is not null, add projectId to query
+    if (selectedProject.value !== null) {
+      queryParams.projectId = selectedProject.value.id;
+    } else {
+      // If selectedProject is null, we want articles without project assignment
+      queryParams.noProject = "true";
+    }
+
     const response = await $fetch<Article[]>("/api/articles/getAll", {
-      query: { projectId: selectedProject.value.id, inStorage: false },
+      query: queryParams,
     });
     deployedArticles.value = response;
     selectedArticles.value = [];
@@ -604,7 +655,7 @@ const bringBackSelected = async () => {
 
 // Watchers
 watch(selectedProject, () => {
-  if (selectedProject.value) {
+  if (selectedProject.value !== undefined) {
     fetchDeployedArticles();
   } else {
     deployedArticles.value = [];
