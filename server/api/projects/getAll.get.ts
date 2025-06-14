@@ -1,8 +1,9 @@
-import { sql } from "drizzle-orm";
+import { sql, isNotNull, eq, and } from "drizzle-orm";
 import type { Project } from "@/composables/articles/types";
 
 export default defineEventHandler(async (event): Promise<Project[]> => {
   const session = requireUserSession(event);
+  const query = getQuery(event);
 
   if (!(await session).rights.includes("useArticles")) {
     throw createError({
@@ -12,12 +13,42 @@ export default defineEventHandler(async (event): Promise<Project[]> => {
   }
 
   const db = useDrizzle();
+  const hasDeployedArticles = query.hasDeployedArticles === "true";
 
   try {
-    const allProjects = await db
-      .select()
-      .from(tables.projects)
-      .orderBy(sql`${tables.projects.name} asc`);
+    let allProjects;
+
+    if (hasDeployedArticles) {
+      // Only get projects that have articles not in storage
+      allProjects = await db
+        .selectDistinct({
+          id: tables.projects.id,
+          name: tables.projects.name,
+          description: tables.projects.description,
+        })
+        .from(tables.projects)
+        .innerJoin(
+          tables.articles,
+          eq(tables.articles.currentProjectId, tables.projects.id),
+        )
+        .innerJoin(
+          tables.locations,
+          eq(tables.articles.locationId, tables.locations.id),
+        )
+        .where(
+          and(
+            isNotNull(tables.articles.locationId),
+            eq(tables.locations.isStorageLocation, false),
+          ),
+        )
+        .orderBy(sql`${tables.projects.name} asc`);
+    } else {
+      // Get all projects (original behavior)
+      allProjects = await db
+        .select()
+        .from(tables.projects)
+        .orderBy(sql`${tables.projects.name} asc`);
+    }
 
     if (!allProjects) {
       throw createError({

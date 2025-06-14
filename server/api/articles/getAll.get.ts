@@ -1,11 +1,15 @@
 import type { Article } from "@/composables/articles/types";
 import { numberToAmpacity } from "@/composables/articles/types";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, isNull } from "drizzle-orm";
 import { z } from "zod";
 
 const querySchema = z.object({
   projectId: z.coerce.number().int().positive().optional(),
   locationId: z.coerce.number().int().positive().optional(),
+  noProject: z
+    .enum(["true", "false"])
+    .transform((val) => val === "true")
+    .optional(),
   inStorage: z
     .enum(["true", "false"])
     .transform((val) => val === "true")
@@ -34,7 +38,7 @@ export default defineEventHandler(async (event): Promise<Article[]> => {
     });
   }
 
-  const { projectId, locationId, inStorage } = validationResult.data;
+  const { projectId, locationId, noProject, inStorage } = validationResult.data;
 
   try {
     const db = useDrizzle();
@@ -44,6 +48,9 @@ export default defineEventHandler(async (event): Promise<Article[]> => {
 
     if (projectId !== undefined) {
       whereConditions.push(eq(tables.articles.currentProjectId, projectId));
+    } else if (noProject) {
+      // Filter for articles without a project
+      whereConditions.push(isNull(tables.articles.currentProjectId));
     }
 
     if (locationId !== undefined) {
