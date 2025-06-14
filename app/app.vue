@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { NuxtPwaManifest } from "#components";
 import { errorMap } from "@/composables/useFriendlyError";
+const isPreview = computed(() => publicConfig.appEnv === "preview");
 
 const toast = useToast();
 
@@ -27,8 +28,8 @@ onMounted(() => {
 });
 
 useSeoMeta({
-  title: "ProvMaterial",
-  description: "Manage your ProvMaterial. ✨",
+  title: isPreview.value ? "ProvMaterial (Preview)" : "ProvMaterial",
+  description: "Verwalte dein ProvMaterial. ✨",
 });
 </script>
 
