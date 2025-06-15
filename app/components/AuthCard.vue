@@ -18,30 +18,6 @@ const { register, authenticate } = useWebAuthn({
   authenticateEndpoint: "/auth/authenticate",
 });
 
-// Auto-login loading state (only for UI feedback)
-const isAutoLoggingIn = ref(false);
-
-// Watch for login status changes to hide loading state
-watch(loggedIn, (newValue) => {
-  if (newValue) {
-    isAutoLoggingIn.value = false;
-  }
-});
-
-// Check if auto-login might be in progress
-onMounted(() => {
-  const route = useRoute();
-  // Show loading if coming from Microsoft OAuth
-  if (route.query.code) {
-    isAutoLoggingIn.value = true;
-
-    // Stop loading after a reasonable timeout
-    setTimeout(() => {
-      isAutoLoggingIn.value = false;
-    }, 5000);
-  }
-});
-
 /** Microsoft login – popup on desktop, redirect on mobile */
 const loginWithMicrosoft = () => {
   window.location.href = "/auth/microsoft";
@@ -89,32 +65,13 @@ const signIn = async () => {
 
 /** Enhanced logout with proper cleanup */
 const enhancedLogout = async () => {
-  try {
-    // Call the logout endpoint to properly clear cookies
-    await $fetch("/auth/logout", {
-      method: "POST",
-    });
-
-    // Clear the session locally
-    await logout();
-
-    toast.add({
-      title: "Erfolgreich abgemeldet",
-      description: "Sie wurden sicher abgemeldet",
-      color: "success",
-      icon: "i-heroicons-check-circle",
-    });
-  } catch (err: unknown) {
-    console.error("❌ Logout failed:", (err as Error).message);
-    // Still try to clear session locally
-    await logout();
-    toast.add({
-      title: "Abgemeldet",
-      description: "Sie wurden abgemeldet",
-      color: "warning",
-      icon: "i-heroicons-exclamation-triangle",
-    });
-  }
+  await logout();
+  toast.add({
+    title: "Abgemeldet",
+    description: "Sie wurden abgemeldet",
+    color: "warning",
+    icon: "i-heroicons-exclamation-triangle",
+  });
 };
 
 /** Remove the user's passkey with confirmation */
@@ -214,12 +171,6 @@ const hasAdminRights = computed(() => {
       class="mb-4"
       icon="i-heroicons-exclamation-triangle"
     />
-
-    <!-- Auto-login loading state -->
-    <UContainer v-if="isAutoLoggingIn" class="flex flex-col items-center py-8">
-      <UIcon name="i-heroicons-arrow-path" class="mb-4 animate-spin text-2xl" />
-      <p class="text-sm text-gray-600">Automatische Anmeldung...</p>
-    </UContainer>
 
     <!-- Signed‑in state -->
     <UContainer v-else-if="loggedIn && user">

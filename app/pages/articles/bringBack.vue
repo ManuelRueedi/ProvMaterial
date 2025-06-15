@@ -4,7 +4,7 @@
   <!-- Scanned Articles Integration -->
   <UCard
     v-if="transformedScannedArticles.length > 0"
-    class="mb-8 border shadow-lg"
+    class="border shadow-lg"
     variant="outline"
   >
     <template #header>
@@ -69,12 +69,25 @@
   <!-- Articles Interface -->
   <UCard v-if="selectedProject !== undefined" class="shadow-sm">
     <template #header>
-      <div class="flex items-center justify-between">
-        <h2 class="text-xl font-semibold">Ausgelagerte Artikel</h2>
+      <div class="flex flex-col items-center justify-between">
+        <h2 class="pt-4 pb-2 text-2xl font-semibold">
+          {{
+            deployedArticles.length === 1
+              ? "Ein Ausgelagerter Artikel"
+              : `${deployedArticles.length} Ausgelagerte Artikel`
+          }}
+        </h2>
+        <h3 class="text-md pb-3 font-medium">
+          {{
+            uniqueLocations.length === 1
+              ? "An einem Standort"
+              : `An ${uniqueLocations.length} Standorten`
+          }}
+        </h3>
         <div class="flex gap-2">
           <UButton
             variant="outline"
-            size="sm"
+            size="md"
             :disabled="!deployedArticles.length"
             @click="selectAll"
           >
@@ -82,33 +95,13 @@
           </UButton>
           <UButton
             variant="outline"
-            size="sm"
+            size="md"
             :disabled="selectedArticles.length === 0"
             @click="deselectAll"
           >
             Auswahl aufheben
           </UButton>
         </div>
-      </div>
-
-      <!-- Summary Stats -->
-      <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <UCard class="p-4">
-          <p class="text-sm">Gesamt ausgelagert</p>
-          <p class="text-2xl font-bold">{{ deployedArticles.length }}</p>
-        </UCard>
-        <UCard class="p-4">
-          <p class="text-sm">Ausgewählt</p>
-          <p class="text-2xl font-bold">
-            {{ selectedArticles.length }}
-          </p>
-        </UCard>
-        <UCard class="p-4">
-          <p class="text-sm">Standorte</p>
-          <p class="text-2xl font-bold">
-            {{ uniqueLocations.length }}
-          </p>
-        </UCard>
       </div>
 
       <!-- Tabs -->
@@ -118,7 +111,7 @@
     </template>
 
     <!-- Tab Content -->
-    <div class="mt-4">
+    <div class="mt-4 mb-10">
       <!-- Table View -->
       <div v-if="activeTab === 'table'">
         <!-- Loading State -->
@@ -140,27 +133,28 @@
         </div>
 
         <!-- Articles by Location and Type -->
-        <div v-else class="mb-10">
+        <div v-else>
           <div
             v-for="location in groupedArticles"
             :key="location.locationName"
             class="p-6"
           >
             <!-- Location Header -->
-            <div class="mb-4 flex items-center justify-between">
+            <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div class="flex items-center gap-3">
                 <UIcon name="i-heroicons-map-pin" class="h-5 w-5" />
                 <h3 class="text-lg font-semibold">
                   {{ location.locationName }}
                 </h3>
                 <UBadge
+                  size="md"
                   :label="`${location.articles.length} Artikel`"
                   color="neutral"
                 />
               </div>
               <UButton
                 variant="outline"
-                size="sm"
+                size="md"
                 :disabled="isLocationFullySelected(location.locationName)"
                 @click="selectLocationArticles(location.locationName)"
               >
@@ -176,38 +170,18 @@
                 class="border-default overflow-hidden rounded-md border"
               >
                 <!-- Type Header -->
-                <div class="px-4 py-3">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                      <UIcon
-                        :name="getTypeIcon(typeGroup.type)"
-                        class="h-4 w-4"
-                      />
-                      <span class="font-medium">{{ typeGroup.type }}</span>
-                      <UBadge
-                        :label="`${typeGroup.articles.length}`"
-                        color="neutral"
-                        size="sm"
-                      />
-                    </div>
-                    <UButton
-                      variant="ghost"
+                <div class="border-b px-4 py-3">
+                  <div class="flex w-full items-center gap-2">
+                    <UIcon
+                      :name="getTypeIcon(typeGroup.type)"
+                      class="h-4 w-4"
+                    />
+                    <span class="font-medium">{{ typeGroup.type }}</span>
+                    <UBadge
+                      :label="`${typeGroup.articles.length}`"
+                      color="neutral"
                       size="sm"
-                      :disabled="
-                        isTypeFullySelected(
-                          location.locationName,
-                          typeGroup.type,
-                        )
-                      "
-                      @click="
-                        selectTypeArticles(
-                          location.locationName,
-                          typeGroup.type,
-                        )
-                      "
-                    >
-                      Alle auswählen
-                    </UButton>
+                    />
                   </div>
                 </div>
 
@@ -390,7 +364,6 @@ const {
   selectAll,
   deselectAll,
   selectLocationArticles,
-  selectTypeArticles,
   isLocationFullySelected,
   isTypeFullySelected,
   isTypePartiallySelected,
@@ -595,9 +568,9 @@ const getTypeIcon = (type: Type): string => {
     Kabel: "ic:baseline-cable",
     Verlängerung: "ic:baseline-cable",
     Verteiler: "ic:baseline-call-split",
-    Box: "ic:baseline-box",
-    Kabelrolle: "ic:baseline-cable-reel",
-    Steckerleiste: "ic:baseline-power-strip",
+    Box: "ic:baseline-check-box-outline-blank",
+    Kabelrolle: "ic:baseline-cable",
+    Steckerleiste: "ic:baseline-outlet",
     Adapterkabel: "ic:baseline-cable",
   };
   return icons[type] || "ic:baseline-box";
