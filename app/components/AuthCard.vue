@@ -173,7 +173,7 @@ const hasAdminRights = computed(() => {
     />
 
     <!-- Signed‑in state -->
-    <UContainer v-else-if="loggedIn && user">
+    <UContainer v-if="loggedIn && user">
       <UContainer class="my-5 flex justify-between">
         <UButton
           :disabled="!session?.rights.includes('useArticles')"
