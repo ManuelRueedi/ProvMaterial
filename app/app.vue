@@ -16,5 +16,7 @@ useSeoMeta({
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
+    <!-- PWA Install Prompt -->
+    <PWAInstallPrompt />
   </UApp>
 </template>

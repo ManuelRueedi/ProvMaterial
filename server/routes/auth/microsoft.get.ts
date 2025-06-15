@@ -128,17 +128,20 @@ export default defineOAuthMicrosoftEventHandler({
         },
       );
 
+      // Clear any session invalidation flags since user has successfully re-authenticated
+      try {
+        const invalidationKey = `session:invalidate:${dbUser.id}`;
+        await hubKV().del(invalidationKey);
+        console.log(
+          `Cleared session invalidation flag for user ${dbUser.mail} after successful re-authentication`,
+        );
+      } catch (kvError) {
+        console.warn(`Failed to clear session invalidation flag:`, kvError);
+      }
+
       console.log(
         `Microsoft OAuth: Session created for user ${dbUser.mail} (ID: ${dbUser.id})`,
       );
-
-      // Set a remember me cookie for auto-login
-      setCookie(event, "remember-login", "true", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-      });
 
       return sendRedirect(event, "/");
     } catch (error) {

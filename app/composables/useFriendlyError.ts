@@ -1,8 +1,37 @@
 import type { H3Error } from "h3";
 import type { Toast } from "@nuxt/ui/runtime/composables/useToast.js";
 
-export const errorMap = (err: unknown): Partial<Toast> => {
+interface ExtendedToast extends Partial<Toast> {
+  requiresLogout?: boolean;
+}
+
+export const errorMap = (err: unknown): ExtendedToast => {
   const h3 = err as Partial<H3Error>;
+
+  // Handle Zod validation errors specifically
+  if (
+    err &&
+    typeof err === "object" &&
+    "data" in err &&
+    Array.isArray((err as { data: unknown }).data)
+  ) {
+    const zodErrors = (
+      err as { data: Array<{ path?: string[]; message: string }> }
+    ).data;
+    const fieldErrors = zodErrors
+      .map(
+        (error: { path?: string[]; message: string }) =>
+          `${error.path?.join(".") || "Feld"}: ${error.message}`,
+      )
+      .join(", ");
+
+    return {
+      title: "Ungültige Eingabe",
+      description: `Bitte überprüfen Sie folgende Felder: ${fieldErrors}`,
+      color: "warning",
+      icon: "ic:baseline-warning",
+    };
+  }
 
   // Handle fetch/network errors
   if (err instanceof TypeError && err.message.includes("fetch")) {
@@ -14,6 +43,22 @@ export const errorMap = (err: unknown): Partial<Toast> => {
     };
   } // Handle auth-specific errors
   if (h3.statusCode === 401) {
+    // Check for session invalidation due to permission changes
+    if (
+      h3.statusMessage?.includes(
+        "Session invalidated due to permission changes",
+      )
+    ) {
+      return {
+        title: "Sitzung ungültig",
+        description:
+          "Ihre Berechtigungen wurden von einem Administrator geändert. Sie werden automatisch abgemeldet.",
+        color: "warning",
+        icon: "ph:shield-warning",
+        requiresLogout: true, // Special flag to trigger logout
+      };
+    }
+
     // Check for specific auth error messages
     if (h3.statusMessage?.includes("Credential not found")) {
       return {
@@ -69,12 +114,50 @@ export const errorMap = (err: unknown): Partial<Toast> => {
         };
       }
 
+      if (h3.statusMessage?.includes("Cannot modify your own permissions")) {
+        return {
+          title: "Eigene Berechtigungen können nicht geändert werden",
+          description:
+            "Sie können Ihre eigenen Berechtigungen nicht ändern, um eine Sperrung zu vermeiden.",
+          color: "warning",
+          icon: "ph:lock",
+        };
+      }
+
+      if (h3.statusMessage?.includes("Cannot remove admin rights")) {
+        return {
+          title: "Administrator-Rechte können nicht entfernt werden",
+          description:
+            "Es muss mindestens ein Administrator im System verbleiben.",
+          color: "warning",
+          icon: "ph:shield-warning",
+        };
+      }
+
+      if (h3.statusMessage?.includes("Sie können sich nicht selbst löschen")) {
+        return {
+          title: "Eigenes Konto kann nicht gelöscht werden",
+          description: "Sie können Ihr eigenes Benutzerkonto nicht löschen.",
+          color: "warning",
+          icon: "ph:user-circle",
+        };
+      }
+
+      if (h3.statusMessage?.includes("Invalid user ID")) {
+        return {
+          title: "Ungültige Benutzer-ID",
+          description: "Die angegebene Benutzer-ID ist nicht gültig.",
+          color: "error",
+          icon: "ph:identification-card",
+        };
+      }
+
       return {
         title: "Ungültige Anfrage",
         description:
           h3.statusMessage || "Die Anfrage konnte nicht verarbeitet werden.",
         color: "warning",
-        icon: "ph:warning-circle",
+        icon: "ic:baseline-warning",
       };
     case 403:
       if (h3.statusMessage?.includes("Test login is not enabled")) {
@@ -99,6 +182,19 @@ export const errorMap = (err: unknown): Partial<Toast> => {
         };
       }
 
+      if (
+        h3.statusMessage?.includes("Admin access required") ||
+        h3.statusMessage?.includes("Admin-Berechtigung erforderlich")
+      ) {
+        return {
+          title: "Administrator-Berechtigung erforderlich",
+          description:
+            "Sie benötigen Administrator-Rechte, um diese Aktion durchzuführen.",
+          color: "error",
+          icon: "ph:shield-x",
+        };
+      }
+
       return {
         title: "Zugriff verweigert",
         description:
@@ -107,6 +203,19 @@ export const errorMap = (err: unknown): Partial<Toast> => {
         icon: "ph:prohibit",
       };
     case 404:
+      if (
+        h3.statusMessage?.includes("User not found") ||
+        h3.statusMessage?.includes("Benutzer nicht gefunden")
+      ) {
+        return {
+          title: "Benutzer nicht gefunden",
+          description:
+            "Der angegebene Benutzer wurde nicht in der Datenbank gefunden.",
+          color: "warning",
+          icon: "ph:user-x",
+        };
+      }
+
       return {
         title: "Nicht gefunden",
         description:
@@ -180,7 +289,53 @@ export const errorMap = (err: unknown): Partial<Toast> => {
           description:
             "Ein interner Fehler ist bei der Anmeldung aufgetreten. Bitte versuchen Sie es später erneut.",
           color: "error",
-          icon: "ph:warning-circle",
+          icon: "ic:baseline-warning",
+        };
+      }
+
+      if (h3.statusMessage?.includes("Update failed")) {
+        return {
+          title: "Aktualisierung fehlgeschlagen",
+          description:
+            "Die Benutzeraktualisierung konnte nicht durchgeführt werden. Bitte versuchen Sie es erneut.",
+          color: "error",
+          icon: "ph:database",
+        };
+      }
+
+      if (
+        h3.statusMessage?.includes("Error updating user") ||
+        h3.statusMessage?.includes("Fehler beim Aktualisieren")
+      ) {
+        return {
+          title: "Benutzer-Aktualisierung fehlgeschlagen",
+          description:
+            "Ein Fehler ist bei der Aktualisierung des Benutzers aufgetreten. Bitte überprüfen Sie Ihre Daten und versuchen Sie es erneut.",
+          color: "error",
+          icon: "ph:user-gear",
+        };
+      }
+
+      if (
+        h3.statusMessage?.includes("Error deleting user") ||
+        h3.statusMessage?.includes("Fehler beim Löschen")
+      ) {
+        return {
+          title: "Benutzer-Löschung fehlgeschlagen",
+          description:
+            "Ein Fehler ist beim Löschen des Benutzers aufgetreten. Bitte versuchen Sie es erneut.",
+          color: "error",
+          icon: "ph:user-minus",
+        };
+      }
+
+      if (h3.statusMessage?.includes("Error loading user data")) {
+        return {
+          title: "Benutzerdaten konnten nicht geladen werden",
+          description:
+            "Ein Fehler ist beim Laden der Benutzerdaten aufgetreten. Bitte laden Sie die Seite neu.",
+          color: "error",
+          icon: "ph:users",
         };
       }
 
@@ -189,7 +344,7 @@ export const errorMap = (err: unknown): Partial<Toast> => {
         description:
           "Ein interner Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
         color: "error",
-        icon: "ph:warning-circle",
+        icon: "ic:baseline-warning",
       };
     case 502:
       return {
@@ -204,7 +359,7 @@ export const errorMap = (err: unknown): Partial<Toast> => {
         description:
           "Der Service ist temporär nicht verfügbar. Bitte versuchen Sie es später erneut.",
         color: "error",
-        icon: "ph:warning-circle",
+        icon: "ic:baseline-warning",
       };
     case 504:
       return {
@@ -266,6 +421,6 @@ export const errorMap = (err: unknown): Partial<Toast> => {
     title: "Unbekannter Fehler",
     description: "Etwas ist schiefgelaufen. Bitte noch einmal versuchen.",
     color: "error",
-    icon: "ph:warning-circle",
+    icon: "ic:baseline-warning",
   };
 };

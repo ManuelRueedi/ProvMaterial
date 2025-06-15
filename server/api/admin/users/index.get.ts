@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   if (!session.rights.includes("admin")) {
     throw createError({
       statusCode: 403,
-      statusMessage: "Admin access required",
+      statusMessage: "Administrator-Berechtigung erforderlich",
     });
   }
 
@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
     console.error("Admin API - Error fetching users:", error);
     throw createError({
       statusCode: 500,
-      statusMessage: "Error loading user data",
+      statusMessage: "Fehler beim Laden der Benutzerdaten",
     });
   }
 });

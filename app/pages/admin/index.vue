@@ -1336,10 +1336,11 @@ async function fetchUsers() {
     users.value = data;
   } catch (error) {
     console.error("Failed to fetch users:", error);
-    toast.add({
-      title: "Fehler beim Laden der Benutzer",
-      color: "error",
-    });
+    await showErrorToast(
+      error,
+      "Fehler beim Laden der Benutzer",
+      "Die Benutzerliste konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+    );
   } finally {
     loadingUsers.value = false;
   }
@@ -1352,10 +1353,11 @@ async function fetchStats() {
     stats.value = data;
   } catch (error) {
     console.error("Failed to fetch stats:", error);
-    toast.add({
-      title: "Fehler beim Laden der Statistiken",
-      color: "error",
-    });
+    await showErrorToast(
+      error,
+      "Fehler beim Laden der Statistiken",
+      "Die Statistiken konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    );
   } finally {
     loadingStats.value = false;
   }
@@ -1394,8 +1396,17 @@ async function saveUser() {
   if (!editingUser.value) return;
 
   savingUser.value = true;
+  // Store user info before potentially clearing it
+  const userInfo = {
+    firstName: editingUser.value.firstName,
+    lastName: editingUser.value.lastName,
+  };
+
   try {
-    await $fetch(`/api/admin/users/${editingUser.value.id}`, {
+    const response = await $fetch<{
+      success: boolean;
+      rightsChanged?: boolean;
+    }>(`/api/admin/users/${editingUser.value.id}`, {
       method: "PUT",
       body: {
         rights: editingUser.value.rights,
@@ -1409,16 +1420,44 @@ async function saveUser() {
     }
 
     closeEditModal();
-    toast.add({
-      title: "Benutzer erfolgreich aktualisiert",
-      color: "success",
-    });
+
+    // Show different message based on whether rights were changed
+    if (response.rightsChanged) {
+      toast.add({
+        title: "Benutzer erfolgreich aktualisiert",
+        description: `Die Berechtigungen für ${userInfo.firstName} ${userInfo.lastName} wurden geändert. Der Benutzer wird automatisch abgemeldet und muss sich erneut anmelden.`,
+        color: "success",
+        icon: "ph:user-check",
+        timeout: 8000, // Longer timeout for important message
+      });
+    } else {
+      toast.add({
+        title: "Benutzer erfolgreich aktualisiert",
+        description: `Die Daten für ${userInfo.firstName} ${userInfo.lastName} wurden erfolgreich geändert.`,
+        color: "success",
+        icon: "ph:user-check",
+      });
+    }
   } catch (error) {
     console.error("Failed to save user:", error);
-    toast.add({
-      title: "Fehler beim Aktualisieren des Benutzers",
-      color: "error",
-    });
+    showErrorToast(
+      error,
+      "Fehler beim Aktualisieren des Benutzers",
+      "Der Benutzer konnte nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben und versuchen Sie es erneut.",
+    );
+
+    // Refresh user data to ensure accuracy
+    await fetchUsers();
+
+    // Update modal data with current user information
+    if (editingUser.value) {
+      const currentUser = users.value.find(
+        (u) => u.id === editingUser.value!.id,
+      );
+      if (currentUser) {
+        editingUser.value = { ...currentUser };
+      }
+    }
   } finally {
     savingUser.value = false;
   }
@@ -1428,6 +1467,12 @@ async function confirmDeleteUser() {
   if (!deletingUser.value) return;
 
   deletingUserLoading.value = true;
+  // Store user info before potentially clearing it
+  const userInfo = {
+    firstName: deletingUser.value.firstName,
+    lastName: deletingUser.value.lastName,
+  };
+
   try {
     await $fetch(`/api/admin/users/${deletingUser.value.id}`, {
       method: "DELETE",
@@ -1439,14 +1484,20 @@ async function confirmDeleteUser() {
     closeDeleteModal();
     toast.add({
       title: "Benutzer erfolgreich gelöscht",
+      description: `${userInfo.firstName} ${userInfo.lastName} wurde aus dem System entfernt.`,
       color: "success",
+      icon: "ph:user-minus",
     });
   } catch (error) {
     console.error("Failed to delete user:", error);
-    toast.add({
-      title: "Fehler beim Löschen des Benutzers",
-      color: "error",
-    });
+    showErrorToast(
+      error,
+      "Fehler beim Löschen des Benutzers",
+      "Der Benutzer konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.",
+    );
+
+    // Refresh user data to ensure accuracy
+    await fetchUsers();
   } finally {
     deletingUserLoading.value = false;
   }
