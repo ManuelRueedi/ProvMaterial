@@ -1,6 +1,16 @@
 <template>
   <UContainer class="flex h-screen flex-col items-center justify-center">
-    <authCard />
+    <!-- Preview Environment Badge -->
+    <UAlert
+      v-if="isPreview"
+      class="mb-4 max-w-sm"
+      color="warning"
+      variant="soft"
+      title="Testumgebung"
+      description="Sie verwenden die Testversion von Provmaterial"
+      icon="i-heroicons-exclamation-triangle"
+    />
+    <authCard class="max-w-sm" />
   </UContainer>
 </template>
 
@@ -13,6 +23,12 @@ definePageMeta({
 
 const route = useRoute();
 const toast = useToast();
+const { public: publicConfig } = useRuntimeConfig();
+// Environment detection
+const isPreview = computed(
+  () =>
+    publicConfig.appEnv === "preview" || publicConfig.appEnv === "development",
+);
 
 // Check for error query parameter and show toast
 onMounted(() => {
