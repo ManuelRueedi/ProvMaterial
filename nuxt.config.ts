@@ -100,11 +100,8 @@ export default defineNuxtConfig({
     },
     client: {
       installPrompt: true,
-      registerPlugin: true,
+      registerPlugin: false,
     },
-    strategies: "injectManifest",
-    srcDir: "app",
-    filename: "sw.ts",
     registerType: "autoUpdate",
     devOptions: {
       enabled: true,
