@@ -176,7 +176,7 @@ const hasAdminRights = computed(() => {
     <UContainer v-else-if="loggedIn && user">
       <UContainer class="my-5 flex justify-between">
         <UButton
-          :disabled="!session.rights.includes('useArticles')"
+          :disabled="!session?.rights.includes('useArticles')"
           to="/"
           icon="ic:baseline-home"
           size="xl"

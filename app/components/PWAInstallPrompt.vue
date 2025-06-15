@@ -57,11 +57,10 @@
               </span>
             </div>
           </div>
-
           <!-- Actions -->
           <div class="flex space-x-3">
             <UButton
-              color="gray"
+              color="neutral"
               variant="ghost"
               class="flex-1"
               @click="dismissInstallPrompt"
