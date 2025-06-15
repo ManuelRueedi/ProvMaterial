@@ -36,23 +36,39 @@
   <!-- Project Selection -->
   <UCard class="mb-4 shadow-sm">
     <template #header>
-      <h2 class="text-xl font-semibold">Projekt auswählen</h2>
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-semibold">Projekt auswählen</h2>
+        <UButton
+          variant="ghost"
+          size="lg"
+          icon="i-heroicons-arrow-path"
+          :loading="loadingProjects"
+          @click="fetchProjects"
+        >
+          Aktualisieren
+        </UButton>
+      </div>
     </template>
 
+    <!-- No Projects with Articles Message -->
     <div
       v-if="!loadingProjects && projects.length === 0"
-      class="py-8 text-center"
+      class="p-8 text-center"
     >
       <UIcon
-        name="i-heroicons-folder-plus"
-        class="mx-auto mb-4 h-12 w-12 text-gray-400"
+        name="i-heroicons-folder-open"
+        class="mx-auto h-12 w-12 text-gray-400"
       />
-      <h3 class="mb-2 text-lg font-medium">Keine Projekte vorhanden</h3>
-      <p class="mb-4">
-        Es sind noch keine Projekte in der Datenbank vorhanden.
+      <h3 class="mt-2 text-lg font-medium">
+        Keine Projekte mit ausgelagerten Artikeln
+      </h3>
+      <p class="text-muted">
+        Derzeit sind keine Projekte mit ausgelagerten Artikeln vorhanden. Lagern
+        Sie zunächst Artikel aus, bevor Sie sie wieder einlagern können.
       </p>
     </div>
 
+    <!-- Project Selection -->
     <USelectMenu
       v-else
       :model-value="displaySelectedProject"
@@ -402,14 +418,8 @@ const transformedScannedArticles = computed(() => {
 
 // Computed
 const projectSelectItems = computed(() => {
-  const items = [...projects.value];
-  // Add "No Project" option at the beginning
-  items.unshift({
-    id: -1,
-    name: "Kein Projekt (Artikel ohne Projektzuordnung)",
-    description: "Zeigt alle ausgelagerten Artikel ohne Projektzuordnung an",
-  } as Project);
-  return items;
+  // Return projects as they are - "No Project" option is now added conditionally in fetchProjects
+  return [...projects.value];
 });
 
 const displaySelectedProject = computed(() => {
@@ -521,10 +531,38 @@ const fetchProjects = async () => {
       query: { hasDeployedArticles: true },
     });
     projects.value = response;
+
+    // Check if there are articles without project assignment
+    await checkNoProjectArticles();
   } catch (error) {
     console.error("Error fetching projects:", error);
   } finally {
     loadingProjects.value = false;
+  }
+};
+
+const checkNoProjectArticles = async () => {
+  try {
+    const response = await $fetch<Article[]>("/api/articles/getAll", {
+      query: { inStorage: false, noProject: "true" },
+    });
+
+    // If there are articles without project, add the "No Project" option to the list
+    if (response.length > 0) {
+      const noProjectOption = {
+        id: -1,
+        name: "Kein Projekt (Artikel ohne Projektzuordnung)",
+        description:
+          "Zeigt alle ausgelagerten Artikel ohne Projektzuordnung an",
+      } as Project;
+
+      // Check if "No Project" option is not already in the list
+      if (!projects.value.some((p) => p.id === -1)) {
+        projects.value.unshift(noProjectOption);
+      }
+    }
+  } catch (error) {
+    console.error("Error checking no project articles:", error);
   }
 };
 
@@ -612,7 +650,13 @@ const bringBackSelected = async () => {
     });
 
     await fetchDeployedArticles();
+    await fetchProjects(); // Refetch projects to update the list after bringing back articles
     selectedArticles.value = [];
+
+    // If no more articles are deployed for the current project, reset selection
+    if (deployedArticles.value.length === 0) {
+      selectedProject.value = undefined;
+    }
   } catch (error) {
     console.error("Error bringing back articles:", error);
     toast.add({
