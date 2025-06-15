@@ -56,13 +56,6 @@ export default defineNuxtConfig({
     "@vite-pwa/nuxt",
   ],
   pwa: {
-    client: {
-      registerPlugin: false,
-    },
-    workbox: {
-      navigateFallbackAllowlist: [],
-      navigateFallbackDenylist: [/^\/auth\/microsoft/],
-    },
     manifest: {
       name:
         getEnvironment() === "preview"
@@ -75,7 +68,7 @@ export default defineNuxtConfig({
       description: "Provmaterial - Material Management",
       theme_color: "#10b981",
       background_color: "#222",
-      display: "minimal-ui",
+      display: "standalone",
       orientation: "portrait",
       lang: "de",
       icons: [
@@ -90,6 +83,15 @@ export default defineNuxtConfig({
           type: "image/png",
         },
       ],
+    },
+    workbox: {
+      navigateFallbackAllowlist: [],
+      navigateFallbackDenylist: [/^\/auth\/microsoft/],
+    },
+
+    client: {
+      installPrompt: true,
+      registerPlugin: false,
     },
     registerType: "autoUpdate",
     devOptions: {
