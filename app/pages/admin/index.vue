@@ -1099,6 +1099,42 @@ const deletingUserLoading = ref(false);
 const showChangelogModal = ref(false);
 const selectedChange = ref<Stats["changelog"]["recent"][0] | null>(null);
 
+// Error handling for admin operations
+async function showErrorToast(
+  error: unknown,
+  defaultTitle: string,
+  defaultDescription: string,
+) {
+  const friendlyError = errorMap(error);
+
+  // Check if this error requires logout
+  if (friendlyError.requiresLogout) {
+    // Clear the user session
+    const { clear: logout } = useUserSession();
+    await logout();
+
+    // Show the error message
+    toast.add({
+      title: friendlyError.title || defaultTitle,
+      description: friendlyError.description || defaultDescription,
+      color: friendlyError.color || "warning",
+      icon: friendlyError.icon || "ph:warning-circle",
+    });
+
+    // Navigate to login page
+    await navigateTo("/login");
+    return;
+  }
+
+  // Show the error message
+  toast.add({
+    title: friendlyError.title || defaultTitle,
+    description: friendlyError.description || defaultDescription,
+    color: friendlyError.color || "error",
+    icon: friendlyError.icon || "ph:warning-circle",
+  });
+}
+
 // Available rights for editing
 const availableRights: Right[] = [
   "useArticles",
@@ -1428,7 +1464,6 @@ async function saveUser() {
         description: `Die Berechtigungen für ${userInfo.firstName} ${userInfo.lastName} wurden geändert. Der Benutzer wird automatisch abgemeldet und muss sich erneut anmelden.`,
         color: "success",
         icon: "ph:user-check",
-        timeout: 8000, // Longer timeout for important message
       });
     } else {
       toast.add({

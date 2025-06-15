@@ -168,15 +168,15 @@ const hasAdminRights = computed(() => {
       variant="soft"
       title="Testumgebung"
       description="Sie verwenden die Testversion von Provmaterial"
-      class="mb-4"
+      class="mx-3 mb-4"
       icon="i-heroicons-exclamation-triangle"
     />
 
     <!-- Signed‑in state -->
-    <UContainer v-else-if="loggedIn && user">
+    <UContainer v-if="loggedIn && user">
       <UContainer class="my-5 flex justify-between">
         <UButton
-          :disabled="!session.rights.includes('useArticles')"
+          :disabled="!session?.rights.includes('useArticles')"
           to="/"
           icon="ic:baseline-home"
           size="xl"

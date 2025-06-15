@@ -114,6 +114,8 @@ async function handleTakeOut(
     });
     toast.add({
       title: "Artikel erfolgreich ausgetragen",
+      description: `Artikel ${articleId} wurde erfolgreich ausgetragen`,
+      icon: "i-heroicons-check-circle",
       color: "success",
     });
 
@@ -172,6 +174,7 @@ async function handleBundleTakeOut(
     toast.add({
       title: "Artikel erfolgreich ausgetragen",
       description: `${articleIds.length} Artikel wurden erfolgreich ausgetragen`,
+      icon: "i-heroicons-check-circle",
       color: "success",
     });
 
