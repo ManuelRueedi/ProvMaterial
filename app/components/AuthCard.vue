@@ -157,6 +157,7 @@ const hasAdminRights = computed(() => {
 </script>
 
 <template>
+  <UCard class="rounded-1xl flex max-h-fit w-full justify-center pb-6">
     <!-- Signed‑in state -->
     <UContainer v-if="loggedIn && user">
       <UContainer class="my-5 flex justify-between">
