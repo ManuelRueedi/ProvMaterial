@@ -102,7 +102,6 @@ export default defineNuxtConfig({
       installPrompt: true,
       registerPlugin: false,
     },
-    strategies: "injectManifest",
     registerType: "autoUpdate",
     devOptions: {
       enabled: true,
