@@ -168,7 +168,7 @@ const hasAdminRights = computed(() => {
       variant="soft"
       title="Testumgebung"
       description="Sie verwenden die Testversion von Provmaterial"
-      class="mb-4"
+      class="mx-3 mb-4"
       icon="i-heroicons-exclamation-triangle"
     />
 
