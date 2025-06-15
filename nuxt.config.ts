@@ -100,7 +100,7 @@ export default defineNuxtConfig({
     },
     client: {
       installPrompt: true,
-      registerPlugin: true,
+      registerPlugin: false,
     },
     strategies: "injectManifest",
     registerType: "autoUpdate",
