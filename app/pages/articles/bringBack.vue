@@ -573,7 +573,7 @@ const getTypeIcon = (type: Type): string => {
     Steckerleiste: "ic:baseline-outlet",
     Adapterkabel: "ic:baseline-cable",
   };
-  return icons[type] || "ic:baseline-box";
+  return icons[type] || "ic:baseline-check-box-outline-blank";
 };
 
 // Scanned Articles Methods

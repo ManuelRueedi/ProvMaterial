@@ -66,7 +66,6 @@ export default defineWebAuthnAuthenticateEventHandler({
         counter: authenticationInfo.newCounter,
       })
       .where(eq(tables.webauthnCredentials.id, credential.id));
-
     await setUserSession(
       event,
       {
@@ -90,13 +89,16 @@ export default defineWebAuthnAuthenticateEventHandler({
       },
     );
 
-    // Set a remember me cookie for auto-login
-    setCookie(event, "remember-login", "true", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-    });
+    // Clear any session invalidation flags since user has successfully re-authenticated
+    try {
+      const invalidationKey = `session:invalidate:${dbUser.id}`;
+      await hubKV().del(invalidationKey);
+      console.log(
+        `Cleared session invalidation flag for user ${dbUser.mail} after successful WebAuthn authentication`,
+      );
+    } catch (kvError) {
+      console.warn(`Failed to clear session invalidation flag:`, kvError);
+    }
 
     console.log(
       `WebAuthn: Session created for user ${dbUser.mail} (ID: ${dbUser.id})`,

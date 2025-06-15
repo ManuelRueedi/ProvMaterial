@@ -1,26 +1,24 @@
 export default defineNuxtRouteMiddleware((to) => {
   const userSession = useUserSession();
 
-  const toast = useToast();
-
-  if (to.path !== "/login" && !userSession.loggedIn.value) {
-    toast.add({
-      title: "Bitte Anmelden!",
-      icon: "ic:baseline-close",
-      color: "info",
-    });
-    return navigateTo("/login");
-  }
   if (
-    (to.path == "/articles/takeOut" || to.path == "/articles/bringBack") &&
-    !userSession.session.value?.rights.includes("useArticles")
+    to.path == "/articles/takeOut" ||
+    to.path == "/" ||
+    to.path == "/articles/bringBack"
   ) {
-    toast.add({
-      title: "Keine Berechtigung!",
-      icon: "ic:baseline-close",
-      color: "error",
-    });
-    return navigateTo("/");
+    if (!userSession.loggedIn.value) {
+      if (to.path == "/") {
+        return navigateTo("/login");
+      }
+      return navigateTo("/login?error=noLogin");
+    } else if (!userSession.session.value?.rights?.includes("useArticles")) {
+      return navigateTo("/login?error=noRight-useArticles");
+    }
   }
+
+  if (to.path == "/admin" && !userSession.loggedIn.value) {
+    return navigateTo("/login?error=noLogin");
+  }
+
   return;
 });

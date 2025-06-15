@@ -152,15 +152,15 @@ const isDark = computed({
 });
 
 // Check if current user has admin rights
+const { session } = useUserSession();
 const hasAdminRights = computed(() => {
-  const { session } = useUserSession();
   const userRights = session.value?.rights || [];
   return userRights.includes("admin");
 });
 </script>
 
 <template>
-  <UCard class="flex max-h-fit max-w-fit rounded-2xl">
+  <UCard class="flex max-h-fit w-full max-w-sm justify-center rounded-2xl pb-6">
     <!-- Preview Environment Badge -->
     <UAlert
       v-if="isPreview"
@@ -176,6 +176,7 @@ const hasAdminRights = computed(() => {
     <UContainer v-else-if="loggedIn && user">
       <UContainer class="my-5 flex justify-between">
         <UButton
+          :disabled="!session.rights.includes('useArticles')"
           to="/"
           icon="ic:baseline-home"
           size="xl"

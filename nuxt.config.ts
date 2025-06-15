@@ -71,7 +71,15 @@ export default defineNuxtConfig({
       display: "standalone",
       orientation: "portrait",
       lang: "de",
+      start_url: "/",
+      scope: "/",
+      categories: ["productivity", "business", "utilities"],
       icons: [
+        {
+          src: `icons-${getIconFolder()}/pwa-64x64.png`,
+          sizes: "64x64",
+          type: "image/png",
+        },
         {
           src: `icons-${getIconFolder()}/pwa-192x192.png`,
           sizes: "192x192",
@@ -82,12 +90,21 @@ export default defineNuxtConfig({
           sizes: "512x512",
           type: "image/png",
         },
+        {
+          src: `icons-${getIconFolder()}/maskable-icon-512x512.png`,
+          sizes: "512x512",
+          type: "image/png",
+          purpose: "maskable",
+        },
       ],
     },
     client: {
       installPrompt: true,
-      registerPlugin: false,
+      registerPlugin: true,
     },
+    strategies: "injectManifest",
+    srcDir: "app",
+    filename: "sw.ts",
     registerType: "autoUpdate",
     devOptions: {
       enabled: true,

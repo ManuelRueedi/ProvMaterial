@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
   if (!session.rights.includes("admin")) {
     throw createError({
       statusCode: 403,
-      statusMessage: "Admin access required",
+      statusMessage: "Administrator-Berechtigung erforderlich",
     });
   }
 
@@ -35,15 +35,7 @@ export default defineEventHandler(async (event) => {
   if (!userId || isNaN(Number(userId))) {
     throw createError({
       statusCode: 400,
-      statusMessage: "Invalid user ID",
-    });
-  }
-
-  // Prevent users from modifying themselves to avoid lockout
-  if (Number(userId) === session.user.userId) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Cannot modify your own permissions to prevent lockout",
+      statusMessage: "Ungültige Benutzer-ID",
     });
   }
 
@@ -62,7 +54,7 @@ export default defineEventHandler(async (event) => {
     if (!existingUser) {
       throw createError({
         statusCode: 404,
-        statusMessage: "User not found",
+        statusMessage: "Benutzer nicht gefunden",
       });
     }
 
@@ -95,7 +87,7 @@ export default defineEventHandler(async (event) => {
           throw createError({
             statusCode: 400,
             statusMessage:
-              "Cannot remove admin rights - at least one admin must remain",
+              "Administrator-Rechte können nicht entfernt werden - mindestens ein Administrator muss verbleiben",
           });
         }
       }
@@ -111,15 +103,29 @@ export default defineEventHandler(async (event) => {
     if (!updatedUsers || updatedUsers.length === 0) {
       throw createError({
         statusCode: 500,
-        statusMessage: "Update failed",
+        statusMessage: "Aktualisierung fehlgeschlagen",
       });
     }
 
     const updatedUser = updatedUsers[0]!;
 
-    console.log(
-      `Admin API: Updated user ${updatedUser.mail} (ID: ${updatedUser.id}) by ${session.user.mail}`,
-    );
+    // If rights were updated, invalidate user sessions by setting a flag in KV
+    if (validatedData.rights !== undefined) {
+      try {
+        // Store a session invalidation flag for this user
+        const invalidationKey = `session:invalidate:${updatedUser.id}`;
+        const timestamp = Date.now();
+        await hubKV().set(invalidationKey, timestamp, {
+          ttl: 60 * 60 * 24 * 30,
+        }); // 30 days TTL
+      } catch (kvError) {
+        // Log error but don't fail the update
+        console.warn(
+          `❌ Admin API: Failed to mark sessions for invalidation for user ${updatedUser.mail}:`,
+          kvError,
+        );
+      }
+    }
 
     return {
       success: true,
@@ -132,15 +138,16 @@ export default defineEventHandler(async (event) => {
         jobtitle: updatedUser.jobtitle,
         rights: updatedUser.rights,
       },
-      message: "User updated successfully",
+      message: "Benutzer erfolgreich aktualisiert",
       changes: Object.keys(updateData),
+      rightsChanged: validatedData.rights !== undefined,
     };
   } catch (error) {
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {
       throw createError({
         statusCode: 400,
-        statusMessage: "Invalid user data",
+        statusMessage: "Ungültige Benutzerdaten",
         data: error.errors,
       });
     }
@@ -153,7 +160,7 @@ export default defineEventHandler(async (event) => {
     console.error("Admin API - Error updating user:", error);
     throw createError({
       statusCode: 500,
-      statusMessage: "Error updating user",
+      statusMessage: "Fehler beim Aktualisieren des Benutzers",
     });
   }
 });

@@ -4,12 +4,13 @@ import type { TableRow } from "@nuxt/ui";
 import { useArticleTable } from "@/composables/articles/useArticleTable";
 import type { Article } from "@/composables/articles/types";
 import { useShowSelectedOnly } from "@/composables/useScannedArticles";
+import { errorMap } from "@/composables/useFriendlyError";
 
 // Fetch article data with proper SSR/client hydration
 const {
   data: allArticles,
   pending: articlesPending,
-  error: _error,
+  error: articlesError,
   refresh: refreshArticles,
 } = await useFetch<Article[]>("/api/articles/getAll", {
   key: "ArticleData",
@@ -35,6 +36,56 @@ const {
 const { selectedArticles } = useScannedArticles();
 const toast = useToast();
 const { isMobile } = useDevice();
+
+// Error handling for articles fetch
+async function showErrorToast(
+  error: unknown,
+  defaultTitle: string,
+  defaultDescription: string,
+) {
+  const friendlyError = errorMap(error);
+
+  // Check if this error requires logout
+  if (friendlyError.requiresLogout) {
+    // Clear the user session
+    const { clear: logout } = useUserSession();
+    await logout();
+
+    // Show the error message
+    toast.add({
+      title: friendlyError.title || defaultTitle,
+      description: friendlyError.description || defaultDescription,
+      color: friendlyError.color || "warning",
+      icon: friendlyError.icon || "ph:warning-circle",
+    });
+
+    // Redirect to login after a short delay
+    setTimeout(() => {
+      navigateTo("/login?error=session_expired");
+    }, 2000);
+
+    return;
+  }
+
+  // Regular error handling
+  toast.add({
+    title: friendlyError.title || defaultTitle,
+    description: friendlyError.description || defaultDescription,
+    color: friendlyError.color || "error",
+    icon: friendlyError.icon || "ph:warning-circle",
+  });
+}
+
+// Watch for fetch errors
+watch(articlesError, (error) => {
+  if (error) {
+    showErrorToast(
+      error,
+      "Fehler beim Laden der Artikel",
+      "Die Artikel konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    );
+  }
+});
 
 // Switch between all articles and selected articles - use global state
 const showSelectedOnly = useShowSelectedOnly();
@@ -102,12 +153,11 @@ async function handleRefresh(silent = false) {
     }
   } catch (error) {
     console.error("Error refreshing articles:", error);
-    toast.add({
-      title: "Fehler beim Aktualisieren",
-      description: "Die Artikel konnten nicht aktualisiert werden",
-      color: "error",
-      icon: "i-heroicons-exclamation-triangle",
-    });
+    await showErrorToast(
+      error,
+      "Fehler beim Aktualisieren",
+      "Die Artikel konnten nicht aktualisiert werden",
+    );
   }
 }
 
@@ -272,7 +322,6 @@ function handleArticleUpdated(response: {
       </UDropdownMenu>
     </div>
   </div>
-
   <!-- Table with better hydration handling -->
   <div class="w-full">
     <!-- Loading state for SSR -->
@@ -280,8 +329,42 @@ function handleArticleUpdated(response: {
       <UButton loading label="Tabelle wird geladen..." :disabled="true" />
     </div>
 
+    <!-- Error state -->
+    <div
+      v-else-if="articlesError"
+      class="flex items-center justify-center p-12"
+    >
+      <UCard class="max-w-md shadow-lg">
+        <div class="flex flex-col items-center space-y-6 p-8">
+          <UIcon
+            name="i-heroicons-exclamation-triangle"
+            class="h-16 w-16 text-red-500"
+          />
+          <div class="space-y-3 text-center">
+            <h3 class="text-xl font-semibold text-red-600">
+              Fehler beim Laden
+            </h3>
+            <p class="text-base">
+              Die Artikel konnten nicht geladen werden. Bitte versuchen Sie es
+              erneut.
+            </p>
+            <UButton
+              color="primary"
+              variant="solid"
+              :loading="articlesPending"
+              @click="handleManualRefresh"
+            >
+              Erneut versuchen
+            </UButton>
+          </div>
+        </div>
+      </UCard>
+    </div>
     <!-- Mobile-friendly table container -->
-    <div v-else class="relative min-h-96 w-full overflow-x-auto pb-4">
+    <div
+      v-else-if="!articlesError"
+      class="relative min-h-96 w-full overflow-x-auto pb-4"
+    >
       <!-- Empty state overlay for viewport centering -->
       <div
         v-if="articles.length === 0"

@@ -134,13 +134,16 @@ export default defineEventHandler(async (event) => {
       },
     );
 
-    // Set a remember me cookie for auto-login
-    setCookie(event, "remember-login", "true", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-    });
+    // Clear any session invalidation flags since user has successfully re-authenticated
+    try {
+      const invalidationKey = `session:invalidate:${dbUser.id}`;
+      await hubKV().del(invalidationKey);
+      console.log(
+        `Cleared session invalidation flag for test user after successful authentication`,
+      );
+    } catch (kvError) {
+      console.warn(`Failed to clear session invalidation flag:`, kvError);
+    }
 
     console.log(`Test login: Session created for test user (ID: ${dbUser.id})`);
 
