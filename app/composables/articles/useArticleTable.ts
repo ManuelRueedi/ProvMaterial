@@ -149,7 +149,7 @@ export function useArticleTable() {
           "div",
           {
             class:
-              "absolute top-full left-0 z-50 mt-1 min-w-40 bg-white border border-gray-300 rounded-md shadow-lg",
+              "absolute top-full left-0 z-50 mt-1 min-w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg",
             "data-filter-dropdown": "",
           },
           [
@@ -157,7 +157,7 @@ export function useArticleTable() {
               "select",
               {
                 class:
-                  "w-full text-xs border-0 rounded-md px-2 py-1 bg-white focus:ring-2 focus:ring-blue-500",
+                  "w-full text-xs border-0 rounded-md px-2 py-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500",
                 value: currentFilter || "",
                 onChange: (e: Event) => {
                   const value = (e.target as HTMLSelectElement).value;
@@ -199,7 +199,7 @@ export function useArticleTable() {
           "div",
           {
             class:
-              "absolute top-full left-0 z-50 mt-1 min-w-40 bg-white border border-gray-300 rounded-md shadow-lg",
+              "absolute top-full left-0 z-50 mt-1 min-w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg",
             "data-filter-dropdown": "",
           },
           [
@@ -207,7 +207,7 @@ export function useArticleTable() {
               "select",
               {
                 class:
-                  "w-full text-xs border-0 rounded-md px-2 py-1 bg-white focus:ring-2 focus:ring-blue-500",
+                  "w-full text-xs border-0 rounded-md px-2 py-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500",
                 value: currentFilter || "",
                 onChange: (e: Event) => {
                   const value = (e.target as HTMLSelectElement).value;
