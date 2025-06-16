@@ -59,6 +59,28 @@
             />
           </div>
 
+          <!-- Off-screen indicator for highlighted location -->
+          <div
+            v-if="offScreenIndicator.show"
+            class="off-screen-indicator"
+            :style="{
+              top: offScreenIndicator.y + 'px',
+              left: offScreenIndicator.x + 'px',
+              transform: `translate(-50%, -50%) rotate(${offScreenIndicator.angle}deg)`,
+            }"
+            @click="centerOnHighlightedLocation"
+          >
+            <div class="indicator-arrow">
+              <UIcon
+                name="ic:baseline-keyboard-arrow-up"
+                class="h-7 w-7 text-white"
+              />
+            </div>
+            <div class="indicator-label">
+              {{ highlightedLocationName }}
+            </div>
+          </div>
+
           <MglMap
             ref="map"
             :map-style="mapStyle"
@@ -66,6 +88,7 @@
             :zoom="mapZoom"
             @map:load="onMapLoad"
             @map:zoom="updateClusters"
+            @map:move="updateClustersThrottled"
             @map:moveend="updateClusters"
           >
             <MglNavigationControl />
@@ -176,16 +199,16 @@
             >
               <Transition name="popup" appear>
                 <div v-if="selectedMapLocation" class="popup-content">
+                  <span
+                    v-if="selectedMapLocation.isStorageLocation"
+                    class="storage-badge storage-badge-top"
+                  >
+                    Lager
+                  </span>
                   <div class="popup-header">
                     <h3 class="popup-title">
                       {{ selectedMapLocation.name }}
                     </h3>
-                    <span
-                      v-if="selectedMapLocation.isStorageLocation"
-                      class="storage-badge"
-                    >
-                      Lager
-                    </span>
                   </div>
                   <div class="popup-detail">
                     📍
@@ -214,7 +237,7 @@
                     </button>
                     <button
                       v-if="showEditButton"
-                      class="popup-button popup-button-secondary"
+                      class="popup-button popup-button-primary"
                       @click="$emit('editLocation', selectedMapLocation)"
                     >
                       Bearbeiten
@@ -317,6 +340,14 @@ const toast = useToast();
 const animatingCluster = ref<string | null>(null);
 const animatingMarker = ref<string | null>(null);
 
+// Off-screen indicator state
+const offScreenIndicator = ref({
+  show: false,
+  x: 0,
+  y: 0,
+  angle: 0,
+});
+
 // Clustering state
 const map = ref(null);
 const supercluster = ref<Supercluster | null>(null);
@@ -390,6 +421,15 @@ const mapZoom = computed(() => {
   return 12;
 });
 
+// Get highlighted location name
+const highlightedLocationName = computed(() => {
+  if (!props.highlightedLocationId) return "";
+  const location = locationsWithCoordinates.value.find(
+    (loc) => loc.id === props.highlightedLocationId,
+  );
+  return location?.name || "";
+});
+
 // Initialize clustering
 function initializeClustering() {
   const SuperclusterClass = Supercluster;
@@ -441,6 +481,20 @@ function updateClusters() {
       ? `cluster-${(cluster as any).properties.cluster_id}`
       : `location-${(cluster as any).properties.location?.id || index}`,
   }));
+
+  // Update off-screen indicator when map view changes
+  updateOffScreenIndicator();
+}
+
+// Throttled version for smooth updates during drag
+let updateThrottleTimeout: NodeJS.Timeout | null = null;
+function updateClustersThrottled() {
+  if (updateThrottleTimeout) {
+    clearTimeout(updateThrottleTimeout);
+  }
+  updateThrottleTimeout = setTimeout(() => {
+    updateClusters();
+  }, 16); // ~60fps for smooth updates
 }
 
 // Handle map load event
@@ -565,6 +619,115 @@ function toggleFullscreen() {
   isFullscreen.value = !isFullscreen.value;
 }
 
+// Center map on highlighted location
+function centerOnHighlightedLocation() {
+  if (!props.highlightedLocationId || !map.value) return;
+
+  const highlightedLocation = locationsWithCoordinates.value.find(
+    (location) => location.id === props.highlightedLocationId,
+  );
+
+  if (highlightedLocation) {
+    const mapInstance = (map.value as { map?: unknown })?.map as any;
+    if (mapInstance) {
+      mapInstance.easeTo({
+        center: [highlightedLocation.longitude, highlightedLocation.latitude],
+        zoom: Math.max(mapInstance.getZoom(), 15),
+        duration: 1000,
+      });
+    }
+  }
+}
+
+// Update off-screen indicator
+function updateOffScreenIndicator() {
+  if (!props.highlightedLocationId || !map.value) {
+    offScreenIndicator.value.show = false;
+    return;
+  }
+
+  const highlightedLocation = locationsWithCoordinates.value.find(
+    (location) => location.id === props.highlightedLocationId,
+  );
+
+  if (!highlightedLocation) {
+    offScreenIndicator.value.show = false;
+    return;
+  }
+
+  const mapInstance = (map.value as { map?: unknown })?.map as any;
+  if (!mapInstance) return;
+
+  const bounds = mapInstance.getBounds();
+  const isVisible = bounds.contains([
+    highlightedLocation.longitude,
+    highlightedLocation.latitude,
+  ]);
+
+  if (isVisible) {
+    offScreenIndicator.value.show = false;
+    return;
+  }
+
+  // Calculate indicator position and angle
+  const mapContainer = mapInstance.getContainer();
+  const mapCenter = mapInstance.getCenter();
+  const mapCenterPixel = mapInstance.project(mapCenter);
+  const locationPixel = mapInstance.project([
+    highlightedLocation.longitude,
+    highlightedLocation.latitude,
+  ]);
+
+  // Calculate direction vector from map center to location
+  const dx = locationPixel.x - mapCenterPixel.x;
+  const dy = locationPixel.y - mapCenterPixel.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  if (distance === 0) {
+    offScreenIndicator.value.show = false;
+    return;
+  }
+
+  // Normalize direction
+  const ndx = dx / distance;
+  const ndy = dy / distance;
+
+  // Calculate position on map edge (with padding)
+  const padding = 50;
+  const mapWidth = mapContainer.offsetWidth;
+  const mapHeight = mapContainer.offsetHeight;
+  const centerX = mapWidth / 2;
+  const centerY = mapHeight / 2;
+
+  // Find intersection with map bounds
+  const maxX = mapWidth - padding;
+  const maxY = mapHeight - padding;
+  const minX = padding;
+  const minY = padding;
+
+  // Calculate intersection with bounds
+  const tRight = (maxX - centerX) / ndx;
+  const tLeft = (minX - centerX) / ndx;
+  const tBottom = (maxY - centerY) / ndy;
+  const tTop = (minY - centerY) / ndy;
+
+  const validT = [tRight, tLeft, tBottom, tTop].filter((t) => t > 0);
+  const t = Math.min(...validT);
+
+  const indicatorX = centerX + ndx * t;
+  const indicatorY = centerY + ndy * t;
+
+  // Calculate rotation angle (pointing towards the location)
+  const angle = (Math.atan2(dx, -dy) * 180) / Math.PI;
+
+  offScreenIndicator.value = {
+    show: true,
+    x: indicatorX,
+    y: indicatorY,
+    angle,
+  };
+}
+
 // Handle escape key for fullscreen
 onMounted(() => {
   const handleEscape = (event: KeyboardEvent) => {
@@ -619,6 +782,8 @@ watch(
         }
       }
     }
+    // Update off-screen indicator whenever highlighted location changes
+    updateOffScreenIndicator();
   },
 );
 
@@ -726,61 +891,32 @@ function clusterContainsHighlightedLocation(
 
 /* Highlight styles */
 .location-marker.highlighted {
-  animation: highlightPulse 2s infinite;
+  animation: greenGlow 2s infinite;
   z-index: 1000;
-  transform-origin: 50% 50%;
 }
 
 .marker-pin.highlighted {
-  border: 4px solid rgb(var(--color-primary-500));
   box-shadow:
-    0 0 40px rgba(var(--color-primary-500), 0.9),
-    0 0 80px rgba(var(--color-primary-500), 0.7),
-    0 0 120px rgba(var(--color-primary-500), 0.5),
-    0 0 160px rgba(var(--color-primary-500), 0.3),
-    0 20px 40px rgba(0, 0, 0, 0.4),
-    0 15px 30px rgba(0, 0, 0, 0.3),
-    0 10px 20px rgba(0, 0, 0, 0.2);
-  transform: rotate(-45deg) scale(1.2);
-  transform-origin: 100% 100%;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
-}
-
-.marker-pin.highlighted:hover {
-  box-shadow:
-    0 0 50px rgba(var(--color-primary-500), 1),
-    0 0 100px rgba(var(--color-primary-500), 0.8),
-    0 0 150px rgba(var(--color-primary-500), 0.6),
-    0 0 200px rgba(var(--color-primary-500), 0.4),
-    0 25px 50px rgba(0, 0, 0, 0.4),
-    0 20px 40px rgba(0, 0, 0, 0.3),
-    0 15px 30px rgba(0, 0, 0, 0.2);
-  transform: rotate(-45deg) scale(1.25) translateY(-3px);
-  transform-origin: 100% 100%;
-  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.4));
+    0 0 20px rgba(16, 185, 129, 0.8),
+    0 0 40px rgba(16, 185, 129, 0.6),
+    0 3px 6px rgba(0, 0, 0, 0.16),
+    0 3px 6px rgba(0, 0, 0, 0.23);
 }
 
 .highlighted-shadow {
-  background: rgba(var(--color-primary-500), 0.7) !important;
-  width: 80px !important;
-  height: 80px !important;
-  filter: blur(20px) !important;
-  box-shadow:
-    0 0 40px rgba(var(--color-primary-500), 0.6),
-    0 0 80px rgba(var(--color-primary-500), 0.4);
+  background: rgba(16, 185, 129, 0.4) !important;
+  width: 40px !important;
+  height: 40px !important;
+  filter: blur(8px) !important;
 }
 
-@keyframes highlightPulse {
+@keyframes greenGlow {
   0%,
   100% {
-    transform: scale(1);
-    filter: drop-shadow(0 0 20px rgba(var(--color-primary-500), 0.8))
-      drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+    filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.6));
   }
   50% {
-    transform: scale(1.2);
-    filter: drop-shadow(0 0 40px rgba(var(--color-primary-300), 1))
-      drop-shadow(0 12px 24px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(0 0 25px rgba(16, 185, 129, 1));
   }
 }
 
@@ -876,49 +1012,22 @@ function clusterContainsHighlightedLocation(
 
 /* Cluster highlight styles */
 .cluster-marker.cluster-highlighted {
-  animation: clusterHighlightPulse 2s infinite;
+  animation: greenGlow 2s infinite;
   z-index: 999;
 }
 
 .cluster-circle.highlighted {
-  border: 5px solid rgb(var(--color-primary-500)) !important;
   box-shadow:
-    0 0 50px rgba(var(--color-primary-500), 0.9),
-    0 0 100px rgba(var(--color-primary-500), 0.7),
-    0 0 150px rgba(var(--color-primary-500), 0.5),
-    0 0 200px rgba(var(--color-primary-500), 0.3),
-    0 15px 30px rgba(0, 0, 0, 0.4),
-    0 10px 20px rgba(0, 0, 0, 0.3),
-    0 5px 10px rgba(0, 0, 0, 0.2) !important;
-  transform: scale(1.15);
-  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+    0 0 25px rgba(16, 185, 129, 0.8),
+    0 0 50px rgba(16, 185, 129, 0.6),
+    0 4px 8px rgba(0, 0, 0, 0.3) !important;
 }
 
 .cluster-circle.highlighted:hover {
   box-shadow:
-    0 0 60px rgba(var(--color-primary-500), 1),
-    0 0 120px rgba(var(--color-primary-500), 0.8),
-    0 0 180px rgba(var(--color-primary-500), 0.6),
-    0 0 240px rgba(var(--color-primary-500), 0.4),
-    0 20px 40px rgba(0, 0, 0, 0.4),
-    0 15px 30px rgba(0, 0, 0, 0.3),
-    0 10px 20px rgba(0, 0, 0, 0.2) !important;
-  transform: scale(1.2);
-  filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.4));
-}
-
-@keyframes clusterHighlightPulse {
-  0%,
-  100% {
-    transform: scale(1);
-    filter: drop-shadow(0 0 30px rgba(var(--color-primary-500), 0.8))
-      drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
-  }
-  50% {
-    transform: scale(1.25);
-    filter: drop-shadow(0 0 60px rgba(var(--color-primary-300), 1))
-      drop-shadow(0 15px 30px rgba(0, 0, 0, 0.3));
-  }
+    0 0 30px rgba(16, 185, 129, 1),
+    0 0 60px rgba(16, 185, 129, 0.7),
+    0 8px 16px rgba(0, 0, 0, 0.4) !important;
 }
 
 /* Popup transition animations */
@@ -995,6 +1104,12 @@ function clusterContainsHighlightedLocation(
   animation-fill-mode: both;
 }
 
+.storage-badge-top {
+  display: inline-block;
+  margin-bottom: 8px;
+  animation-delay: 0.1s;
+}
+
 .popup-detail {
   margin-bottom: 8px;
   font-size: 13px;
@@ -1061,11 +1176,6 @@ function clusterContainsHighlightedLocation(
   box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
 }
 
-.popup-button-secondary {
-  background: #6b7280;
-  color: white;
-}
-
 .popup-button-secondary:hover {
   background: #374151;
   transform: translateY(-1px);
@@ -1123,6 +1233,65 @@ function clusterContainsHighlightedLocation(
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Off-screen indicator styles */
+.off-screen-indicator {
+  position: absolute;
+  z-index: 1001;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: all;
+  animation: greenGlow 2s infinite;
+}
+
+.indicator-arrow {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: 3px solid white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 0 20px rgba(16, 185, 129, 0.8),
+    0 0 40px rgba(16, 185, 129, 0.6),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.indicator-arrow:hover {
+  transform: scale(1.1);
+  box-shadow:
+    0 0 25px rgba(16, 185, 129, 1),
+    0 0 50px rgba(16, 185, 129, 0.7),
+    0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.indicator-arrow .heroicon {
+  color: white;
+  font-weight: bold;
+}
+
+.indicator-label {
+  background: white;
+  color: #1f2937;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid #e5e7eb;
+  box-shadow:
+    0 0 10px rgba(16, 185, 129, 0.6),
+    0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .current-location-circle {

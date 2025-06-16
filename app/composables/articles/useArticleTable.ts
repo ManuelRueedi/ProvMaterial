@@ -40,6 +40,39 @@ export function useArticleTable() {
   const sorting = ref([]);
   const expanded = ref({});
 
+  // Column filters
+  const columnFilters = ref([]);
+
+  // Dropdown visibility state for filters
+  const typeFilterOpen = ref(false);
+  const tagsFilterOpen = ref(false);
+
+  // Get unique types for filter options
+  const getUniqueTypes = (data: Article[]) => {
+    const types = new Set<string>();
+    data.forEach((article) => {
+      if (article.type) {
+        types.add(article.type);
+      }
+    });
+    return Array.from(types).sort();
+  };
+
+  // Get unique tags for filter options
+  const getUniqueTags = (data: Article[]) => {
+    const tags = new Set<string>();
+    data.forEach((article) => {
+      if (article.tags && article.tags.length > 0) {
+        article.tags.forEach((tag) => {
+          if (tag) {
+            tags.add(tag);
+          }
+        });
+      }
+    });
+    return Array.from(tags).sort();
+  };
+
   // Function to expand all grouped rows
   const expandAllRows = (tableApi: TableApi) => {
     if (!tableApi) return;
@@ -99,6 +132,104 @@ export function useArticleTable() {
       },
       tag,
     );
+
+  // Create filter dropdown for Type column
+  const createTypeFilter = (
+    column: {
+      getFilterValue: () => unknown;
+      setFilterValue: (value: unknown) => void;
+    },
+    uniqueTypes: string[],
+    isOpen: boolean,
+  ) => {
+    const currentFilter = column.getFilterValue() as string | undefined;
+
+    return isOpen
+      ? h(
+          "div",
+          {
+            class:
+              "absolute top-full left-0 z-50 mt-1 min-w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg",
+            "data-filter-dropdown": "",
+          },
+          [
+            h(
+              "select",
+              {
+                class:
+                  "w-full text-xs border-0 rounded-md px-2 py-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500",
+                value: currentFilter || "",
+                onChange: (e: Event) => {
+                  const value = (e.target as HTMLSelectElement).value;
+                  column.setFilterValue(value === "" ? undefined : value);
+                  typeFilterOpen.value = false;
+                },
+                onBlur: () => {
+                  // Close dropdown when clicking outside
+                  setTimeout(() => {
+                    typeFilterOpen.value = false;
+                  }, 100);
+                },
+              },
+              [
+                h("option", { value: "" }, "Alle Typen"),
+                ...uniqueTypes.map((type) =>
+                  h("option", { value: type }, type),
+                ),
+              ],
+            ),
+          ],
+        )
+      : null;
+  };
+
+  // Create filter dropdown for Tags column
+  const createTagsFilter = (
+    column: {
+      getFilterValue: () => unknown;
+      setFilterValue: (value: unknown) => void;
+    },
+    uniqueTags: string[],
+    isOpen: boolean,
+  ) => {
+    const currentFilter = column.getFilterValue() as string | undefined;
+
+    return isOpen
+      ? h(
+          "div",
+          {
+            class:
+              "absolute top-full left-0 z-50 mt-1 min-w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg",
+            "data-filter-dropdown": "",
+          },
+          [
+            h(
+              "select",
+              {
+                class:
+                  "w-full text-xs border-0 rounded-md px-2 py-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500",
+                value: currentFilter || "",
+                onChange: (e: Event) => {
+                  const value = (e.target as HTMLSelectElement).value;
+                  column.setFilterValue(value === "" ? undefined : value);
+                  tagsFilterOpen.value = false;
+                },
+                onBlur: () => {
+                  // Close dropdown when clicking outside
+                  setTimeout(() => {
+                    tagsFilterOpen.value = false;
+                  }, 100);
+                },
+              },
+              [
+                h("option", { value: "" }, "Alle Tags"),
+                ...uniqueTags.map((tag) => h("option", { value: tag }, tag)),
+              ],
+            ),
+          ],
+        )
+      : null;
+  };
 
   // Helper function to create sortable column headers using plain HTML button
   const createSortableHeader = (column: SortableColumn, label: string) => {
@@ -187,9 +318,56 @@ export function useArticleTable() {
     },
     {
       accessorKey: "type",
-      header: "Typ",
+      header: ({ column, table }) => {
+        const data = table
+          .getPreFilteredRowModel()
+          .rows.map((row) => row.original);
+        const uniqueTypes = getUniqueTypes(data);
+        const currentFilter = column.getFilterValue() as string | undefined;
+        const hasActiveFilter = currentFilter && currentFilter !== "";
+
+        return h("div", { class: "relative" }, [
+          // Clickable header with icon
+          h(
+            "button",
+            {
+              class: `flex items-center gap-1 font-medium text-left ${
+                hasActiveFilter ? "text-blue-600" : ""
+              }`,
+              "data-filter-dropdown": "",
+              onClick: () => {
+                typeFilterOpen.value = !typeFilterOpen.value;
+              },
+            },
+            [
+              "Typ",
+              h(
+                "svg",
+                {
+                  class: `w-3 h-3 ${hasActiveFilter ? "text-blue-600" : "text-gray-400"}`,
+                  fill: "none",
+                  stroke: "currentColor",
+                  viewBox: "0 0 24 24",
+                  xmlns: "http://www.w3.org/2000/svg",
+                },
+                [
+                  h("path", {
+                    "stroke-linecap": "round",
+                    "stroke-linejoin": "round",
+                    "stroke-width": "2",
+                    d: "M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z",
+                  }),
+                ],
+              ),
+            ],
+          ),
+          // Filter dropdown positioned absolutely
+          createTypeFilter(column, uniqueTypes, typeFilterOpen.value),
+        ]);
+      },
       id: "Typ",
       enableGlobalFilter: false,
+      filterFn: "includesString",
     },
     {
       accessorKey: "lengthInMeter",
@@ -254,7 +432,53 @@ export function useArticleTable() {
     },
     {
       accessorKey: "tags",
-      header: "Tags",
+      header: ({ column, table }) => {
+        const data = table
+          .getPreFilteredRowModel()
+          .rows.map((row) => row.original);
+        const uniqueTags = getUniqueTags(data);
+        const currentFilter = column.getFilterValue() as string | undefined;
+        const hasActiveFilter = currentFilter && currentFilter !== "";
+
+        return h("div", { class: "relative" }, [
+          // Clickable header with icon
+          h(
+            "button",
+            {
+              class: `flex items-center gap-1 font-medium text-left ${
+                hasActiveFilter ? "text-blue-600" : ""
+              }`,
+              "data-filter-dropdown": "",
+              onClick: () => {
+                tagsFilterOpen.value = !tagsFilterOpen.value;
+              },
+            },
+            [
+              "Tags",
+              h(
+                "svg",
+                {
+                  class: `w-3 h-3 ${hasActiveFilter ? "text-blue-600" : "text-gray-400"}`,
+                  fill: "none",
+                  stroke: "currentColor",
+                  viewBox: "0 0 24 24",
+                  xmlns: "http://www.w3.org/2000/svg",
+                },
+                [
+                  h("path", {
+                    "stroke-linecap": "round",
+                    "stroke-linejoin": "round",
+                    "stroke-width": "2",
+                    d: "M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z",
+                  }),
+                ],
+              ),
+            ],
+          ),
+          // Filter dropdown positioned absolutely
+          createTagsFilter(column, uniqueTags, tagsFilterOpen.value),
+        ]);
+      },
       cell: ({ row }) => {
         if (row.getIsGrouped()) return "";
         const tags = (row.original.tags || []) as Tag[];
@@ -263,6 +487,12 @@ export function useArticleTable() {
         const badges = tags.map(createTagBadge);
         return h("div", { class: "flex flex-wrap gap-1" }, badges);
       },
+      filterFn: (row, columnId, filterValue) => {
+        if (!filterValue) return true;
+        const tags = (row.original.tags || []) as Tag[];
+        return tags.includes(filterValue as Tag);
+      },
+      id: "Tags",
     },
     {
       accessorFn: (row) => row.storageLocation?.name || "Unbekannt",
@@ -311,9 +541,14 @@ export function useArticleTable() {
     columnPinning,
     globalFilter,
     sorting,
+    columnFilters,
+    typeFilterOpen,
+    tagsFilterOpen,
     groupingOptions,
     handleRowClick,
     expanded,
     expandAllRows,
+    getUniqueTypes,
+    getUniqueTags,
   };
 }

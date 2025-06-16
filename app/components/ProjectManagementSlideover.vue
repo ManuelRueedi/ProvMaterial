@@ -155,6 +155,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "update:open": [value: boolean];
+  "project-created": [project: Project];
 }>();
 
 const { isDesktop } = useDevice();
@@ -216,14 +217,10 @@ const filteredProjects = computed(() => {
 
 // Handle project creation
 function handleProjectCreated(newProject: Project) {
-  toast.add({
-    title: "Projekt erstellt",
-    description: `Projekt "${newProject.name}" wurde erfolgreich erstellt.`,
-    color: "success",
-    icon: "i-heroicons-check-circle",
-  });
   // Refresh the projects list
   refresh();
+  // Emit event to parent component for global refresh
+  emit("project-created", newProject);
 }
 
 // Handle project editing
