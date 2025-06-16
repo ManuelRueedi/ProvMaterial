@@ -43,6 +43,27 @@
             :rows="3"
             class="w-full"
           />
+          <!-- Get Position Button -->
+          <UButton
+            v-if="formData.address.trim()"
+            variant="outline"
+            color="primary"
+            size="sm"
+            class="mt-2"
+            :loading="isGeocodingAddress"
+            @click="getCoordinatesFromAddress"
+          >
+            <template #leading>
+              <Icon name="i-heroicons-map-pin" class="h-4 w-4" />
+            </template>
+            Position ermitteln
+          </UButton>
+        </div>
+
+        <!-- Map Info -->
+        <div class="flex items-center gap-2 text-sm text-gray-600">
+          <Icon name="i-heroicons-information-circle" class="h-4 w-4" />
+          <span>Ziehen Sie den Marker, um den Standort zu ändern</span>
         </div>
       </div>
 
@@ -146,6 +167,73 @@ const coordinates = ref<{ lng: number; lat: number }>({
 // Fullscreen and geolocation state
 const isFullscreen = ref(false);
 const isLoadingLocation = ref(false);
+const isGeocodingAddress = ref(false);
+
+// Get coordinates from address
+async function getCoordinatesFromAddress() {
+  if (!formData.address.trim()) {
+    toast.add({
+      title: "Fehler",
+      description: "Bitte geben Sie eine Adresse ein",
+      color: "error",
+    });
+    return;
+  }
+
+  isGeocodingAddress.value = true;
+
+  try {
+    const response = await $fetch<{
+      success: boolean;
+      latitude?: number;
+      longitude?: number;
+      address?: string;
+      error?: string;
+    }>("/api/geocoding/forward", {
+      method: "POST",
+      body: { address: formData.address },
+    });
+
+    if (response.success && response.latitude && response.longitude) {
+      // Update coordinates
+      formData.latitude = response.latitude;
+      formData.longitude = response.longitude;
+
+      // Update map
+      coordinates.value = { lng: response.longitude, lat: response.latitude };
+      center.value = [response.longitude, response.latitude];
+      zoom.value = 16;
+
+      // Update address with the formatted result if available
+      if (response.address) {
+        formData.address = response.address;
+      }
+
+      toast.add({
+        title: "Position gefunden",
+        description: "Koordinaten wurden erfolgreich ermittelt",
+        color: "success",
+      });
+    } else {
+      toast.add({
+        title: "Keine Position gefunden",
+        description:
+          response.error ||
+          "Für diese Adresse konnten keine Koordinaten gefunden werden",
+        color: "warning",
+      });
+    }
+  } catch (error) {
+    console.error("Geocoding error:", error);
+    toast.add({
+      title: "Fehler",
+      description: "Position konnte nicht ermittelt werden",
+      color: "error",
+    });
+  } finally {
+    isGeocodingAddress.value = false;
+  }
+}
 
 // Get current location
 async function getCurrentLocation(silent = false) {

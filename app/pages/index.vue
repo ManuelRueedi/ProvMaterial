@@ -2,7 +2,7 @@
 import { upperFirst } from "scule";
 import type { TableRow } from "@nuxt/ui";
 import { useArticleTable } from "@/composables/articles/useArticleTable";
-import type { Article } from "@/composables/articles/types";
+import type { Article, Project, Location } from "@/composables/articles/types";
 import { useShowSelectedOnly } from "@/composables/useScannedArticles";
 import { errorMap } from "@/composables/useFriendlyError";
 
@@ -101,6 +101,9 @@ const {
   columnPinning,
   globalFilter,
   sorting,
+  columnFilters,
+  typeFilterOpen,
+  tagsFilterOpen,
   groupingOptions,
   handleRowClick,
   expanded,
@@ -126,6 +129,41 @@ watch(globalFilter, (newFilter) => {
       }
     });
   }
+});
+
+// Watch for column filter changes and expand all grouped rows when filter is applied
+watch(
+  columnFilters,
+  (newFilters) => {
+    if (newFilters && newFilters.length > 0 && table.value?.tableApi) {
+      // Use nextTick to ensure the table has processed the filter
+      nextTick(() => {
+        if (table.value?.tableApi) {
+          expandAllRows(table.value.tableApi);
+        }
+      });
+    }
+  },
+  { deep: true },
+);
+
+// Close dropdown when clicking outside
+onMounted(() => {
+  const handleClickOutside = (event: Event) => {
+    const target = event.target as HTMLElement;
+    if (typeFilterOpen.value && !target.closest("[data-filter-dropdown]")) {
+      typeFilterOpen.value = false;
+    }
+    if (tagsFilterOpen.value && !target.closest("[data-filter-dropdown]")) {
+      tagsFilterOpen.value = false;
+    }
+  };
+
+  document.addEventListener("click", handleClickOutside);
+
+  onUnmounted(() => {
+    document.removeEventListener("click", handleClickOutside);
+  });
 });
 
 // Handle article details
@@ -230,22 +268,133 @@ function handleArticleUpdated(response: {
     icon: "i-heroicons-check-circle",
   });
 }
+
+// Handle project creation
+function handleProjectCreated(newProject: Project) {
+  toast.add({
+    title: "Projekt erstellt",
+    description: `Projekt "${newProject.name}" wurde erfolgreich erstellt.`,
+    color: "success",
+    icon: "i-heroicons-check-circle",
+  });
+  // Refresh articles to show updated project references (silent refresh since we show our own toast)
+  handleRefresh(true);
+}
+
+// Handle location creation
+function handleLocationCreated(newLocation: Location) {
+  toast.add({
+    title: "Standort erstellt",
+    description: `Standort "${newLocation.name}" wurde erfolgreich erstellt.`,
+    color: "success",
+    icon: "i-heroicons-check-circle",
+  });
+  // Refresh articles to show updated location references (silent refresh since we show our own toast)
+  handleRefresh(true);
+}
 </script>
 
 <template>
   <h1 class="my-5 text-center text-3xl font-bold">Übersicht</h1>
 
   <!-- Controls section with consistent spacing -->
-  <div class="mb-6 flex w-full flex-row justify-center gap-4 sm:justify-end">
+  <div class="mb-6 flex w-full flex-col gap-4 sm:flex-row sm:justify-end">
+    <!-- Active filter indicators -->
+    <div
+      v-if="
+        showSelectedOnly ||
+        (globalFilter && globalFilter.trim()) ||
+        (columnFilters && columnFilters.length > 0)
+      "
+      class="flex flex-wrap justify-center gap-2 sm:justify-start"
+    >
+      <!-- Global search indicator -->
+      <UBadge
+        v-if="globalFilter && globalFilter.trim()"
+        color="primary"
+        variant="soft"
+        size="md"
+        class="flex items-center gap-1"
+      >
+        <UIcon name="i-heroicons-magnifying-glass" class="h-3 w-3" />
+        Suche: "{{
+          globalFilter.length > 15
+            ? globalFilter.slice(0, 15) + "..."
+            : globalFilter
+        }}"
+        <UButton
+          color="primary"
+          variant="ghost"
+          icon="i-heroicons-x-mark"
+          size="xs"
+          @click="globalFilter = ''"
+        />
+      </UBadge>
+
+      <!-- Column filter indicators -->
+      <UBadge
+        v-if="columnFilters && columnFilters.length > 0"
+        color="info"
+        variant="soft"
+        size="md"
+        class="flex items-center gap-1"
+      >
+        <UIcon name="i-heroicons-funnel" class="h-3 w-3" />
+        {{ columnFilters.length }} Spaltenfilter aktiv
+        <UButton
+          color="info"
+          variant="ghost"
+          icon="i-heroicons-x-mark"
+          size="xs"
+          @click="columnFilters = []"
+        />
+      </UBadge>
+
+      <!-- Show only scanned indicator -->
+      <UBadge
+        v-if="showSelectedOnly"
+        color="success"
+        variant="soft"
+        size="md"
+        class="flex items-center gap-1"
+      >
+        <UIcon name="ic:baseline-qr-code" class="h-3 w-3" />
+        Nur gescannte ({{ selectedArticles.length }})
+        <UButton
+          color="success"
+          variant="ghost"
+          icon="i-heroicons-x-mark"
+          size="xs"
+          @click="showSelectedOnly = false"
+        />
+      </UBadge>
+    </div>
+
     <!-- Filter and actions -->
-    <div class="flex flex-row gap-4">
+    <div class="flex flex-row justify-center gap-4 sm:justify-end">
       <!-- Filter input -->
       <UInput
         v-model="globalFilter"
         class="sm:size-md w-full sm:w-64"
         placeholder="Filter..."
         size="lg"
-      />
+        :color="globalFilter && globalFilter.trim() ? 'primary' : undefined"
+        :icon="
+          globalFilter && globalFilter.trim()
+            ? 'i-heroicons-magnifying-glass-solid'
+            : 'i-heroicons-magnifying-glass'
+        "
+      >
+        <template v-if="globalFilter && globalFilter.trim()" #trailing>
+          <UButton
+            color="neutral"
+            variant="ghost"
+            icon="i-heroicons-x-mark"
+            size="xs"
+            @click="globalFilter = ''"
+          />
+        </template>
+      </UInput>
 
       <!-- Actions dropdown with column visibility -->
       <UDropdownMenu
@@ -388,7 +537,6 @@ function handleArticleUpdated(response: {
           </UCard>
         </div>
       </div>
-
       <ClientOnly>
         <UTable
           ref="table"
@@ -397,6 +545,7 @@ function handleArticleUpdated(response: {
           v-model:column-pinning="columnPinning"
           v-model:expanded="expanded"
           v-model:sorting="sorting"
+          v-model:column-filters="columnFilters"
           sticky
           :data="articles"
           :columns="columns"
@@ -464,7 +613,13 @@ function handleArticleUpdated(response: {
       :article-id="selectedArticle?.id || ''"
       @article-updated="handleArticleUpdated"
     />
-    <ProjectManagementSlideover v-model:open="showProjectManagement" />
-    <LocationManagementSlideover v-model:open="showLocationManagement" />
+    <ProjectManagementSlideover
+      v-model:open="showProjectManagement"
+      @project-created="handleProjectCreated"
+    />
+    <LocationManagementSlideover
+      v-model:open="showLocationManagement"
+      @location-created="handleLocationCreated"
+    />
   </ClientOnly>
 </template>

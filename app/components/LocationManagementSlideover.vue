@@ -213,6 +213,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "update:open": [value: boolean];
+  "location-created": [location: Location];
 }>();
 
 const { isDesktop } = useDevice();
@@ -287,14 +288,10 @@ const filteredLocations = computed(() => {
 
 // Handle location creation
 function handleLocationCreated(newLocation: Location) {
-  toast.add({
-    title: "Standort erstellt",
-    description: `Standort "${newLocation.name}" wurde erfolgreich erstellt.`,
-    color: "success",
-    icon: "i-heroicons-check-circle",
-  });
   // Refresh the locations list
   refresh();
+  // Emit event to parent component for global refresh
+  emit("location-created", newLocation);
 }
 
 // Watch for component open state to refresh data

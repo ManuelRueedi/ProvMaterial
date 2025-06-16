@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
   if (!lat || !lng) {
     throw createError({
       statusCode: 400,
-      statusMessage: "Latitude and longitude are required",
+      statusMessage: "Breitengrad und Längengrad sind erforderlich",
     });
   }
 
@@ -35,14 +35,14 @@ export default defineEventHandler(async (event) => {
       return {
         address: null,
         success: false,
-        error: "No address found for these coordinates",
+        error: "Keine Adresse für diese Koordinaten gefunden",
       };
     }
   } catch (error) {
     console.error("Error fetching address:", error);
     throw createError({
       statusCode: 500,
-      statusMessage: "Failed to fetch address from coordinates",
+      statusMessage: "Fehler beim Abrufen der Adresse von den Koordinaten",
     });
   }
 });
