@@ -23,7 +23,6 @@ function getIconFolder() {
 
 export default defineNuxtConfig({
   app: {
-    keepalive: true,
     head: {
       link: [
         {

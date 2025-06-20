@@ -4,7 +4,7 @@
   <!-- Scanned Articles Integration -->
   <UCard
     v-if="transformedScannedArticles.length > 0"
-    class="border shadow-lg"
+    class="mb-3 border shadow-lg"
     variant="outline"
   >
     <template #header>
@@ -232,10 +232,19 @@
                           Nr.
                         </th>
                         <th class="px-4 py-3 text-left text-sm font-medium">
-                          Typ
-                        </th>
-                        <th class="px-4 py-3 text-left text-sm font-medium">
                           Länge
+                        </th>
+                        <th
+                          v-if="isDesktop"
+                          class="px-4 py-3 text-left text-sm font-medium"
+                        >
+                          Nennstrom
+                        </th>
+                        <th
+                          v-if="isDesktop && hasOutputsData(typeGroup.articles)"
+                          class="px-4 py-3 text-left text-sm font-medium"
+                        >
+                          Abgänge
                         </th>
                       </tr>
                     </thead>
@@ -262,10 +271,24 @@
                           {{ article.id }}
                         </td>
                         <td class="px-4 py-3 text-sm">
-                          {{ article.type }}
-                        </td>
-                        <td class="px-4 py-3 text-sm">
                           {{ article.lengthInMeter }}m
+                        </td>
+                        <td v-if="isDesktop" class="px-4 py-3 text-sm">
+                          {{ article.ampacity }}
+                        </td>
+                        <td
+                          v-if="isDesktop && hasOutputsData(typeGroup.articles)"
+                          class="px-4 py-3 text-sm"
+                        >
+                          <div class="flex flex-wrap gap-1">
+                            <UBadge
+                              v-for="(value, key) in article.outputs"
+                              :key="key"
+                              :label="`${value}x ${key}`"
+                              size="md"
+                              color="neutral"
+                            />
+                          </div>
                         </td>
                       </tr>
                     </tbody>
@@ -335,6 +358,8 @@ import type { Article, Project, Type } from "@/composables/articles/types";
 import type { TabsItem } from "@nuxt/ui";
 import { useBringBack } from "@/composables/articles/useBringBack";
 import { useScannedArticles } from "@/composables/useScannedArticles";
+
+const { isDesktop } = useDevice();
 
 interface GroupedByLocation {
   locationName: string;
@@ -612,6 +637,12 @@ const getTypeIcon = (type: Type): string => {
     Adapterkabel: "ic:baseline-cable",
   };
   return icons[type] || "ic:baseline-check-box-outline-blank";
+};
+
+const hasOutputsData = (articles: Article[]) => {
+  return articles.some(
+    (article) => article.outputs && Object.keys(article.outputs).length > 0,
+  );
 };
 
 // Scanned Articles Methods
