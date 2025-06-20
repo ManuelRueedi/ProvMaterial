@@ -203,7 +203,7 @@
 
                 <!-- Articles Table -->
                 <div class="overflow-x-auto">
-                  <table class="w-full">
+                  <table class="w-full table-fixed">
                     <thead>
                       <tr>
                         <th class="w-12 px-4 py-3 text-left">
@@ -228,15 +228,19 @@
                             "
                           />
                         </th>
-                        <th class="px-4 py-3 text-left text-sm font-medium">
+                        <th
+                          class="w-28 px-4 py-3 text-left text-sm font-medium"
+                        >
                           Nr.
                         </th>
-                        <th class="px-4 py-3 text-left text-sm font-medium">
+                        <th
+                          class="w-20 px-4 py-3 text-left text-sm font-medium"
+                        >
                           Länge
                         </th>
                         <th
                           v-if="isDesktop"
-                          class="px-4 py-3 text-left text-sm font-medium"
+                          class="w-24 px-4 py-3 text-left text-sm font-medium"
                         >
                           Nennstrom
                         </th>
@@ -258,7 +262,7 @@
                         }"
                         @click="toggleArticleSelection(article.id)"
                       >
-                        <td class="px-4 py-3">
+                        <td class="w-12 px-4 py-3">
                           <UCheckbox
                             :model-value="isArticleSelected(article.id)"
                             @update:model-value="
@@ -267,13 +271,13 @@
                             @click.stop
                           />
                         </td>
-                        <td class="px-4 py-3 font-mono text-sm">
+                        <td class="w-28 px-4 py-3 font-mono text-sm">
                           {{ article.id }}
                         </td>
-                        <td class="px-4 py-3 text-sm">
+                        <td class="w-20 px-4 py-3 text-sm">
                           {{ article.lengthInMeter }}m
                         </td>
-                        <td v-if="isDesktop" class="px-4 py-3 text-sm">
+                        <td v-if="isDesktop" class="w-24 px-4 py-3 text-sm">
                           {{ article.ampacity }}
                         </td>
                         <td
