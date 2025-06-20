@@ -50,7 +50,8 @@ export default defineEventHandler(async (event) => {
   if (!session.rights.includes("useArticles")) {
     throw createError({
       statusCode: 403,
-      statusMessage: "User does not have permission to search articles",
+      statusMessage:
+        "Benutzer hat keine Berechtigung zum Durchsuchen von Artikeln",
     });
   }
 
@@ -137,7 +138,7 @@ export default defineEventHandler(async (event) => {
     if (!items.length) {
       throw createError({
         statusCode: 404,
-        statusMessage: "No matching items",
+        statusMessage: "Keine passenden Artikel gefunden",
       });
     }
     return { items: items.map(transformToArticle) } as ArticleSearchResponse;
@@ -271,7 +272,10 @@ export default defineEventHandler(async (event) => {
 
   // 5) No bundles found?
   if (!items.length) {
-    throw createError({ statusCode: 404, statusMessage: "No matching items" });
+    throw createError({
+      statusCode: 404,
+      statusMessage: "Keine passenden Artikel gefunden",
+    });
   }
 
   return { items: items.map(transformToArticle) } as ArticleSearchResponse;
