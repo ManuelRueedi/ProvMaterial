@@ -1,13 +1,15 @@
 <template>
-  <div class="container mx-auto space-y-6 p-4 sm:space-y-8 sm:p-6">
+  <div class="container mx-auto mt-3 space-y-6 p-4 sm:space-y-8 sm:p-6">
     <!-- Header -->
     <div
       class="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0"
     >
       <div class="flex-1">
-        <h1 class="text-2xl font-bold sm:text-3xl">Admin-Dashboard</h1>
+        <h1 class="text-center text-2xl font-bold sm:text-3xl">
+          Admin-Dashboard
+        </h1>
         <p
-          class="text-md mt-1 text-gray-600 sm:mt-2 sm:text-base dark:text-gray-400"
+          class="text-md mt-1 text-center text-gray-600 sm:mt-2 sm:text-base dark:text-gray-400"
         >
           Benutzer und Berechtigungen verwalten sowie Systemstatistiken anzeigen
         </p>
@@ -417,105 +419,113 @@
     description="Benutzerberechtigungen und Zugriffsrechte ändern"
   >
     <template #content>
-      <div class="space-y-6 p-6">
-        <!-- Header Section -->
+      <div class="flex max-h-[80vh] flex-col">
+        <!-- Fixed Header Section -->
         <div
-          class="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-700"
+          class="flex-shrink-0 border-b border-gray-200 p-6 dark:border-gray-700"
         >
-          <div class="flex items-center space-x-3">
-            <div
-              class="bg-primary-100 dark:bg-primary-900 flex h-10 w-10 items-center justify-center rounded-full"
-            >
-              <UIcon
-                name="i-heroicons-user-circle"
-                class="text-primary-600 dark:text-primary-400 h-6 w-6"
-              />
-            </div>
-            <div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Benutzerberechtigungen bearbeiten
-              </h3>
-              <p class="text-lx text-gray-500 dark:text-gray-400">
-                {{ editingUser?.firstName }} {{ editingUser?.lastName }}
-              </p>
-            </div>
-          </div>
-          <UButton
-            color="neutral"
-            variant="ghost"
-            icon="i-heroicons-x-mark"
-            size="sm"
-            @click="closeEditModal"
-          />
-        </div>
-
-        <!-- User Info Card -->
-        <div
-          v-if="editingUser"
-          class="rounded-lg bg-gray-50 p-4 dark:bg-gray-800"
-        >
-          <div class="flex items-center space-x-3">
-            <UAvatar
-              :alt="`${editingUser.firstName} ${editingUser.lastName}`"
-              size="md"
-            />
-            <div>
-              <p class="font-medium text-gray-900 dark:text-white">
-                {{ editingUser.firstName }} {{ editingUser.lastName }}
-              </p>
-              <p class="text-lx text-gray-600 dark:text-gray-300">
-                {{ editingUser.mail }}
-              </p>
-              <p
-                v-if="editingUser.jobtitle"
-                class="text-xs text-gray-500 dark:text-gray-400"
-              >
-                {{ editingUser.jobtitle }}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Rights Section -->
-        <div v-if="editingUser" class="space-y-4">
-          <div>
-            <label
-              class="text-lx mb-3 flex items-center space-x-2 font-medium text-gray-900 dark:text-white"
-            >
-              <UIcon name="i-heroicons-shield-check" class="h-4 w-4" />
-              <span>Benutzerberechtigungen</span>
-            </label>
-            <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
               <div
-                v-for="right in availableRights"
-                :key="right"
-                class="group hover:border-primary-300 hover:bg-primary-50 dark:hover:border-primary-600 dark:hover:bg-primary-900/20 relative rounded-lg border border-gray-200 p-4 transition-all dark:border-gray-700"
-                :class="{
-                  'border-primary-300 bg-primary-50 dark:border-primary-600 dark:bg-primary-900/20':
-                    editingUser.rights.includes(right),
-                }"
+                class="bg-primary-100 dark:bg-primary-900 flex h-10 w-10 items-center justify-center rounded-full"
               >
-                <div class="flex items-start space-x-3">
-                  <UCheckbox
-                    :model-value="editingUser.rights.includes(right)"
-                    :color="
-                      editingUser.rights.includes(right) ? 'primary' : 'neutral'
-                    "
-                    size="xl"
-                    @update:model-value="
-                      (checked: boolean | 'indeterminate') =>
-                        toggleUserRight(right, checked as boolean)
-                    "
-                  />
-                  <div class="flex-1">
-                    <div class="flex items-center space-x-2">
-                      <p class="font-medium text-gray-900 dark:text-white">
-                        {{ formatRight(right) }}
-                      </p>
-                    </div>
-                    <p class="text-lx mt-1 text-gray-600 dark:text-gray-300">
-                      {{ getRightDescription(right) }}
-                    </p>
+                <UIcon
+                  name="i-heroicons-user-circle"
+                  class="text-primary-600 dark:text-primary-400 h-6 w-6"
+                />
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  Benutzerberechtigungen bearbeiten
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  {{ editingUser?.firstName }} {{ editingUser?.lastName }}
+                </p>
+              </div>
+            </div>
+            <UButton
+              color="neutral"
+              variant="ghost"
+              icon="i-heroicons-x-mark"
+              size="sm"
+              @click="closeEditModal"
+            />
+          </div>
+        </div>
+
+        <!-- Scrollable Content Section -->
+        <div class="flex-1 overflow-y-auto p-6">
+          <div v-if="editingUser" class="space-y-6">
+            <!-- User Info Card -->
+            <div class="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+              <div class="flex items-center space-x-3">
+                <UAvatar
+                  :alt="`${editingUser.firstName} ${editingUser.lastName}`"
+                  size="md"
+                />
+                <div>
+                  <p class="font-medium text-gray-900 dark:text-white">
+                    {{ editingUser.firstName }} {{ editingUser.lastName }}
+                  </p>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">
+                    {{ editingUser.mail }}
+                  </p>
+                  <p
+                    v-if="editingUser.jobtitle"
+                    class="text-xs text-gray-500 dark:text-gray-400"
+                  >
+                    {{ editingUser.jobtitle }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rights Section -->
+            <div class="space-y-4">
+              <div>
+                <label
+                  class="mb-3 flex items-center space-x-2 text-sm font-medium text-gray-900 dark:text-white"
+                >
+                  <UIcon name="i-heroicons-shield-check" class="h-4 w-4" />
+                  <span>Benutzerberechtigungen</span>
+                </label>
+                <div class="space-y-3">
+                  <div
+                    v-for="right in availableRights"
+                    :key="right"
+                    class="group hover:border-primary-300 hover:bg-primary-50 dark:hover:border-primary-600 dark:hover:bg-primary-900/20 relative rounded-lg border border-gray-200 p-4 transition-all dark:border-gray-700"
+                    :class="{
+                      'border-primary-300 bg-primary-50 dark:border-primary-600 dark:bg-primary-900/20':
+                        editingUser.rights.includes(right),
+                    }"
+                  >
+                    <label class="flex cursor-pointer items-start space-x-3">
+                      <UCheckbox
+                        :model-value="editingUser.rights.includes(right)"
+                        :color="
+                          editingUser.rights.includes(right)
+                            ? 'primary'
+                            : 'neutral'
+                        "
+                        size="lg"
+                        @update:model-value="
+                          (checked: boolean | 'indeterminate') =>
+                            toggleUserRight(right, checked as boolean)
+                        "
+                      />
+                      <div class="flex-1">
+                        <div class="flex items-center space-x-2">
+                          <p class="font-medium text-gray-900 dark:text-white">
+                            {{ formatRight(right) }}
+                          </p>
+                        </div>
+                        <p
+                          class="mt-1 text-sm text-gray-600 dark:text-gray-300"
+                        >
+                          {{ getRightDescription(right) }}
+                        </p>
+                      </div>
+                    </label>
                   </div>
                 </div>
               </div>
@@ -523,20 +533,22 @@
           </div>
         </div>
 
-        <!-- Action Buttons -->
+        <!-- Fixed Footer Section -->
         <div
-          class="flex justify-end space-x-3 border-t border-gray-200 pt-4 dark:border-gray-700"
+          class="flex-shrink-0 border-t border-gray-200 p-6 dark:border-gray-700"
         >
-          <UButton color="neutral" variant="soft" @click="closeEditModal">
-            Abbrechen
-          </UButton>
-          <UButton
-            :loading="savingUser"
-            icon="i-heroicons-check"
-            @click="saveUser"
-          >
-            Änderungen speichern
-          </UButton>
+          <div class="flex justify-end space-x-3">
+            <UButton color="neutral" variant="soft" @click="closeEditModal">
+              Abbrechen
+            </UButton>
+            <UButton
+              :loading="savingUser"
+              icon="i-heroicons-check"
+              @click="saveUser"
+            >
+              Änderungen speichern
+            </UButton>
+          </div>
         </div>
       </div>
     </template>
@@ -1144,6 +1156,20 @@ const availableRights: Right[] = [
   "admin",
 ];
 
+// Computed properties
+const filteredUsers = computed(() => {
+  if (!searchTerm.value) return users.value;
+
+  const search = searchTerm.value.toLowerCase();
+  return users.value.filter(
+    (user) =>
+      user.firstName.toLowerCase().includes(search) ||
+      user.lastName.toLowerCase().includes(search) ||
+      user.mail.toLowerCase().includes(search) ||
+      (user.jobtitle && user.jobtitle.toLowerCase().includes(search)),
+  );
+});
+
 // Table columns configuration
 const userColumns: TableColumn<User>[] = [
   {
@@ -1171,20 +1197,6 @@ const userColumns: TableColumn<User>[] = [
     header: "Aktionen",
   },
 ];
-
-// Computed properties
-const filteredUsers = computed(() => {
-  if (!searchTerm.value) return users.value;
-
-  const search = searchTerm.value.toLowerCase();
-  return users.value.filter(
-    (user) =>
-      user.firstName.toLowerCase().includes(search) ||
-      user.lastName.toLowerCase().includes(search) ||
-      user.mail.toLowerCase().includes(search) ||
-      (user.jobtitle && user.jobtitle.toLowerCase().includes(search)),
-  );
-});
 
 // Helper functions
 function getRightColor(right: Right) {

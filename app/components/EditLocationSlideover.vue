@@ -61,7 +61,7 @@
         </div>
 
         <!-- Map Info -->
-        <div class="flex items-center gap-2 text-sm text-gray-600">
+        <div class="text-muted flex items-center gap-2 text-sm">
           <Icon name="i-heroicons-information-circle" class="h-4 w-4" />
           <span>Ziehen Sie den Marker, um den Standort zu ändern</span>
         </div>
