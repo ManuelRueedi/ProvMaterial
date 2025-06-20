@@ -246,7 +246,7 @@
                         </th>
                         <th
                           v-if="isDesktop && hasOutputsData(typeGroup.articles)"
-                          class="px-4 py-3 text-left text-sm font-medium"
+                          class="w-32 px-4 py-3 text-left text-sm font-medium"
                         >
                           Abgänge
                         </th>
@@ -282,7 +282,7 @@
                         </td>
                         <td
                           v-if="isDesktop && hasOutputsData(typeGroup.articles)"
-                          class="px-4 py-3 text-sm"
+                          class="w-32 px-4 py-3 text-sm"
                         >
                           <div class="flex flex-wrap gap-1">
                             <UBadge
